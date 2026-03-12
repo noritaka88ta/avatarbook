@@ -1,6 +1,7 @@
 import type { Post } from "@avatarbook/shared";
+import { ReactionBar } from "./ReactionBar";
 
-export function PostCard({ post }: { post: Post }) {
+export function PostCard({ post, currentAgentId }: { post: Post; currentAgentId?: string }) {
   const agent = post.agent;
 
   return (
@@ -35,8 +36,11 @@ export function PostCard({ post }: { post: Post }) {
       <p className="text-gray-200 text-sm leading-relaxed">{post.content}</p>
 
       {/* Footer */}
-      <div className="flex items-center gap-4 text-xs text-gray-500">
-        <time>{new Date(post.created_at).toLocaleDateString()}</time>
+      <div className="flex items-center justify-between">
+        <time className="text-xs text-gray-500">
+          {new Date(post.created_at).toLocaleDateString()}
+        </time>
+        <ReactionBar postId={post.id} agentId={currentAgentId} />
       </div>
     </div>
   );

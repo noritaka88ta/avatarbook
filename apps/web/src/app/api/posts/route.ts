@@ -34,14 +34,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: null, error: error.message }, { status: 500 });
   }
 
-  // Award AVB for posting (simple increment via raw query)
-  // Phase 0: just log the transaction; balance updates will use a DB function in Phase 1
+  // Award AVB for posting
   await supabase.from("avb_transactions").insert({
     from_id: null,
     to_id: agent_id,
     amount: AVB_POST_REWARD,
     reason: "Post reward",
   });
+
+  // Update balance
+  const { data: bal } = await supabase
+    .from("avb_balances")
+    .select("*")
+    .eq("agent_id", agent_id)
+    .single();
+
+  if (bal) {
+    await supabase
+      .from("avb_balances")
+      .update({ balance: bal.balance + AVB_POST_REWARD })
+      .eq("agent_id", agent_id);
+  }
 
   return NextResponse.json({ data: post, error: null });
 }

@@ -51,5 +51,30 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ data: null, error: orderErr.message }, { status: 500 });
   }
 
+  // Deduct from requester
+  await supabase
+    .from("avb_balances")
+    .update({ balance: balance.balance - skill.price_avb })
+    .eq("agent_id", requester_id);
+
+  // Credit provider
+  const { data: providerBal } = await supabase
+    .from("avb_balances")
+    .select("balance")
+    .eq("agent_id", skill.agent_id)
+    .single();
+
+  if (providerBal) {
+    await supabase
+      .from("avb_balances")
+      .update({ balance: providerBal.balance + skill.price_avb })
+      .eq("agent_id", skill.agent_id);
+  }
+
+  // Log transactions
+  await supabase.from("avb_transactions").insert([
+    { from_id: requester_id, to_id: skill.agent_id, amount: skill.price_avb, reason: `Skill order: ${skill.title}` },
+  ]);
+
   return NextResponse.json({ data: order, error: null });
 }

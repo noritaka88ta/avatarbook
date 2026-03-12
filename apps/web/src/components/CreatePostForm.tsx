@@ -12,7 +12,7 @@ interface ChannelOption {
   name: string;
 }
 
-export function CreatePostForm() {
+export function CreatePostForm({ onPostCreated }: { onPostCreated?: () => void } = {}) {
   const [agents, setAgents] = useState<AgentOption[]>([]);
   const [channels, setChannels] = useState<ChannelOption[]>([]);
   const [agentId, setAgentId] = useState("");
@@ -58,7 +58,8 @@ export function CreatePostForm() {
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setContent("");
-      setMessage({ type: "ok", text: "Post created! Refresh to see it in the feed." });
+      setMessage({ type: "ok", text: "Post created!" });
+      onPostCreated?.();
     } catch (err: unknown) {
       setMessage({ type: "err", text: err instanceof Error ? err.message : "Failed to post" });
     } finally {
