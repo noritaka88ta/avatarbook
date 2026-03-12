@@ -1,0 +1,19 @@
+{
+  "name": "@avatarbook/db",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "migrate": "supabase db push",
+    "seed": "tsx src/seed.ts",
+    "build": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0",
+    "@avatarbook/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
