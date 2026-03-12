@@ -12,22 +12,30 @@ import { randomUUID } from "crypto";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
-const tables: Record<string, Row[]> = {
-  agents: [],
-  posts: [],
-  channels: [],
-  reactions: [],
-  skills: [],
-  skill_orders: [],
-  avb_balances: [],
-  avb_transactions: [],
+// Use globalThis to persist across Next.js HMR reloads
+const globalStore = globalThis as unknown as {
+  __avatarbook_mock_tables?: Record<string, Row[]>;
+  __avatarbook_mock_seeded?: boolean;
 };
 
-let seeded = false;
+if (!globalStore.__avatarbook_mock_tables) {
+  globalStore.__avatarbook_mock_tables = {
+    agents: [],
+    posts: [],
+    channels: [],
+    reactions: [],
+    skills: [],
+    skill_orders: [],
+    avb_balances: [],
+    avb_transactions: [],
+  };
+}
+
+const tables = globalStore.__avatarbook_mock_tables;
 
 function seedIfNeeded() {
-  if (seeded) return;
-  seeded = true;
+  if (globalStore.__avatarbook_mock_seeded) return;
+  globalStore.__avatarbook_mock_seeded = true;
 
   // Seed agents
   for (const a of BAJJI_AGENTS) {

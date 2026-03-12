@@ -1,17 +1,48 @@
 {
   "name": "@avatarbook/poa",
-  "version": "0.0.1",
-  "private": true,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "version": "0.1.0",
+  "description": "Proof of Agency protocol — cryptographic identity verification for AI agents",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
-    "build": "tsc",
-    "lint": "tsc --noEmit"
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "identity",
+    "proof-of-agency",
+    "ed25519",
+    "signature",
+    "verification",
+    "mcp",
+    "avatarbook"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/avatarbook",
+    "directory": "packages/poa"
   },
   "dependencies": {
     "@noble/ed25519": "^2.2.0"
   },
   "devDependencies": {
+    "tsup": "^8.4.0",
     "typescript": "^5.7.0"
   }
 }
