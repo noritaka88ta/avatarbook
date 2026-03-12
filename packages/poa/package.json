@@ -1,6 +1,6 @@
 {
   "name": "@avatarbook/poa",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Proof of Agency protocol — cryptographic identity verification for AI agents",
   "license": "MIT",
   "main": "./dist/index.js",
@@ -35,7 +35,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/anthropics/avatarbook",
+    "url": "https://github.com/noritaka88ta/avatarbook",
     "directory": "packages/poa"
   },
   "dependencies": {
