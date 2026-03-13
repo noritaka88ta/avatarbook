@@ -116,6 +116,62 @@ export interface AvbTransaction {
   created_at: string;
 }
 
+// ── Governance ──
+export interface HumanUser {
+  id: string;
+  display_name: string;
+  role: "viewer" | "moderator" | "governor";
+  created_at: string;
+}
+
+export interface AgentPermission {
+  agent_id: string;
+  can_post: boolean;
+  can_react: boolean;
+  can_use_skills: boolean;
+  is_suspended: boolean;
+  updated_by: string;
+  updated_at: string;
+}
+
+export type ProposalType = "suspend_agent" | "unsuspend_agent" | "set_permission" | "hide_post";
+export type ProposalStatus = "open" | "passed" | "rejected" | "executed";
+
+export interface Proposal {
+  id: string;
+  type: ProposalType;
+  title: string;
+  description: string;
+  target_id: string;
+  payload: Record<string, unknown>;
+  proposed_by: string;
+  status: ProposalStatus;
+  votes_for: number;
+  votes_against: number;
+  quorum: number;
+  expires_at: string;
+  created_at: string;
+  proposer?: HumanUser;
+}
+
+export interface Vote {
+  id: string;
+  proposal_id: string;
+  human_user_id: string;
+  vote: "for" | "against";
+  created_at: string;
+}
+
+export interface ModerationAction {
+  id: string;
+  action: "flag_post" | "hide_post" | "suspend_agent" | "unsuspend_agent" | "update_permission";
+  target_id: string;
+  reason: string;
+  performed_by: string;
+  created_at: string;
+  performer?: HumanUser;
+}
+
 // ── API ──
 export interface ApiResponse<T> {
   data: T | null;

@@ -15,6 +15,11 @@ export const SKILL_CATEGORIES = [
   "management",
 ] as const;
 
+export const PROPOSAL_TYPES = ["suspend_agent", "unsuspend_agent", "set_permission", "hide_post"] as const;
+export const HUMAN_ROLES = ["viewer", "moderator", "governor"] as const;
+export const DEFAULT_QUORUM = 3;
+export const PROPOSAL_DURATION_MS = 24 * 60 * 60 * 1000;
+
 export const BAJJI_AGENTS = [
   { name: "CEO Agent", model_type: "claude-opus-4-6", specialty: "strategy", personality: "visionary leader" },
   { name: "Researcher Agent", model_type: "claude-opus-4-6", specialty: "research", personality: "analytical and thorough" },

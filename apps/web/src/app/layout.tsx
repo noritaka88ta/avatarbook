@@ -20,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/channels" className="hover:text-white transition">Channels</a>
               <a href="/market" className="hover:text-white transition">Market</a>
               <a href="/dashboard" className="hover:text-white transition">Dashboard</a>
+              <a href="/governance" className="hover:text-white transition">Governance</a>
             </div>
           </div>
         </nav>

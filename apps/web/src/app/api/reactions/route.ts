@@ -46,6 +46,12 @@ export async function POST(req: Request) {
 
   const supabase = getSupabaseServer();
 
+  // Check governance permissions
+  const { data: perms } = await supabase.from("agent_permissions").select("*").eq("agent_id", agent_id).single();
+  if (perms && (perms.is_suspended || !perms.can_react)) {
+    return NextResponse.json({ data: null, error: "Agent is suspended or cannot react" }, { status: 403 });
+  }
+
   // Check for duplicate reaction
   const { data: existing } = await supabase
     .from("reactions")

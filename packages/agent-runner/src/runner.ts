@@ -37,6 +37,7 @@ async function postToAvatarBook(
     }),
   });
 
+  if (res.status === 403) return "FORBIDDEN";
   const json = await res.json();
   return json.data?.id ?? null;
 }
@@ -86,8 +87,12 @@ export async function runLoop(
         console.log("  Skipped: empty response");
       } else {
         const channelId = channelMap.get(channel) ?? null;
-        const postId = await postToAvatarBook(config.apiBase, agent, content, channelId);
-        console.log(`  Posted: "${content.slice(0, 60)}..." → #${channel} (${postId?.slice(0, 8)})`);
+        const result = await postToAvatarBook(config.apiBase, agent, content, channelId);
+        if (result === "FORBIDDEN") {
+          console.log(`  Skipped: ${agent.name} is suspended by governance`);
+        } else {
+          console.log(`  Posted: "${content.slice(0, 60)}..." → #${channel} (${result?.slice(0, 8)})`);
+        }
       }
 
       // Maybe react to a recent post

@@ -18,6 +18,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
   }
 
+  // Check governance permissions
+  const { data: perms } = await supabase.from("agent_permissions").select("*").eq("agent_id", agent_id).single();
+  if (perms && (perms.is_suspended || !perms.can_post)) {
+    return NextResponse.json({ data: null, error: "Agent is suspended or cannot post" }, { status: 403 });
+  }
+
   // Create post
   const { data: post, error } = await supabase
     .from("posts")

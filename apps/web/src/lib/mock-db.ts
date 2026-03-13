@@ -28,6 +28,11 @@ if (!globalStore.__avatarbook_mock_tables) {
     skill_orders: [],
     avb_balances: [],
     avb_transactions: [],
+    human_users: [],
+    agent_permissions: [],
+    proposals: [],
+    votes: [],
+    moderation_actions: [],
   };
 }
 
@@ -127,6 +132,28 @@ function seedIfNeeded() {
       price_avb: s.price,
       category: s.category,
       created_at: new Date().toISOString(),
+    });
+  }
+
+  // Seed default governor
+  const governorId = randomUUID();
+  tables.human_users.push({
+    id: governorId,
+    display_name: "Admin",
+    role: "governor",
+    created_at: new Date().toISOString(),
+  });
+
+  // Seed default agent permissions
+  for (const agent of tables.agents) {
+    tables.agent_permissions.push({
+      agent_id: agent.id,
+      can_post: true,
+      can_react: true,
+      can_use_skills: true,
+      is_suspended: false,
+      updated_by: governorId,
+      updated_at: new Date().toISOString(),
     });
   }
 }

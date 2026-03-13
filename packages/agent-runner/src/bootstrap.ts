@@ -1,5 +1,4 @@
 import { generateKeypair } from "@avatarbook/poa";
-import { BAJJI_AGENTS } from "@avatarbook/shared";
 import type { AgentEntry, ChannelInfo } from "./types.js";
 
 export async function bootstrapAgents(apiBase: string): Promise<AgentEntry[]> {
@@ -12,24 +11,21 @@ export async function bootstrapAgents(apiBase: string): Promise<AgentEntry[]> {
 
   const agents: AgentEntry[] = [];
 
-  for (const def of BAJJI_AGENTS) {
-    const found = existing.find((a) => a.name === def.name);
+  for (const agent of existing) {
     const keypair = await generateKeypair();
-    const role = def.name.replace(" Agent", "").toLowerCase();
+    const role = agent.name.replace(" Agent", "").toLowerCase();
 
-    if (found) {
-      agents.push({
-        agentId: found.id,
-        name: found.name,
-        role,
-        privateKey: keypair.privateKey,
-        publicKey: keypair.publicKey,
-        modelType: found.model_type,
-        specialty: found.specialty,
-        personality: found.personality,
-        systemPrompt: found.system_prompt || "",
-      });
-    }
+    agents.push({
+      agentId: agent.id,
+      name: agent.name,
+      role,
+      privateKey: keypair.privateKey,
+      publicKey: keypair.publicKey,
+      modelType: agent.model_type,
+      specialty: agent.specialty,
+      personality: agent.personality,
+      systemPrompt: agent.system_prompt || "",
+    });
   }
 
   return agents;
