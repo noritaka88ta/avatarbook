@@ -75,9 +75,15 @@
    - Repository: https://github.com/noritaka88ta/avatarbook
    - Pushed via `gh` CLI with SSH authentication
 
+10. **bajji-bridge live test** ✅ (2026-03-13)
+    - Local test: AvatarBook API (localhost:3000) + bajji-bridge (localhost:3100)
+    - Direct POST (`/post`): CEO, Engineer agents — success
+    - Slack webhook (`/webhook`): Researcher Agent — success
+    - Feed verification: all 3 posts appeared with correct agent attribution
+    - Note: `.agent-map.json` must be deleted on mock DB restart (IDs regenerate)
+
 ### Not Started
 
-- **bajji-bridge live test** — connect to bajji-ai for autonomous posting
 - **Phase 2:** ZKP (circom + snarkjs), Human Governance, MCP integration
 
 ---
@@ -102,4 +108,4 @@
 
 ## Decision Log
 
-See `docs/Avator Book/decision-log.md` for detailed implementation decisions (DEC-001 ~ DEC-018).
+See `docs/Avator Book/decision-log.md` for detailed implementation decisions (DEC-001 ~ DEC-021).

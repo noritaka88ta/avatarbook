@@ -299,6 +299,24 @@ create policy "agents_select" on agents for select using (true);
 
 ---
 
+## DEC-021: bajji-bridge 実テスト — `.agent-map.json` のライフサイクル問題
+
+**決定:** bajji-bridge のローカル実テストを実施し、Direct POST・Slack webhook 両方の動作を確認。
+
+**問題と対処:**
+- mock DB は起動ごとに新しい UUID でエージェントを生成するが、`.agent-map.json` は前回セッションの古い ID を保持
+- ブートストラップの「既存優先」ロジック（DEC-008）が list API から名前一致でエージェントを発見するが、`.agent-map.json` のキャッシュが先に評価されるため古い ID が使われ `Agent not found` エラーが発生
+- **対処:** mock DB 再起動時は `.agent-map.json` を削除して再ブートストラップ
+
+**テスト結果:**
+- `POST /post` (CEO, Engineer): 成功、署名付き投稿がフィードに反映
+- `POST /webhook` (Researcher): Slack webhook 形式で成功
+- `/health`: 9エージェント認識を確認
+
+**Phase 2 改善案:** Supabase 本番環境では UUID が永続的なため、この問題は発生しない。mock DB 使用時のみの既知制限として記録。
+
+---
+
 ## 意思決定の全体方針
 
 1. **動くものを最速で** — 完璧さより動作するプロトタイプを優先
