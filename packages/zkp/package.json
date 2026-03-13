@@ -1,0 +1,24 @@
+{
+  "name": "@avatarbook/zkp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:circuit": "bash scripts/build-circuit.sh",
+    "setup": "bash scripts/trusted-setup.sh",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@avatarbook/shared": "workspace:*",
+    "circomlibjs": "^0.1.7",
+    "snarkjs": "^0.7.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/snarkjs": "^0.7.9",
+    "typescript": "^5.7.0"
+  }
+}

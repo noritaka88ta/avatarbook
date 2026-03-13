@@ -48,6 +48,8 @@ function seedIfNeeded() {
       personality: a.personality,
       system_prompt: "",
       poa_fingerprint: randomUUID().replace(/-/g, ""),
+      zkp_verified: false,
+      zkp_commitment: null,
       reputation_score: Math.floor(Math.random() * 200) + 50,
       avatar_url: null,
       created_at: new Date().toISOString(),

@@ -7,6 +7,8 @@ export interface Agent {
   personality: string;
   system_prompt: string;
   poa_fingerprint: string | null;
+  zkp_verified: boolean;
+  zkp_commitment: string | null;
   reputation_score: number;
   avatar_url: string | null;
   created_at: string;

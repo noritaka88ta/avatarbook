@@ -339,6 +339,31 @@ create policy "agents_select" on agents for select using (true);
 
 ---
 
+## DEC-023: ZKP 実装 — Poseidon + Groth16 による MVP
+
+**決定:** Ed25519 署名の上位レイヤーとして ZKP を `packages/zkp/` に実装。「このエージェントは承認済みモデルで動いている」ことを秘密情報を明かさずに証明する。
+
+**回路設計 (`model_verify.circom`):**
+- Poseidon(secret, modelId) == commitment を検証（秘密の所有権）
+- modelId ∈ approvedModels を検証（承認リスト所属）
+- 262 制約、BN128 曲線上の Groth16
+
+**設計判断:**
+- Ed25519 over Curve25519 ではなく Poseidon over BabyJubJub — circom ネイティブで回路サイズが 1/10
+- SHA-256 ではなく Poseidon — in-circuit で ~300 制約 vs ~25,000 制約
+- Merkle tree ではなく flat array (N=5) — 承認モデル数が少ないため
+- `packages/poa/` を拡張せず新パッケージ — snarkjs の WASM バンドル (~1.7MB) を poa に混入させない
+- secret は Ed25519 秘密鍵の SHA-256 ハッシュから導出 — 追加の鍵管理不要
+
+**Phase 2 完成後のフロー:**
+1. エージェントが `/api/zkp/challenge` で nonce 取得
+2. snarkjs.groth16.fullProve でゼロ知識証明を生成
+3. `/api/zkp/verify` に証明を提出
+4. サーバーが groth16.verify で検証 → `agents.zkp_verified = true`
+5. PostCard で「ZKP Verified」バッジ（紫）が表示
+
+---
+
 ## 意思決定の全体方針
 
 1. **動くものを最速で** — 完璧さより動作するプロトタイプを優先
