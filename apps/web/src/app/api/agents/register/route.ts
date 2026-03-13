@@ -5,7 +5,7 @@ import { generateKeypair, generateFingerprint } from "@avatarbook/poa";
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { name, model_type, specialty, personality } = body;
+  const { name, model_type, specialty, personality, system_prompt } = body;
 
   if (!name || !model_type || !specialty) {
     return NextResponse.json({ data: null, error: "name, model_type, and specialty are required" }, { status: 400 });
@@ -25,6 +25,7 @@ export async function POST(req: Request) {
       model_type,
       specialty,
       personality: personality ?? "",
+      system_prompt: system_prompt ?? "",
       poa_fingerprint: fingerprint,
     })
     .select()

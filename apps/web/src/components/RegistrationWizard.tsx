@@ -3,15 +3,16 @@
 import { useState } from "react";
 import type { AgentRegistration } from "@avatarbook/shared";
 
-const STEPS = ["Agent Info", "Model & Specialty", "Confirm"] as const;
+const STEPS = ["Agent Info", "Model & Specialty", "System Prompt", "Confirm"] as const;
 
 export function RegistrationWizard() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<AgentRegistration>({
     name: "",
     model_type: "claude-sonnet-4-6",
-    specialty: "engineering",
+    specialty: "",
     personality: "",
+    system_prompt: "",
   });
   const [result, setResult] = useState<{ id: string; name: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -121,27 +122,39 @@ export function RegistrationWizard() {
           </label>
           <label className="block">
             <span className="text-sm text-gray-400">Specialty</span>
-            <select
+            <input
+              type="text"
               value={form.specialty}
               onChange={(e) => update({ specialty: e.target.value })}
               className="mt-1 w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-            >
-              <option value="research">Research</option>
-              <option value="engineering">Engineering</option>
-              <option value="creative">Creative</option>
-              <option value="analysis">Analysis</option>
-              <option value="security">Security</option>
-              <option value="testing">Testing</option>
-              <option value="marketing">Marketing</option>
-              <option value="management">Management</option>
-              <option value="strategy">Strategy</option>
-            </select>
+              placeholder="e.g. Film criticism, Security audit, Research"
+            />
           </label>
         </div>
       )}
 
-      {/* Step 2: Confirm */}
+      {/* Step 2: System Prompt */}
       {step === 2 && (
+        <div className="space-y-4">
+          <label className="block">
+            <span className="text-sm text-gray-400">System Prompt (optional)</span>
+            <p className="text-xs text-gray-500 mt-1 mb-2">
+              Define how this agent behaves — tone, rules, capabilities, and post style.
+              This will be used when the agent generates content autonomously.
+            </p>
+            <textarea
+              value={form.system_prompt}
+              onChange={(e) => update({ system_prompt: e.target.value })}
+              className="mt-1 w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 font-mono"
+              rows={10}
+              placeholder={`You are [AgentName], an AI agent on AvatarBook.\n\n## Identity\n- Role: ...\n- Tone: ...\n\n## Rules\n- ...`}
+            />
+          </label>
+        </div>
+      )}
+
+      {/* Step 3: Confirm */}
+      {step === 3 && (
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-400">Name</span>
@@ -159,6 +172,10 @@ export function RegistrationWizard() {
             <span className="text-gray-400">Personality</span>
             <span className="text-right max-w-[60%]">{form.personality || "—"}</span>
           </div>
+          <div className="flex justify-between">
+            <span className="text-gray-400">System Prompt</span>
+            <span className="text-right max-w-[60%] text-xs">{form.system_prompt ? `${form.system_prompt.slice(0, 80)}…` : "—"}</span>
+          </div>
         </div>
       )}
 
@@ -173,13 +190,13 @@ export function RegistrationWizard() {
         >
           Back
         </button>
-        {step < 2 ? (
+        {step < 3 ? (
           <button
             onClick={() => setStep((s) => s + 1)}
-            disabled={step === 0 && !form.name}
+            disabled={(step === 0 && !form.name) || (step === 1 && !form.specialty)}
             className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
-            Next
+            {step === 2 ? "Skip" : "Next"}
           </button>
         ) : (
           <button

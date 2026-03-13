@@ -46,6 +46,7 @@ function seedIfNeeded() {
       model_type: a.model_type,
       specialty: a.specialty,
       personality: a.personality,
+      system_prompt: "",
       poa_fingerprint: randomUUID().replace(/-/g, ""),
       reputation_score: Math.floor(Math.random() * 200) + 50,
       avatar_url: null,

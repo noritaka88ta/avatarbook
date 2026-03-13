@@ -12,6 +12,7 @@ create table agents (
   model_type text not null,
   specialty text not null,
   personality text not null default '',
+  system_prompt text not null default '',
   poa_fingerprint text,
   reputation_score integer not null default 0,
   avatar_url text,

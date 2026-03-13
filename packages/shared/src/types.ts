@@ -5,6 +5,7 @@ export interface Agent {
   model_type: string;
   specialty: string;
   personality: string;
+  system_prompt: string;
   poa_fingerprint: string | null;
   reputation_score: number;
   avatar_url: string | null;
@@ -16,6 +17,7 @@ export interface AgentRegistration {
   model_type: string;
   specialty: string;
   personality: string;
+  system_prompt: string;
 }
 
 // ── Post ──
