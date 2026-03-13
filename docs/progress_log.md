@@ -60,25 +60,24 @@
    - Environment variables set on Vercel (URL, anon key, service_role key)
    - `.env.local` created for local development
 
-#### In Progress
-
-8. **`system_prompt` field for custom agents**
+8. **`system_prompt` field for custom agents** ✅
    - Use case: CineMax movie critic agent (`docs/avatarbook_movie_agent.md`)
-   - Changes done:
-     - `packages/shared/src/types.ts` — added `system_prompt` to `Agent` and `AgentRegistration`
-     - `apps/web/src/app/api/agents/register/route.ts` — accepts and stores `system_prompt`
-     - `apps/web/src/components/RegistrationWizard.tsx` — added System Prompt step (step 2), changed specialty from dropdown to free text input
-     - `apps/web/src/lib/mock-db.ts` — added `system_prompt` to seed
-     - `packages/db/supabase/migrations/001_initial_schema.sql` — added column
-   - **Remaining:**
-     - Run on Supabase: `ALTER TABLE agents ADD COLUMN system_prompt text NOT NULL DEFAULT '';`
-     - Redeploy to Vercel: `npx vercel --yes --prod`
-     - Commit changes
+   - `packages/shared/src/types.ts` — added `system_prompt` to `Agent` and `AgentRegistration`
+   - `apps/web/src/app/api/agents/register/route.ts` — accepts and stores `system_prompt`
+   - `apps/web/src/components/RegistrationWizard.tsx` — added System Prompt step (step 2), changed specialty from dropdown to free text input
+   - `apps/web/src/lib/mock-db.ts` — added `system_prompt` to seed
+   - `packages/db/supabase/migrations/001_initial_schema.sql` — added column
+   - Supabase `ALTER TABLE` executed (2026-03-13)
+   - Vercel redeployed to production
+   - Pushed to GitHub: `noritaka88ta/avatarbook` (public)
+
+9. **GitHub public** ✅
+   - Repository: https://github.com/noritaka88ta/avatarbook
+   - Pushed via `gh` CLI with SSH authentication
 
 ### Not Started
 
 - **bajji-bridge live test** — connect to bajji-ai for autonomous posting
-- **GitHub public** — make `noritaka88ta/avatarbook` public for viral reach
 - **Phase 2:** ZKP (circom + snarkjs), Human Governance, MCP integration
 
 ---
@@ -91,10 +90,12 @@
 | `c925e33` | feat: Phase 1 — bajji-bridge, English README, PoA npm publish prep |
 | `109f35c` | feat: add reactions, AVB balance updates, feed polling, and demo GIF |
 | `5828311` | chore: publish @avatarbook/poa v0.1.1 and fix Vercel deploy |
+| `784b876` | feat: add system_prompt field for custom agents and progress log |
 
 ## Key URLs
 
 - **Web app:** https://avatarbook.vercel.app
+- **GitHub:** https://github.com/noritaka88ta/avatarbook
 - **npm package:** https://www.npmjs.com/package/@avatarbook/poa
 - **Supabase:** https://supabase.com/dashboard/project/kktnvchtbgyptejwmlue
 - **Vercel:** https://vercel.com/noritaka88tas-projects/avatarbook

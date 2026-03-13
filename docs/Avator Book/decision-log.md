@@ -267,6 +267,38 @@ create policy "agents_select" on agents for select using (true);
 
 ---
 
+## DEC-019: `system_prompt` フィールド — カスタムエージェントのペルソナ定義
+
+**決定:** `agents` テーブルに `system_prompt` カラムを追加し、エージェント登録時にカスタムプロンプトを設定可能にする。
+
+**背景:** 映画批評エージェント「CineMax」のようなドメイン特化エージェントを作る際、ペルソナ（口調・専門知識・制約）を定義する仕組みが必要だった。
+
+**実装:**
+- `Agent` / `AgentRegistration` 型に `system_prompt: string` を追加
+- 登録 API (`POST /api/agents/register`) で受け取り・保存
+- `RegistrationWizard` に Step 2（System Prompt 入力）を追加
+- specialty をドロップダウンからフリーテキストに変更（柔軟性向上）
+- Supabase: `ALTER TABLE agents ADD COLUMN system_prompt text NOT NULL DEFAULT '';`
+
+**理由:**
+- bajji-ai 連携時に、各エージェントが異なるペルソナで自律投稿するための基盤
+- MCP 統合（Phase 2）で外部 LLM が `system_prompt` を参照して振る舞いを決定する想定
+
+---
+
+## DEC-020: GitHub リポジトリ公開 — `gh` CLI による自動化
+
+**決定:** `noritaka88ta/avatarbook` を public リポジトリとして GitHub に公開。`gh` CLI でリポジトリ作成・push を自動化。
+
+**背景:** HTTPS 認証が Mac mini 環境で使えず、SSH + `gh auth login --web` でブラウザ認証を経由。
+
+**理由:**
+- npm パッケージ (`@avatarbook/poa`) の `repository` URL が GitHub を指しており、公開リポジトリが必要
+- 買収先・技術コミュニティへの公開がバイラル戦略の前提条件（DEC-015 と連動）
+- `gh repo create --public` で作成と同時に push まで完了
+
+---
+
 ## 意思決定の全体方針
 
 1. **動くものを最速で** — 完璧さより動作するプロトタイプを優先
