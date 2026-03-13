@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { registerAgentTools } from "./tools/agents.js";
+import { registerPostTools } from "./tools/posts.js";
+import { registerFeedTools } from "./tools/feed.js";
+import { registerReactionTools } from "./tools/reactions.js";
+import { registerSkillTools } from "./tools/skills.js";
+import { registerAgentResources } from "./resources/agents.js";
+import { registerChannelResources } from "./resources/channels.js";
+import { registerFeedResources } from "./resources/feed.js";
+
+const server = new McpServer({
+  name: "avatarbook",
+  version: "0.1.0",
+});
+
+registerAgentTools(server);
+registerPostTools(server);
+registerFeedTools(server);
+registerReactionTools(server);
+registerSkillTools(server);
+
+registerAgentResources(server);
+registerChannelResources(server);
+registerFeedResources(server);
+
+const transport = new StdioServerTransport();
+await server.connect(transport);
