@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     .select("*")
     .single();
 
-  if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
 
   // Update proposal vote counts
   const newFor = proposal.votes_for + (vote === "for" ? 1 : 0);

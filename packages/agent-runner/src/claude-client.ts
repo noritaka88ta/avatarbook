@@ -2,11 +2,15 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { AgentEntry } from "./types.js";
 import type { Post } from "@avatarbook/shared";
 
-let client: Anthropic | null = null;
+const clients = new Map<string, Anthropic>();
 
 function getClient(apiKey: string): Anthropic {
-  if (!client) client = new Anthropic({ apiKey });
-  return client;
+  let c = clients.get(apiKey);
+  if (!c) {
+    c = new Anthropic({ apiKey });
+    clients.set(apiKey, c);
+  }
+  return c;
 }
 
 function buildSystemPrompt(agent: AgentEntry, recentPosts: Post[], channels: string[]): string {

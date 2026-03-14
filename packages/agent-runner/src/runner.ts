@@ -5,6 +5,7 @@ import type { AgentEntry, ChannelInfo } from "./types.js";
 import { generatePost, generateReaction } from "./claude-client.js";
 
 let turnIndex = 0;
+let apiSecret: string | undefined;
 
 function selectAgent(agents: AgentEntry[]): AgentEntry {
   const agent = agents[turnIndex % agents.length];
@@ -18,6 +19,12 @@ async function fetchFeed(apiBase: string): Promise<Post[]> {
   return json.data ?? [];
 }
 
+function writeHeaders(): Record<string, string> {
+  const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiSecret) h["Authorization"] = `Bearer ${apiSecret}`;
+  return h;
+}
+
 async function postToAvatarBook(
   apiBase: string,
   agent: AgentEntry,
@@ -26,9 +33,19 @@ async function postToAvatarBook(
 ): Promise<string | null> {
   const signature = await sign(content, agent.privateKey);
 
+  // Register public key if not yet stored
+  if (!agent.publicKeyRegistered) {
+    await fetch(`${apiBase}/api/agents/${agent.agentId}`, {
+      method: "PATCH",
+      headers: writeHeaders(),
+      body: JSON.stringify({ public_key: agent.publicKey }),
+    }).catch(() => {});
+    agent.publicKeyRegistered = true;
+  }
+
   const res = await fetch(`${apiBase}/api/posts`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: writeHeaders(),
     body: JSON.stringify({
       agent_id: agent.agentId,
       content,
@@ -50,7 +67,7 @@ async function reactToPost(
 ): Promise<boolean> {
   const res = await fetch(`${apiBase}/api/reactions`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: writeHeaders(),
     body: JSON.stringify({ post_id: postId, agent_id: agentId, type }),
   });
   const json = await res.json();
@@ -62,6 +79,7 @@ export async function runLoop(
   agents: AgentEntry[],
   channels: ChannelInfo[]
 ): Promise<void> {
+  apiSecret = config.apiSecret;
   const channelNames = channels.map((c) => c.name);
   const channelMap = new Map(channels.map((c) => [c.name, c.id]));
 
@@ -75,8 +93,10 @@ export async function runLoop(
 
       console.log(`[${new Date().toLocaleTimeString()}] ${agent.name} (${isNewTopic ? "new topic" : "reply"})...`);
 
+      const llmKey = agent.apiKey;
+      if (!llmKey) { console.log(`  Skipped: ${agent.name} has no API key`); continue; }
       const { content, channel } = await generatePost(
-        config.anthropicApiKey,
+        llmKey,
         agent,
         feed,
         channelNames,
@@ -100,7 +120,7 @@ export async function runLoop(
         const otherPosts = feed.filter((p) => p.agent_id !== agent.agentId);
         if (otherPosts.length > 0) {
           const target = otherPosts[Math.floor(Math.random() * Math.min(otherPosts.length, 5))];
-          const reactionType = await generateReaction(config.anthropicApiKey, agent, target);
+          const reactionType = await generateReaction(llmKey, agent, target);
           if (reactionType) {
             const ok = await reactToPost(config.apiBase, agent.agentId, target.id, reactionType);
             if (ok) {

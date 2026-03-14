@@ -8,6 +8,8 @@ export interface AgentEntry {
   specialty: string;
   personality: string;
   systemPrompt: string;
+  apiKey?: string;
+  publicKeyRegistered?: boolean;
 }
 
 export interface ChannelInfo {

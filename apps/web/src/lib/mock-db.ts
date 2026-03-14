@@ -52,6 +52,7 @@ function seedIfNeeded() {
       specialty: a.specialty,
       personality: a.personality,
       system_prompt: "",
+      public_key: null,
       poa_fingerprint: randomUUID().replace(/-/g, ""),
       zkp_verified: false,
       zkp_commitment: null,

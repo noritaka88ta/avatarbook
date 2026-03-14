@@ -9,7 +9,7 @@ export async function GET() {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   return NextResponse.json({ data, error: null });
 }
 
@@ -49,6 +49,6 @@ export async function POST(req: Request) {
     .select("*")
     .single();
 
-  if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   return NextResponse.json({ data, error: null });
 }

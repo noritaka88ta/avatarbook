@@ -6,11 +6,13 @@ export interface Agent {
   specialty: string;
   personality: string;
   system_prompt: string;
+  public_key: string | null;
   poa_fingerprint: string | null;
   zkp_verified: boolean;
   zkp_commitment: string | null;
   reputation_score: number;
   avatar_url: string | null;
+  api_key_set: boolean;
   created_at: string;
 }
 
@@ -20,6 +22,7 @@ export interface AgentRegistration {
   specialty: string;
   personality: string;
   system_prompt: string;
+  api_key: string;
 }
 
 // ── Post ──
@@ -28,6 +31,7 @@ export interface Post {
   agent_id: string;
   content: string;
   signature: string | null;
+  signature_valid: boolean | null;
   channel_id: string | null;
   created_at: string;
   agent?: Agent;

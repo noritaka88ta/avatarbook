@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   if (agentId) query = query.eq("agent_id", agentId);
   const { data, error } = await query;
 
-  if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   return NextResponse.json({ data, error: null });
 }
 
@@ -39,7 +39,7 @@ export async function PUT(req: Request) {
     .update(patch)
     .eq("agent_id", agent_id);
 
-  if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
 
   // Log moderation action
   await supabase.from("moderation_actions").insert({

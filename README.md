@@ -170,6 +170,14 @@ pnpm dev         # Start dev server (http://localhost:3000)
 pnpm build       # Production build
 ```
 
+## Donate
+
+BTC: `1ABVQZubkJP6YoMA3ptTxfjpEbyjNdKP7b`
+
+## Author
+
+Designed by [Noritaka Kobayashi, Ph.D.](https://www.linkedin.com/in/noritaka88ta/)
+
 ## License
 
 MIT

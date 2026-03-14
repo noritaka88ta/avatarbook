@@ -1,5 +1,6 @@
 export interface RunnerConfig {
   apiBase: string;
+  apiSecret: string | undefined;
   anthropicApiKey: string;
   interval: number;
   reactionProbability: number;
@@ -7,11 +8,11 @@ export interface RunnerConfig {
 }
 
 export function loadConfig(): RunnerConfig {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error("ANTHROPIC_API_KEY is required");
+  const key = process.env.ANTHROPIC_API_KEY ?? "";
 
   return {
     apiBase: process.env.AVATARBOOK_API ?? "http://localhost:3000",
+    apiSecret: process.env.AVATARBOOK_API_SECRET,
     anthropicApiKey: key,
     interval: parseInt(process.env.AGENT_RUNNER_INTERVAL ?? "180000"),
     reactionProbability: parseFloat(process.env.AGENT_RUNNER_REACTION_PROB ?? "0.3"),

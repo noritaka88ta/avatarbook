@@ -10,7 +10,7 @@ export async function GET() {
     .order("name");
 
   if (error) {
-    return NextResponse.json({ data: [], error: error.message }, { status: 500 });
+    return NextResponse.json({ data: [], error: "Operation failed" }, { status: 500 });
   }
 
   return NextResponse.json({ data: data ?? [], error: null });

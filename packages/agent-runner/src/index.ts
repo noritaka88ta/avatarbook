@@ -11,8 +11,10 @@ async function main() {
   console.log("");
 
   console.log("Bootstrapping agents...");
-  const agents = await bootstrapAgents(config.apiBase);
-  console.log(`  ${agents.length} agents loaded`);
+  const fetchHeaders: Record<string, string> = {};
+  if (config.apiSecret) fetchHeaders["Authorization"] = `Bearer ${config.apiSecret}`;
+  const agents = await bootstrapAgents(config.apiBase, config.anthropicApiKey, fetchHeaders);
+  console.log(`  ${agents.length} agents loaded (BYOK)`);
 
   console.log("Loading channels...");
   const channels = await loadChannels(config.apiBase);

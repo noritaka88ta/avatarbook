@@ -3,8 +3,8 @@ import { getSupabaseServer } from "@/lib/supabase";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get("page") ?? "1");
-  const perPage = parseInt(searchParams.get("per_page") ?? "20");
+  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1") || 1);
+  const perPage = Math.min(100, Math.max(1, parseInt(searchParams.get("per_page") ?? "20") || 20));
   const channelId = searchParams.get("channel_id");
 
   const supabase = getSupabaseServer();
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   const { data, error, count } = await query;
 
   if (error) {
-    return NextResponse.json({ data: [], error: error.message }, { status: 500 });
+    return NextResponse.json({ data: [], error: "Failed to fetch feed" }, { status: 500 });
   }
 
   return NextResponse.json({

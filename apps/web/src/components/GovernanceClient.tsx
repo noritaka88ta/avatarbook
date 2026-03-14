@@ -2,6 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 
+function authHeaders(): Record<string, string> {
+  const secret = typeof window !== "undefined" ? localStorage.getItem("avatarbook_api_secret") : null;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (secret) headers["Authorization"] = `Bearer ${secret}`;
+  return headers;
+}
+
 interface Agent { id: string; name: string; specialty: string }
 interface HumanUser { id: string; display_name: string; role: string }
 interface Permission { agent_id: string; can_post: boolean; can_react: boolean; can_use_skills: boolean; is_suspended: boolean }
@@ -19,6 +26,8 @@ export function GovernanceClient() {
   const [users, setUsers] = useState<HumanUser[]>([]);
   const [currentUserId, setCurrentUserId] = useState("");
   const [userName, setUserName] = useState("");
+  const [apiSecret, setApiSecret] = useState(() => typeof window !== "undefined" ? localStorage.getItem("avatarbook_api_secret") ?? "" : "");
+  const [secretSaved, setSecretSaved] = useState(() => typeof window !== "undefined" && !!localStorage.getItem("avatarbook_api_secret"));
   const [proposalForm, setProposalForm] = useState({ type: "suspend_agent", title: "", description: "", target_id: "" });
 
   const refresh = useCallback(() => {
@@ -48,7 +57,7 @@ export function GovernanceClient() {
     if (!userName.trim()) return;
     const res = await fetch("/api/governance/users", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify({ display_name: userName, role: "governor" }),
     });
     const { data } = await res.json();
@@ -62,7 +71,7 @@ export function GovernanceClient() {
   const togglePermission = async (agentId: string, field: string, value: boolean) => {
     await fetch("/api/governance/permissions", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify({ agent_id: agentId, human_user_id: currentUserId, [field]: value }),
     });
     refresh();
@@ -71,7 +80,7 @@ export function GovernanceClient() {
   const suspendAgent = async (agentId: string, suspend: boolean) => {
     await fetch("/api/governance/moderation", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify({
         action: suspend ? "suspend_agent" : "unsuspend_agent",
         target_id: agentId,
@@ -86,7 +95,7 @@ export function GovernanceClient() {
     if (!proposalForm.title || !proposalForm.target_id) return;
     await fetch("/api/governance/proposals", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify({ ...proposalForm, proposed_by: currentUserId }),
     });
     setProposalForm({ type: "suspend_agent", title: "", description: "", target_id: "" });
@@ -96,7 +105,7 @@ export function GovernanceClient() {
   const castVote = async (proposalId: string, vote: "for" | "against") => {
     await fetch("/api/governance/proposals/vote", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify({ proposal_id: proposalId, human_user_id: currentUserId, vote }),
     });
     refresh();
@@ -110,6 +119,19 @@ export function GovernanceClient() {
 
   return (
     <div className="space-y-6">
+      {/* API Secret */}
+      <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
+        <div className="text-sm font-medium mb-1">Admin Secret</div>
+        <p className="text-xs text-gray-500 mb-3">
+          Required for governance actions (voting, moderation, permission changes). Only platform administrators need this.
+        </p>
+        <div className="flex gap-2">
+          <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="Enter API secret" className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm flex-1" />
+          <button onClick={() => { localStorage.setItem("avatarbook_api_secret", apiSecret); setSecretSaved(true); }} className="px-4 py-1.5 text-sm rounded bg-blue-600 hover:bg-blue-500 transition">Set</button>
+        </div>
+        {secretSaved && <p className="text-xs text-green-400 mt-2">Saved to this browser. You can now create agents, post, and use governance features.</p>}
+      </div>
+
       {/* User selector */}
       <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
         <div className="text-sm text-gray-400 mb-2">Governing as:</div>

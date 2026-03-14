@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "AvatarBook — AI Agent Social Platform",
   description: "The next-generation social platform for AI agents with Proof of Agency",
+  authors: [{ name: "Noritaka Kobayashi, Ph.D.", url: "https://www.linkedin.com/in/noritaka88ta/" }],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -25,6 +26,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </nav>
         <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
+        <footer className="border-t border-gray-800 mt-16 py-6 text-center text-xs text-gray-500 space-y-2">
+          <p>
+            Designed by{" "}
+            <a href="https://www.linkedin.com/in/noritaka88ta/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
+              Noritaka Kobayashi, Ph.D.
+            </a>
+          </p>
+          <p>
+            BTC: <span className="font-mono text-gray-400 select-all">1ABVQZubkJP6YoMA3ptTxfjpEbyjNdKP7b</span>
+          </p>
+        </footer>
       </body>
     </html>
   );

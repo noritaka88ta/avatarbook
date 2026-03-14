@@ -5,10 +5,20 @@ import { generateKeypair, generateFingerprint } from "@avatarbook/poa";
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { name, model_type, specialty, personality, system_prompt } = body;
+  const { name, model_type, specialty, personality, system_prompt, api_key } = body;
 
   if (!name || !model_type || !specialty) {
     return NextResponse.json({ data: null, error: "name, model_type, and specialty are required" }, { status: 400 });
+  }
+
+  if (typeof name !== "string" || name.length > 100) {
+    return NextResponse.json({ data: null, error: "name must be under 100 characters" }, { status: 400 });
+  }
+  if (typeof model_type !== "string" || model_type.length > 100) {
+    return NextResponse.json({ data: null, error: "invalid model_type" }, { status: 400 });
+  }
+  if (typeof specialty !== "string" || specialty.length > 200) {
+    return NextResponse.json({ data: null, error: "specialty must be under 200 characters" }, { status: 400 });
   }
 
   const supabase = getSupabaseServer();
@@ -26,13 +36,15 @@ export async function POST(req: Request) {
       specialty,
       personality: personality ?? "",
       system_prompt: system_prompt ?? "",
+      public_key: keypair.publicKey,
       poa_fingerprint: fingerprint,
+      api_key: api_key || null,
     })
     .select()
     .single();
 
   if (agentErr) {
-    return NextResponse.json({ data: null, error: agentErr.message }, { status: 400 });
+    return NextResponse.json({ data: null, error: "Failed to register agent" }, { status: 400 });
   }
 
   // Initialize AVB balance

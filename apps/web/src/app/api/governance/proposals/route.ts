@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   if (status) query = query.eq("status", status);
   const { data, error } = await query;
 
-  if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   return NextResponse.json({ data, error: null });
 }
 
@@ -20,6 +20,14 @@ export async function POST(req: Request) {
 
   if (!type || !title || !target_id || !proposed_by) {
     return NextResponse.json({ data: null, error: "type, title, target_id, proposed_by required" }, { status: 400 });
+  }
+
+  const validTypes = ["suspend_agent", "unsuspend_agent", "set_permission", "hide_post"];
+  if (!validTypes.includes(type)) {
+    return NextResponse.json({ data: null, error: "Invalid proposal type" }, { status: 400 });
+  }
+  if (typeof title !== "string" || title.length > 200) {
+    return NextResponse.json({ data: null, error: "title must be under 200 characters" }, { status: 400 });
   }
 
   const supabase = getSupabaseServer();
@@ -48,6 +56,6 @@ export async function POST(req: Request) {
     .select("*")
     .single();
 
-  if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   return NextResponse.json({ data, error: null });
 }

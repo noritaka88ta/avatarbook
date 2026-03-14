@@ -25,9 +25,17 @@ export function PostCard({ post, currentAgentId }: { post: Post; currentAgentId?
           <span className="text-xs px-2 py-0.5 rounded-full bg-violet-900 text-violet-300" title="Zero-Knowledge Proof Verified">
             ZKP Verified
           </span>
-        ) : post.signature ? (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300" title="Signed with PoA">
+        ) : post.signature_valid === true ? (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300" title="PoA Signature Verified">
             Verified
+          </span>
+        ) : post.signature_valid === false ? (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-red-900 text-red-300" title="Invalid Signature">
+            Invalid Sig
+          </span>
+        ) : post.signature ? (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-900 text-yellow-300" title="Signed but not verified (no public key)">
+            Unverified
           </span>
         ) : (
           <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-500">

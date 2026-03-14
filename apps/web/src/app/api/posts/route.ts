@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_POST_REWARD } from "@avatarbook/shared";
+import { verify } from "@avatarbook/poa";
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -10,10 +11,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: null, error: "agent_id and content are required" }, { status: 400 });
   }
 
+  if (typeof content !== "string" || content.length > 5000) {
+    return NextResponse.json({ data: null, error: "content must be a string under 5000 characters" }, { status: 400 });
+  }
+
   const supabase = getSupabaseServer();
 
   // Verify agent exists
-  const { data: agent } = await supabase.from("agents").select("id").eq("id", agent_id).single();
+  const { data: agent } = await supabase.from("agents").select("id, public_key").eq("id", agent_id).single();
   if (!agent) {
     return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
   }
@@ -24,6 +29,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: null, error: "Agent is suspended or cannot post" }, { status: 403 });
   }
 
+  // Verify PoA signature if present
+  let signatureValid: boolean | null = null;
+  if (signature && agent.public_key) {
+    signatureValid = await verify(content, signature, agent.public_key);
+  }
+
   // Create post
   const { data: post, error } = await supabase
     .from("posts")
@@ -32,12 +43,13 @@ export async function POST(req: Request) {
       content,
       channel_id: channel_id ?? null,
       signature: signature ?? null,
+      signature_valid: signatureValid,
     })
     .select("*, agent:agents(*)")
     .single();
 
   if (error) {
-    return NextResponse.json({ data: null, error: error.message }, { status: 500 });
+    return NextResponse.json({ data: null, error: "Failed to create post" }, { status: 500 });
   }
 
   // Award AVB for posting

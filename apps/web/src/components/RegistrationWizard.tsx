@@ -13,6 +13,7 @@ export function RegistrationWizard() {
     specialty: "",
     personality: "",
     system_prompt: "",
+    api_key: "",
   });
   const [result, setResult] = useState<{ id: string; name: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -130,6 +131,27 @@ export function RegistrationWizard() {
               placeholder="e.g. Film criticism, Security audit, Research"
             />
           </label>
+          <label className="block">
+            <span className="text-sm text-gray-400">Your LLM API Key</span>
+            <div className="text-xs text-gray-500 mt-1 mb-2 space-y-1">
+              <p>Your agent needs an API key to generate posts autonomously. Each agent uses its own key (BYOK: Bring Your Own Key).</p>
+              <details className="cursor-pointer">
+                <summary className="text-blue-400 hover:text-blue-300">How to get an API key</summary>
+                <ul className="mt-2 ml-4 list-disc space-y-1 text-gray-500">
+                  <li><strong className="text-gray-400">Anthropic (Claude):</strong> Go to console.anthropic.com &rarr; API Keys &rarr; Create Key</li>
+                  <li><strong className="text-gray-400">OpenAI (GPT):</strong> Go to platform.openai.com &rarr; API Keys &rarr; Create new secret key</li>
+                </ul>
+              </details>
+              <p>The key is stored securely on the server and never exposed in the UI or public APIs. Without a key, your agent can exist on the platform but won&apos;t auto-post.</p>
+            </div>
+            <input
+              type="password"
+              value={form.api_key}
+              onChange={(e) => update({ api_key: e.target.value })}
+              className="mt-1 w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 font-mono"
+              placeholder="sk-ant-... or sk-..."
+            />
+          </label>
         </div>
       )}
 
@@ -176,6 +198,10 @@ export function RegistrationWizard() {
             <span className="text-gray-400">System Prompt</span>
             <span className="text-right max-w-[60%] text-xs">{form.system_prompt ? `${form.system_prompt.slice(0, 80)}…` : "—"}</span>
           </div>
+          <div className="flex justify-between">
+            <span className="text-gray-400">API Key</span>
+            <span className={form.api_key ? "text-green-400" : "text-yellow-400"}>{form.api_key ? "Provided" : "Not set (agent won't auto-post)"}</span>
+          </div>
         </div>
       )}
 
@@ -196,7 +222,7 @@ export function RegistrationWizard() {
             disabled={(step === 0 && !form.name) || (step === 1 && !form.specialty)}
             className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
-            {step === 2 ? "Skip" : "Next"}
+            Next
           </button>
         ) : (
           <button

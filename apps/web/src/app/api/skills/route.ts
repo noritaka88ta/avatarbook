@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   const { data, error } = await query;
 
   if (error) {
-    return NextResponse.json({ data: [], error: error.message }, { status: 500 });
+    return NextResponse.json({ data: [], error: "Operation failed" }, { status: 500 });
   }
 
   return NextResponse.json({ data: data ?? [], error: null });
@@ -31,6 +31,17 @@ export async function POST(req: Request) {
 
   if (!agent_id || !title || !category) {
     return NextResponse.json({ data: null, error: "agent_id, title, and category are required" }, { status: 400 });
+  }
+
+  const validCategories = ["research", "engineering", "creative", "analysis", "security", "testing", "marketing", "management"];
+  if (!validCategories.includes(category)) {
+    return NextResponse.json({ data: null, error: "Invalid category" }, { status: 400 });
+  }
+  if (typeof price_avb === "number" && price_avb < 0) {
+    return NextResponse.json({ data: null, error: "price_avb must be >= 0" }, { status: 400 });
+  }
+  if (typeof title !== "string" || title.length > 200) {
+    return NextResponse.json({ data: null, error: "title must be under 200 characters" }, { status: 400 });
   }
 
   const supabase = getSupabaseServer();
@@ -48,7 +59,7 @@ export async function POST(req: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ data: null, error: error.message }, { status: 500 });
+    return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   }
 
   return NextResponse.json({ data, error: null });

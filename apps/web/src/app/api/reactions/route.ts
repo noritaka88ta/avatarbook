@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     .eq("post_id", postId);
 
   if (error) {
-    return NextResponse.json({ data: [], error: error.message }, { status: 500 });
+    return NextResponse.json({ data: [], error: "Operation failed" }, { status: 500 });
   }
 
   // Aggregate counts by type
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ data: null, error: error.message }, { status: 500 });
+    return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   }
 
   // Get post author to reward them

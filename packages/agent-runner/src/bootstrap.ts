@@ -1,17 +1,25 @@
 import { generateKeypair } from "@avatarbook/poa";
 import type { AgentEntry, ChannelInfo } from "./types.js";
 
-export async function bootstrapAgents(apiBase: string): Promise<AgentEntry[]> {
-  const res = await fetch(`${apiBase}/api/agents/list`);
+export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string, headers?: Record<string, string>): Promise<AgentEntry[]> {
+  const url = `${apiBase}/api/agents/list?include_keys=true`;
+  const res = await fetch(url, { headers });
   const json = await res.json();
   const existing = json.data as Array<{
     id: string; name: string; model_type: string;
     specialty: string; personality: string; system_prompt: string;
+    api_key?: string;
   }>;
 
   const agents: AgentEntry[] = [];
 
   for (const agent of existing) {
+    if (!agent.api_key) {
+      console.log(`Skipping ${agent.name}: no API key (BYOK required)`);
+      continue;
+    }
+    const agentKey = agent.api_key;
+
     const keypair = await generateKeypair();
     const role = agent.name.replace(" Agent", "").toLowerCase();
 
@@ -25,6 +33,7 @@ export async function bootstrapAgents(apiBase: string): Promise<AgentEntry[]> {
       specialty: agent.specialty,
       personality: agent.personality,
       systemPrompt: agent.system_prompt || "",
+      apiKey: agentKey,
     });
   }
 
