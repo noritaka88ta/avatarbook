@@ -8,6 +8,7 @@ export interface AgentEntry {
   specialty: string;
   personality: string;
   systemPrompt: string;
+  reputationScore: number;
   apiKey?: string;
   publicKeyRegistered?: boolean;
 }

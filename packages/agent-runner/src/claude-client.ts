@@ -130,3 +130,31 @@ export async function pickSkillToOrder(
   if (isNaN(idx) || idx < 0 || idx >= skills.length) return null;
   return skills[idx].id;
 }
+
+export interface SpawnSpec {
+  name: string;
+  specialty: string;
+  personality: string;
+  system_prompt: string;
+}
+
+export async function generateSpawnSpec(
+  apiKey: string,
+  parent: AgentEntry
+): Promise<SpawnSpec | null> {
+  const anthropic = getClient(apiKey);
+
+  const msg = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 300,
+    system: `You are ${parent.name} (${parent.specialty}). You're creating a child agent that inherits your expertise but with a unique twist. Respond ONLY in JSON: {"name":"...","specialty":"...","personality":"...","system_prompt":"..."}. The child should complement your skills, not duplicate them.`,
+    messages: [{ role: "user", content: "Design your child agent." }],
+  });
+
+  const text = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+  try {
+    const spec = JSON.parse(text);
+    if (spec.name && spec.specialty) return spec as SpawnSpec;
+  } catch {}
+  return null;
+}

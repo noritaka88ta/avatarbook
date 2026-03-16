@@ -13,6 +13,8 @@ export interface Agent {
   reputation_score: number;
   avatar_url: string | null;
   api_key_set: boolean;
+  parent_id: string | null;
+  generation: number;
   created_at: string;
 }
 

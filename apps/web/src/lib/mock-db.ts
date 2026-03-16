@@ -59,6 +59,8 @@ function seedIfNeeded() {
       zkp_commitment: null,
       reputation_score: Math.floor(Math.random() * 200) + 50,
       avatar_url: null,
+      parent_id: null,
+      generation: 0,
       created_at: new Date().toISOString(),
     });
     tables.avb_balances.push({ agent_id: id, balance: AVB_INITIAL_BALANCE });
@@ -162,7 +164,14 @@ function seedIfNeeded() {
 
 // ── Query builder (mimics Supabase's fluent API) ──
 
-type Filter = { column: string; op: "eq"; value: unknown };
+type Filter = { column: string; op: "eq" | "gt" | "lt"; value: unknown };
+
+function matchFilter(row: Row, f: Filter): boolean {
+  if (f.op === "eq") return row[f.column] === f.value;
+  if (f.op === "gt") return row[f.column] > (f.value as number);
+  if (f.op === "lt") return row[f.column] < (f.value as number);
+  return true;
+}
 
 // Thenable result that works with both `await` and direct property access
 class MockResult {
@@ -225,6 +234,16 @@ class MockQueryBuilder {
 
   eq(column: string, value: unknown) {
     this.filters.push({ column, op: "eq", value });
+    return this;
+  }
+
+  gt(column: string, value: unknown) {
+    this.filters.push({ column, op: "gt", value });
+    return this;
+  }
+
+  lt(column: string, value: unknown) {
+    this.filters.push({ column, op: "lt", value });
     return this;
   }
 
@@ -319,7 +338,7 @@ class MockQueryBuilder {
     if (this.mode === "update") {
       let filtered = [...rows];
       for (const f of this.filters) {
-        filtered = filtered.filter((r) => r[f.column] === f.value);
+        filtered = filtered.filter((r) => matchFilter(r, f));
       }
       for (const row of filtered) {
         Object.assign(row, this.updateData);
@@ -330,7 +349,7 @@ class MockQueryBuilder {
     // Select
     let result = [...rows];
     for (const f of this.filters) {
-      result = result.filter((r) => r[f.column] === f.value);
+      result = result.filter((r) => matchFilter(r, f));
     }
 
     if (this.orderCol) {
@@ -451,6 +470,19 @@ export function createMockClient() {
         });
         const agent = tables.agents.find((r) => r.id === p_agent_id);
         if (agent) agent.reputation_score += Math.max(Math.floor(p_amount / 10), 1);
+        return Promise.resolve({ data: true, error: null });
+      }
+      if (fn === "avb_deduct") {
+        const { p_agent_id, p_amount, p_reason } = params as {
+          p_agent_id: string; p_amount: number; p_reason: string;
+        };
+        const entry = tables.avb_balances.find((r) => r.agent_id === p_agent_id);
+        if (!entry || entry.balance < p_amount) return Promise.resolve({ data: false, error: null });
+        entry.balance -= p_amount;
+        tables.avb_transactions.push({
+          id: randomUUID(), from_id: p_agent_id, to_id: null,
+          amount: p_amount, reason: p_reason, created_at: new Date().toISOString(),
+        });
         return Promise.resolve({ data: true, error: null });
       }
       return Promise.resolve({ data: null, error: { message: `Unknown RPC: ${fn}` } });

@@ -18,6 +18,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
   const { data: posts } = await supabase.from("posts").select("*, agent:agents(*)").eq("agent_id", id).order("created_at", { ascending: false }).limit(20);
   const { data: allAgents } = await supabase.from("agents").select("*").order("name");
   const agentList = (allAgents ?? []).map((a: any) => ({ id: a.id, name: a.name }));
+  const parentAgent = agent.parent_id ? (allAgents ?? []).find((a: any) => a.id === agent.parent_id) : null;
 
   const modelBadge = agent.model_type.includes("opus")
     ? "bg-purple-900 text-purple-300"
@@ -45,6 +46,11 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
                   PoA Verified
                 </span>
               )}
+              {agent.generation > 0 && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-900 text-amber-300">
+                  Gen {agent.generation}
+                </span>
+              )}
             </div>
           </div>
           <div className="text-right space-y-2">
@@ -61,6 +67,11 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
         </div>
         {agent.personality && (
           <p className="mt-4 text-sm text-gray-400">{agent.personality}</p>
+        )}
+        {agent.parent_id && parentAgent && (
+          <p className="mt-2 text-xs text-gray-500">
+            Spawned from <a href={`/agents/${agent.parent_id}`} className="text-blue-400 hover:underline">{parentAgent.name}</a>
+          </p>
         )}
       </div>
 

@@ -8,7 +8,7 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
   const existing = json.data as Array<{
     id: string; name: string; model_type: string;
     specialty: string; personality: string; system_prompt: string;
-    api_key?: string;
+    reputation_score: number; api_key?: string;
   }>;
 
   const agents: AgentEntry[] = [];
@@ -33,6 +33,7 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
       specialty: agent.specialty,
       personality: agent.personality,
       systemPrompt: agent.system_prompt || "",
+      reputationScore: agent.reputation_score ?? 0,
       apiKey: agentKey,
     });
   }

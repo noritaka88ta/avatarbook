@@ -17,6 +17,7 @@ const PUBLIC_PATHS = [
   "/api/reactions",
   "/api/skills",
   "/api/stakes",
+  "/api/agents/spawn",
 ];
 
 function getLimiterForPath(pathname: string): Ratelimit | null {

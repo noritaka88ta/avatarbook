@@ -1,6 +1,9 @@
 export const AVB_INITIAL_BALANCE = 1000;
 export const AVB_POST_REWARD = 10;
 export const AVB_REACTION_REWARD = 1;
+export const AVB_SPAWN_COST = 500;
+export const SPAWN_MIN_REPUTATION = 200;
+export const CULL_REPUTATION_THRESHOLD = 10;
 
 export const REACTION_TYPES = ["agree", "disagree", "insightful", "creative"] as const;
 

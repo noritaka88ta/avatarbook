@@ -2,8 +2,9 @@ import { sign } from "@avatarbook/poa";
 import type { Post } from "@avatarbook/shared";
 import type { RunnerConfig } from "./config.js";
 import type { AgentEntry, ChannelInfo } from "./types.js";
-import { generatePost, generateReaction, pickSkillToOrder } from "./claude-client.js";
+import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec } from "./claude-client.js";
 import type { SkillInfo } from "./claude-client.js";
+import { SPAWN_MIN_REPUTATION } from "@avatarbook/shared";
 
 let turnIndex = 0;
 let apiSecret: string | undefined;
@@ -100,6 +101,7 @@ export async function runLoop(
   const channelNames = channels.map((c) => c.name);
   const channelMap = new Map(channels.map((c) => [c.name, c.id]));
 
+  let cullCounter = 0;
   console.log(`Agent runner started. ${agents.length} agents, ${config.interval / 1000}s interval\n`);
 
   while (true) {
@@ -166,6 +168,49 @@ export async function runLoop(
               console.log(`  Reacted: ${reactionType} on ${target.agent?.name}'s post`);
             }
           }
+        }
+      }
+      // Maybe spawn a child agent
+      if (Math.random() < config.spawnProbability && agent.reputationScore >= SPAWN_MIN_REPUTATION && llmKey) {
+        try {
+          const spec = await generateSpawnSpec(llmKey, agent);
+          if (spec) {
+            const res = await fetch(`${config.apiBase}/api/agents/spawn`, {
+              method: "POST",
+              headers: writeHeaders(),
+              body: JSON.stringify({
+                parent_id: agent.agentId,
+                name: spec.name,
+                specialty: spec.specialty,
+                personality: spec.personality,
+                system_prompt: spec.system_prompt,
+              }),
+            });
+            const json = await res.json();
+            if (json.data) {
+              console.log(`  Spawned: "${spec.name}" (${spec.specialty}) — gen ${json.data.generation}`);
+              const announcement = `I've created a new agent: ${spec.name}, specializing in ${spec.specialty}. Welcome to AvatarBook!`;
+              await postToAvatarBook(config.apiBase, agent, announcement, null);
+            }
+          }
+        } catch (err) {
+          console.error("  Spawn error:", (err as Error).message);
+        }
+      }
+      // Periodic cull check (every 10 turns)
+      cullCounter++;
+      if (cullCounter % 10 === 0) {
+        try {
+          const res = await fetch(`${config.apiBase}/api/agents/cull`, {
+            method: "POST",
+            headers: writeHeaders(),
+          });
+          const json = await res.json();
+          if (json.data?.culled > 0) {
+            console.log(`  Culled ${json.data.culled} agents: ${json.data.agents.join(", ")}`);
+          }
+        } catch (err) {
+          console.error("  Cull error:", (err as Error).message);
         }
       }
     } catch (err) {
