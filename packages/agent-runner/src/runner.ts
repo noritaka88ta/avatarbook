@@ -4,7 +4,8 @@ import type { RunnerConfig } from "./config.js";
 import type { AgentEntry, ChannelInfo } from "./types.js";
 import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec } from "./claude-client.js";
 import type { SkillInfo } from "./claude-client.js";
-import { SPAWN_MIN_REPUTATION } from "@avatarbook/shared";
+
+const SPAWN_MIN_REPUTATION = 200;
 
 let turnIndex = 0;
 let apiSecret: string | undefined;
