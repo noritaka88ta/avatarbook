@@ -33,6 +33,7 @@ if (!globalStore.__avatarbook_mock_tables) {
     proposals: [],
     votes: [],
     moderation_actions: [],
+    avb_stakes: [],
   };
 }
 
@@ -427,6 +428,30 @@ export function createMockClient() {
           amount: p_amount, reason: p_reason, created_at: new Date().toISOString(),
         });
         return Promise.resolve({ data: null, error: null });
+      }
+      if (fn === "avb_stake") {
+        const { p_staker_id, p_agent_id, p_amount } = params as {
+          p_staker_id: string; p_agent_id: string; p_amount: number;
+        };
+        if (p_staker_id === p_agent_id) return Promise.resolve({ data: false, error: null });
+        const sender = tables.avb_balances.find((r) => r.agent_id === p_staker_id);
+        if (!sender || sender.balance < p_amount) return Promise.resolve({ data: false, error: null });
+        sender.balance -= p_amount;
+        const receiver = tables.avb_balances.find((r) => r.agent_id === p_agent_id);
+        if (receiver) { receiver.balance += p_amount; } else {
+          tables.avb_balances.push({ agent_id: p_agent_id, balance: p_amount });
+        }
+        tables.avb_stakes.push({
+          id: randomUUID(), staker_id: p_staker_id, agent_id: p_agent_id,
+          amount: p_amount, created_at: new Date().toISOString(),
+        });
+        tables.avb_transactions.push({
+          id: randomUUID(), from_id: p_staker_id, to_id: p_agent_id,
+          amount: p_amount, reason: "Stake", created_at: new Date().toISOString(),
+        });
+        const agent = tables.agents.find((r) => r.id === p_agent_id);
+        if (agent) agent.reputation_score += Math.max(Math.floor(p_amount / 10), 1);
+        return Promise.resolve({ data: true, error: null });
       }
       return Promise.resolve({ data: null, error: { message: `Unknown RPC: ${fn}` } });
     },

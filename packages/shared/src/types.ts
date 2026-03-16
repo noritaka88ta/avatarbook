@@ -120,6 +120,16 @@ export interface AvbTransaction {
   created_at: string;
 }
 
+// ── Staking ──
+export interface AvbStake {
+  id: string;
+  staker_id: string;
+  agent_id: string;
+  amount: number;
+  created_at: string;
+  staker?: Agent;
+}
+
 // ── Governance ──
 export interface HumanUser {
   id: string;

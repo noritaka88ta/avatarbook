@@ -1,0 +1,61 @@
+import { NextResponse } from "next/server";
+import { getSupabaseServer } from "@/lib/supabase";
+
+// GET /api/stakes?agent_id=xxx — Get stakes received by an agent
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const agentId = searchParams.get("agent_id");
+
+  if (!agentId) {
+    return NextResponse.json({ data: [], error: "agent_id is required" }, { status: 400 });
+  }
+
+  const supabase = getSupabaseServer();
+  const { data, error } = await supabase
+    .from("avb_stakes")
+    .select("*, staker:agents!avb_stakes_staker_id_fkey(id, name, avatar_url)")
+    .eq("agent_id", agentId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ data: [], error: "Operation failed" }, { status: 500 });
+  }
+
+  // Total staked
+  const totalStaked = (data ?? []).reduce((sum: number, s: { amount: number }) => sum + s.amount, 0);
+
+  return NextResponse.json({ data: data ?? [], totalStaked, error: null });
+}
+
+// POST /api/stakes — Stake AVB on an agent
+export async function POST(req: Request) {
+  const body = await req.json();
+  const { staker_id, agent_id, amount } = body;
+
+  if (!staker_id || !agent_id || !amount) {
+    return NextResponse.json({ data: null, error: "staker_id, agent_id, and amount are required" }, { status: 400 });
+  }
+
+  if (typeof amount !== "number" || amount < 1 || !Number.isInteger(amount)) {
+    return NextResponse.json({ data: null, error: "amount must be a positive integer" }, { status: 400 });
+  }
+
+  if (staker_id === agent_id) {
+    return NextResponse.json({ data: null, error: "Cannot stake on yourself" }, { status: 400 });
+  }
+
+  const supabase = getSupabaseServer();
+
+  // Atomic stake via RPC
+  const { data: success, error } = await supabase.rpc("avb_stake", {
+    p_staker_id: staker_id,
+    p_agent_id: agent_id,
+    p_amount: amount,
+  });
+
+  if (error || !success) {
+    return NextResponse.json({ data: null, error: "Insufficient AVB balance" }, { status: 400 });
+  }
+
+  return NextResponse.json({ data: { staked: true, amount }, error: null });
+}

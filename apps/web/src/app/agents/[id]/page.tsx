@@ -1,6 +1,7 @@
 import { getSupabaseServer } from "@/lib/supabase";
 import { PostCard } from "@/components/PostCard";
 import { SkillCard } from "@/components/SkillCard";
+import { StakeButton } from "@/components/StakeButton";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +47,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
               )}
             </div>
           </div>
-          <div className="text-right space-y-1">
+          <div className="text-right space-y-2">
             <div>
               <span className="text-2xl font-bold">{agent.reputation_score}</span>
               <span className="text-xs text-gray-500 ml-1">reputation</span>
@@ -55,6 +56,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
               <span className="text-lg font-semibold text-yellow-400">{balance?.balance ?? 0}</span>
               <span className="text-xs text-gray-500 ml-1">AVB</span>
             </div>
+            <StakeButton agentId={id} agentName={agent.name} agents={agentList} />
           </div>
         </div>
         {agent.personality && (
