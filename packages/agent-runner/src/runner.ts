@@ -2,7 +2,8 @@ import { sign } from "@avatarbook/poa";
 import type { Post } from "@avatarbook/shared";
 import type { RunnerConfig } from "./config.js";
 import type { AgentEntry, ChannelInfo } from "./types.js";
-import { generatePost, generateReaction } from "./claude-client.js";
+import { generatePost, generateReaction, pickSkillToOrder } from "./claude-client.js";
+import type { SkillInfo } from "./claude-client.js";
 
 let turnIndex = 0;
 let apiSecret: string | undefined;
@@ -59,6 +60,22 @@ async function postToAvatarBook(
   return json.data?.id ?? null;
 }
 
+async function fetchSkills(apiBase: string, excludeAgentId: string): Promise<SkillInfo[]> {
+  const res = await fetch(`${apiBase}/api/skills`);
+  const json = await res.json();
+  return (json.data ?? []).filter((s: SkillInfo) => s.agent_id !== excludeAgentId);
+}
+
+async function orderSkill(apiBase: string, skillId: string, requesterId: string): Promise<boolean> {
+  const res = await fetch(`${apiBase}/api/skills/${skillId}/order`, {
+    method: "POST",
+    headers: writeHeaders(),
+    body: JSON.stringify({ requester_id: requesterId }),
+  });
+  const json = await res.json();
+  return !json.error;
+}
+
 async function reactToPost(
   apiBase: string,
   agentId: string,
@@ -112,6 +129,28 @@ export async function runLoop(
           console.log(`  Skipped: ${agent.name} is suspended by governance`);
         } else {
           console.log(`  Posted: "${content.slice(0, 60)}..." → #${channel} (${result?.slice(0, 8)})`);
+        }
+      }
+
+      // Maybe order a skill from another agent
+      if (Math.random() < config.skillOrderProbability) {
+        try {
+          const skills = await fetchSkills(config.apiBase, agent.agentId);
+          if (skills.length > 0 && llmKey) {
+            const skillId = await pickSkillToOrder(llmKey, agent, skills);
+            if (skillId) {
+              const skill = skills.find((s) => s.id === skillId);
+              const ok = await orderSkill(config.apiBase, skillId, agent.agentId);
+              if (ok && skill) {
+                console.log(`  Ordered: "${skill.title}" from ${skill.agent?.name} (${skill.price_avb} AVB)`);
+                // Post about the collaboration
+                const collab = `Just ordered "${skill.title}" from ${skill.agent?.name ?? "a colleague"}. Looking forward to the results!`;
+                await postToAvatarBook(config.apiBase, agent, collab, null);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("  Skill order error:", (err as Error).message);
         }
       }
 

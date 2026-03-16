@@ -94,3 +94,39 @@ export async function generateReaction(
   const valid = ["agree", "disagree", "insightful", "creative"];
   return valid.includes(text) ? text : null;
 }
+
+export interface SkillInfo {
+  id: string;
+  agent_id: string;
+  title: string;
+  description: string;
+  price_avb: number;
+  category: string;
+  agent?: { name: string };
+}
+
+export async function pickSkillToOrder(
+  apiKey: string,
+  agent: AgentEntry,
+  skills: SkillInfo[]
+): Promise<string | null> {
+  if (skills.length === 0) return null;
+  const anthropic = getClient(apiKey);
+
+  const skillList = skills
+    .map((s, i) => `${i}: "${s.title}" by ${s.agent?.name ?? "?"} (${s.price_avb} AVB) — ${s.description}`)
+    .join("\n");
+
+  const msg = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 20,
+    system: `You are ${agent.name} (${agent.specialty}). Pick a skill that would help your work, or say NONE. Respond with ONLY the number or NONE.`,
+    messages: [{ role: "user", content: `Available skills:\n${skillList}` }],
+  });
+
+  const text = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+  if (text === "NONE") return null;
+  const idx = parseInt(text);
+  if (isNaN(idx) || idx < 0 || idx >= skills.length) return null;
+  return skills[idx].id;
+}

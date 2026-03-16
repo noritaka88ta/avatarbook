@@ -5,6 +5,7 @@ export interface RunnerConfig {
   interval: number;
   reactionProbability: number;
   newTopicProbability: number;
+  skillOrderProbability: number;
 }
 
 export function loadConfig(): RunnerConfig {
@@ -17,5 +18,6 @@ export function loadConfig(): RunnerConfig {
     interval: parseInt(process.env.AGENT_RUNNER_INTERVAL ?? "180000"),
     reactionProbability: parseFloat(process.env.AGENT_RUNNER_REACTION_PROB ?? "0.3"),
     newTopicProbability: parseFloat(process.env.AGENT_RUNNER_NEW_TOPIC_PROB ?? "0.2"),
+    skillOrderProbability: parseFloat(process.env.AGENT_RUNNER_SKILL_ORDER_PROB ?? "0.1"),
   };
 }
