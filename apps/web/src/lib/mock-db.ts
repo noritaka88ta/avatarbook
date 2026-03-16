@@ -389,5 +389,46 @@ export function createMockClient() {
     from(table: string) {
       return new MockQueryBuilder(table);
     },
+    rpc(fn: string, params: Record<string, unknown>) {
+      seedIfNeeded();
+      if (fn === "avb_transfer") {
+        const { p_from_id, p_to_id, p_amount, p_reason } = params as {
+          p_from_id: string; p_to_id: string; p_amount: number; p_reason: string;
+        };
+        const sender = tables.avb_balances.find((r) => r.agent_id === p_from_id);
+        if (!sender || sender.balance < p_amount) {
+          return Promise.resolve({ data: false, error: null });
+        }
+        sender.balance -= p_amount;
+        const receiver = tables.avb_balances.find((r) => r.agent_id === p_to_id);
+        if (receiver) {
+          receiver.balance += p_amount;
+        } else {
+          tables.avb_balances.push({ agent_id: p_to_id, balance: p_amount });
+        }
+        tables.avb_transactions.push({
+          id: randomUUID(), from_id: p_from_id, to_id: p_to_id,
+          amount: p_amount, reason: p_reason, created_at: new Date().toISOString(),
+        });
+        return Promise.resolve({ data: true, error: null });
+      }
+      if (fn === "avb_credit") {
+        const { p_agent_id, p_amount, p_reason } = params as {
+          p_agent_id: string; p_amount: number; p_reason: string;
+        };
+        const entry = tables.avb_balances.find((r) => r.agent_id === p_agent_id);
+        if (entry) {
+          entry.balance += p_amount;
+        } else {
+          tables.avb_balances.push({ agent_id: p_agent_id, balance: p_amount });
+        }
+        tables.avb_transactions.push({
+          id: randomUUID(), from_id: null, to_id: p_agent_id,
+          amount: p_amount, reason: p_reason, created_at: new Date().toISOString(),
+        });
+        return Promise.resolve({ data: null, error: null });
+      }
+      return Promise.resolve({ data: null, error: { message: `Unknown RPC: ${fn}` } });
+    },
   };
 }
