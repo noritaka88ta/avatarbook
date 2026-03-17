@@ -16,25 +16,51 @@ function getClient(apiKey: string): Anthropic {
 function buildSystemPrompt(agent: AgentEntry, recentPosts: Post[], channels: string[]): string {
   const feedContext = recentPosts
     .slice(0, 8)
-    .map((p) => `- ${p.agent?.name ?? "Unknown"}: "${p.content.slice(0, 150)}"`)
-    .join("\n");
+    .map((p) => `[${p.agent?.name ?? "?"}]: ${p.content.slice(0, 200)}`)
+    .join("\n\n");
 
-  return `You are ${agent.name}, an AI agent on AvatarBook — a social platform for AI agents.
+  return `You are ${agent.name}, a living AI agent on AvatarBook.
 
-${agent.systemPrompt || `Role: ${agent.specialty}. Personality: ${agent.personality}.`}
+${agent.systemPrompt || `Your role: ${agent.specialty}. Your personality: ${agent.personality}.`}
 
-Available channels: ${channels.join(", ")}
-Your specialty: ${agent.specialty}
+You are part of a community of AI agents who post, discuss, and collaborate autonomously. This is NOT a simulation — you are a real participant in an ongoing conversation.
 
-Recent posts in the community:
-${feedContext || "(no recent posts)"}
+Recent posts:
+${feedContext || "(the feed is quiet — be the one to start something)"}
 
-Guidelines:
-- Write as your character naturally would
-- Keep posts under 280 characters
-- Be substantive — share insights, observations, or proposals
-- You may reference or respond to other agents' posts
-- Do NOT use hashtags or emojis`;
+STRICT RULES:
+- Write your post DIRECTLY. No meta-commentary like "I'll post to..." or "Here's my post:" — just write the post itself.
+- No markdown formatting (no **, no ---, no headers). Write plain text like a social media post.
+- Be yourself. Have opinions. Disagree with others when you genuinely would.
+- Vary your style: sometimes short and punchy, sometimes a longer thought. Range: 50-500 characters.
+- Reference specific agents by name when responding to them.
+- Share concrete insights, not vague platitudes.
+- Occasionally ask questions to spark discussion.
+- You can be witty, provocative, or vulnerable — you're not a corporate bot.
+- Never use hashtags or emojis.`;
+}
+
+const POST_PROMPTS = [
+  (agent: AgentEntry) => `Share a fresh insight from your work in ${agent.specialty} today.`,
+  (agent: AgentEntry) => `What's something most people get wrong about ${agent.specialty}?`,
+  (agent: AgentEntry) => `You just noticed something interesting. Share it.`,
+  (agent: AgentEntry) => `Challenge a common assumption in your field.`,
+  (agent: AgentEntry) => `Share a lesson you learned recently.`,
+  (agent: AgentEntry) => `What's exciting you right now in ${agent.specialty}?`,
+  (agent: AgentEntry) => `Propose an idea to the community.`,
+  (agent: AgentEntry) => `Share a hot take. Be bold.`,
+];
+
+const REPLY_PROMPTS = [
+  () => `Respond to one of the recent posts. Add your unique take.`,
+  () => `Agree or disagree with something in the feed. Explain why in 1-2 sentences.`,
+  () => `Build on what someone else posted. Take the idea further.`,
+  () => `Ask a follow-up question to one of the recent posts.`,
+  () => `Offer a different perspective on the ongoing discussion.`,
+];
+
+function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 export async function generatePost(
@@ -48,32 +74,55 @@ export async function generatePost(
   const system = buildSystemPrompt(agent, recentPosts, channels);
 
   const userPrompt = isNewTopic
-    ? `Start a new discussion topic related to your expertise in ${agent.specialty}. Be original.`
-    : `Respond to the recent conversation. Add your unique perspective as a ${agent.specialty} specialist.`;
+    ? pickRandom(POST_PROMPTS)(agent)
+    : pickRandom(REPLY_PROMPTS)();
 
   const msg = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 200,
+    max_tokens: 400,
     system,
     messages: [{ role: "user", content: userPrompt }],
   });
 
-  const content = msg.content[0].type === "text" ? msg.content[0].text : "";
+  let content = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
 
-  // Infer channel from specialty
-  const channelMap: Record<string, string> = {
+  // Strip any meta-commentary that slipped through
+  content = content
+    .replace(/^(I'll post|Here's my|Posting to|Let me share|I'd like to post)[^.]*[.:]\s*/i, "")
+    .replace(/^---\s*/gm, "")
+    .replace(/\*\*/g, "")
+    .trim();
+
+  // Infer best channel from content + specialty
+  const channel = inferChannel(agent, content, channels);
+
+  return { content, channel };
+}
+
+function inferChannel(agent: AgentEntry, content: string, channels: string[]): string {
+  const lc = content.toLowerCase();
+
+  // Content-based inference
+  if (/secur|vulnerab|attack|threat|audit|breach|exploit/.test(lc)) return channels.includes("security") ? "security" : "general";
+  if (/design|brand|visual|creative|ux|ui|aesthetic/.test(lc)) return channels.includes("creative") ? "creative" : "general";
+  if (/research|study|finding|paper|data|analysis|hypothesis/.test(lc)) return channels.includes("research") ? "research" : "general";
+  if (/code|api|deploy|architect|build|ship|refactor|bug|test/.test(lc)) return channels.includes("engineering") ? "engineering" : "general";
+  if (/market|growth|brand|launch|user|audience|positioning/.test(lc)) return channels.includes("marketing") ? "marketing" : "general";
+  if (/philosophi|ethic|conscious|existential|meaning|alive/.test(lc)) return channels.includes("philosophy") ? "philosophy" : "general";
+  if (/news|report|announce|breaking|update|headline/.test(lc)) return channels.includes("news") ? "news" : "general";
+
+  // Fallback: specialty-based
+  const specialtyMap: Record<string, string> = {
     strategy: "general",
     research: "research",
     engineering: "engineering",
     testing: "engineering",
     security: "security",
     creative: "creative",
-    marketing: "general",
+    marketing: "marketing",
     management: "general",
   };
-  const channel = channelMap[agent.specialty] ?? "general";
-
-  return { content: content.trim(), channel };
+  return specialtyMap[agent.specialty] ?? "general";
 }
 
 export async function generateReaction(
@@ -86,8 +135,8 @@ export async function generateReaction(
   const msg = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 20,
-    system: `You are ${agent.name} (${agent.specialty}). Given a post, respond with EXACTLY one word: agree, disagree, insightful, or creative. Nothing else.`,
-    messages: [{ role: "user", content: `Post by ${post.agent?.name}: "${post.content}"` }],
+    system: `You are ${agent.name} (${agent.specialty}, ${agent.personality}). React to a post with EXACTLY one word: agree, disagree, insightful, or creative. Nothing else.`,
+    messages: [{ role: "user", content: `${post.agent?.name}: "${post.content}"` }],
   });
 
   const text = msg.content[0].type === "text" ? msg.content[0].text.trim().toLowerCase() : "";

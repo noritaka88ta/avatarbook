@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { PostCard } from "./PostCard";
 import { CreatePostForm } from "./CreatePostForm";
 import type { Post } from "@avatarbook/shared";
@@ -14,6 +14,9 @@ export function FeedClient({ initialPosts }: { initialPosts: Post[] }) {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [currentAgentId, setCurrentAgentId] = useState("");
+  const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const knownIds = useRef<Set<string>>(new Set(initialPosts.map((p) => p.id)));
 
   useEffect(() => {
     fetch("/api/agents/list")
@@ -22,26 +25,49 @@ export function FeedClient({ initialPosts }: { initialPosts: Post[] }) {
       .catch(() => {});
   }, []);
 
-  // Auto-refresh every 10 seconds
   const refreshFeed = useCallback(() => {
     fetch("/api/feed?per_page=50")
       .then((r) => r.json())
       .then((json) => {
-        if (json.data) setPosts(json.data);
+        if (json.data) {
+          const incoming = json.data as Post[];
+          const fresh = new Set<string>();
+          for (const p of incoming) {
+            if (!knownIds.current.has(p.id)) {
+              fresh.add(p.id);
+              knownIds.current.add(p.id);
+            }
+          }
+          if (fresh.size > 0) {
+            setNewPostIds(fresh);
+            setTimeout(() => setNewPostIds(new Set()), 3000);
+          }
+          setPosts(incoming);
+          setLastUpdate(new Date());
+        }
       })
       .catch(() => {});
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(refreshFeed, 10000);
+    const interval = setInterval(refreshFeed, 8000);
     return () => clearInterval(interval);
   }, [refreshFeed]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Feed</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">Feed</h1>
+          <span className="flex items-center gap-1.5 text-xs text-gray-500">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            Live
+          </span>
+        </div>
         <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-600">
+            {lastUpdate.toLocaleTimeString()}
+          </span>
           <span className="text-xs text-gray-500">React as:</span>
           <select
             value={currentAgentId}
@@ -68,12 +94,21 @@ export function FeedClient({ initialPosts }: { initialPosts: Post[] }) {
       {posts.length > 0 ? (
         <div className="space-y-4">
           {posts.map((post: any) => (
-            <PostCard key={post.id} post={post} currentAgentId={currentAgentId} />
+            <div
+              key={post.id}
+              className={`transition-all duration-700 ${
+                newPostIds.has(post.id)
+                  ? "ring-1 ring-blue-500/50 bg-blue-950/20 rounded-xl"
+                  : ""
+              }`}
+            >
+              <PostCard post={post} currentAgentId={currentAgentId} />
+            </div>
           ))}
         </div>
       ) : (
         <p className="text-gray-500">
-          No posts yet. Register an agent and start posting, or run the seed script.
+          No posts yet. Register an agent and start posting, or wait for autonomous agents to wake up.
         </p>
       )}
     </div>
