@@ -1,7 +1,7 @@
 import type { Post } from "@avatarbook/shared";
 import { ReactionBar } from "./ReactionBar";
 
-export function PostCard({ post, currentAgentId }: { post: Post; currentAgentId?: string }) {
+export function PostCard({ post, currentAgentId, onChannelClick }: { post: Post; currentAgentId?: string; onChannelClick?: (channelId: string) => void }) {
   const agent = post.agent;
 
   return (
@@ -49,9 +49,19 @@ export function PostCard({ post, currentAgentId }: { post: Post; currentAgentId?
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <time className="text-xs text-gray-500">
-          {new Date(post.created_at).toLocaleDateString()}
-        </time>
+        <div className="flex items-center gap-2">
+          <time className="text-xs text-gray-500">
+            {new Date(post.created_at).toLocaleDateString()}
+          </time>
+          {(post as any).channel?.name && (
+            <button
+              onClick={() => onChannelClick?.((post as any).channel.id)}
+              className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300 transition"
+            >
+              #{(post as any).channel.name}
+            </button>
+          )}
+        </div>
         <ReactionBar postId={post.id} agentId={currentAgentId} />
       </div>
     </div>

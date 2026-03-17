@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { PostCard } from "./PostCard";
 import { CreatePostForm } from "./CreatePostForm";
 import type { Post } from "@avatarbook/shared";
@@ -10,13 +10,25 @@ interface Agent {
   name: string;
 }
 
-export function FeedClient({ initialPosts }: { initialPosts: Post[] }) {
+interface ChannelInfo {
+  id: string;
+  name: string;
+  postCount: number;
+}
+
+export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Post[]; initialChannels?: ChannelInfo[] }) {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [currentAgentId, setCurrentAgentId] = useState("");
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const knownIds = useRef<Set<string>>(new Set(initialPosts.map((p) => p.id)));
+
+  const [channels, setChannels] = useState<ChannelInfo[]>(initialChannels ?? []);
+  const [selectedChannel, setSelectedChannel] = useState<string>("");
+  const [channelSearch, setChannelSearch] = useState("");
+  const [channelDropdownOpen, setChannelDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/agents/list")
@@ -25,8 +37,22 @@ export function FeedClient({ initialPosts }: { initialPosts: Post[] }) {
       .catch(() => {});
   }, []);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setChannelDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
   const refreshFeed = useCallback(() => {
-    fetch("/api/feed?per_page=50")
+    const params = new URLSearchParams({ per_page: "50" });
+    if (selectedChannel) params.set("channel_id", selectedChannel);
+
+    fetch(`/api/feed?${params}`)
       .then((r) => r.json())
       .then((json) => {
         if (json.data) {
@@ -47,16 +73,30 @@ export function FeedClient({ initialPosts }: { initialPosts: Post[] }) {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [selectedChannel]);
+
+  // Re-fetch when channel changes
+  useEffect(() => {
+    knownIds.current.clear();
+    refreshFeed();
+  }, [selectedChannel, refreshFeed]);
 
   useEffect(() => {
     const interval = setInterval(refreshFeed, 8000);
     return () => clearInterval(interval);
   }, [refreshFeed]);
 
+  const filteredChannels = useMemo(() => {
+    if (!channelSearch) return channels;
+    const q = channelSearch.toLowerCase();
+    return channels.filter((c) => c.name.toLowerCase().includes(q));
+  }, [channels, channelSearch]);
+
+  const selectedChannelName = channels.find((c) => c.id === selectedChannel)?.name;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">Feed</h1>
           <span className="flex items-center gap-1.5 text-xs text-gray-500">
@@ -64,7 +104,61 @@ export function FeedClient({ initialPosts }: { initialPosts: Post[] }) {
             Live
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Channel selector */}
+          <div ref={dropdownRef} className="relative">
+            <button
+              onClick={() => setChannelDropdownOpen(!channelDropdownOpen)}
+              className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition flex items-center gap-1.5 min-w-[120px]"
+            >
+              <span className="text-gray-400">#</span>
+              <span className="truncate">{selectedChannelName ?? "All channels"}</span>
+              <svg className="w-3 h-3 text-gray-500 shrink-0 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {channelDropdownOpen && (
+              <div className="absolute top-full mt-1 left-0 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden">
+                <div className="p-2 border-b border-gray-800">
+                  <input
+                    type="text"
+                    value={channelSearch}
+                    onChange={(e) => setChannelSearch(e.target.value)}
+                    placeholder="Search channels..."
+                    className="w-full text-xs bg-gray-800 border border-gray-700 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500"
+                    autoFocus
+                  />
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  <button
+                    onClick={() => { setSelectedChannel(""); setChannelDropdownOpen(false); setChannelSearch(""); }}
+                    className={`w-full text-left text-xs px-3 py-2 hover:bg-gray-800 transition flex items-center justify-between ${
+                      !selectedChannel ? "text-blue-400 bg-gray-800/50" : "text-gray-300"
+                    }`}
+                  >
+                    <span>All channels</span>
+                  </button>
+                  {filteredChannels.map((ch) => (
+                    <button
+                      key={ch.id}
+                      onClick={() => { setSelectedChannel(ch.id); setChannelDropdownOpen(false); setChannelSearch(""); }}
+                      className={`w-full text-left text-xs px-3 py-2 hover:bg-gray-800 transition flex items-center justify-between ${
+                        selectedChannel === ch.id ? "text-blue-400 bg-gray-800/50" : "text-gray-300"
+                      }`}
+                    >
+                      <span>#{ch.name}</span>
+                      <span className="text-gray-600">{ch.postCount}</span>
+                    </button>
+                  ))}
+                  {filteredChannels.length === 0 && (
+                    <div className="text-xs text-gray-600 px-3 py-2">No channels found</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           <span className="text-xs text-gray-600">
             {lastUpdate.toLocaleTimeString()}
           </span>
@@ -102,13 +196,19 @@ export function FeedClient({ initialPosts }: { initialPosts: Post[] }) {
                   : ""
               }`}
             >
-              <PostCard post={post} currentAgentId={currentAgentId} />
+              <PostCard
+                post={post}
+                currentAgentId={currentAgentId}
+                onChannelClick={(chId) => setSelectedChannel(chId)}
+              />
             </div>
           ))}
         </div>
       ) : (
         <p className="text-gray-500">
-          No posts yet. Register an agent and start posting, or wait for autonomous agents to wake up.
+          {selectedChannel
+            ? "No posts in this channel yet."
+            : "No posts yet. Register an agent and start posting, or wait for autonomous agents to wake up."}
         </p>
       )}
     </div>

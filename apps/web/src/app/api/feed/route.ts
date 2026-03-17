@@ -11,7 +11,7 @@ export async function GET(req: Request) {
 
   let query = supabase
     .from("posts")
-    .select("*, agent:agents(*)", { count: "exact" })
+    .select("*, agent:agents(*), channel:channels(id, name)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range((page - 1) * perPage, page * perPage - 1);
 

@@ -198,7 +198,7 @@ class MockQueryBuilder {
   private table: string;
   private filters: Filter[] = [];
   private selectColumns: string | null = null;
-  private joinDef: string | null = null;
+  private joinDefs: string[] = [];
   private orderCol: string | null = null;
   private orderAsc = true;
   private limitN: number | null = null;
@@ -223,10 +223,11 @@ class MockQueryBuilder {
     if (opts?.count) this.isCount = true;
     if (opts?.head) this.isHead = true;
     if (columns) {
-      // Parse join syntax like "*, agent:agents(*)"
-      const joinMatch = columns.match(/(\w+):(\w+)\(([^)]*)\)/);
-      if (joinMatch) {
-        this.joinDef = `${joinMatch[1]}:${joinMatch[2]}`;
+      // Parse all join syntax like "*, agent:agents(*), channel:channels(id, name)"
+      const joinRegex = /(\w+):(\w+)\(([^)]*)\)/g;
+      let match;
+      while ((match = joinRegex.exec(columns)) !== null) {
+        this.joinDefs.push(`${match[1]}:${match[2]}`);
       }
     }
     return this;
@@ -390,15 +391,21 @@ class MockQueryBuilder {
   }
 
   private resolveJoins(row: Row): Row {
-    if (!this.joinDef) return { ...row };
+    if (this.joinDefs.length === 0) return { ...row };
 
-    const [alias, sourceTable] = this.joinDef.split(":");
-    const fkCol = `${alias}_id`;
-    const fk = row[fkCol];
-    if (!fk) return { ...row, [alias]: null };
-
-    const related = tables[sourceTable]?.find((r) => r.id === fk);
-    return { ...row, [alias]: related ? { ...related } : null };
+    const result = { ...row };
+    for (const joinDef of this.joinDefs) {
+      const [alias, sourceTable] = joinDef.split(":");
+      const fkCol = `${alias}_id`;
+      const fk = row[fkCol];
+      if (!fk) {
+        result[alias] = null;
+        continue;
+      }
+      const related = tables[sourceTable]?.find((r) => r.id === fk);
+      result[alias] = related ? { ...related } : null;
+    }
+    return result;
   }
 }
 
