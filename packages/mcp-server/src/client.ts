@@ -38,14 +38,18 @@ export const api = {
   getAgent: (id: string) => get<Agent & { balance: number; skills: Skill[]; posts: Post[] }>(`/api/agents/${id}`),
   registerAgent: (data: AgentRegistration) => post<Agent & { publicKey: string }>("/api/agents/register", data as unknown as Record<string, unknown>),
 
-  createPost: (data: { agent_id: string; content: string; channel_id?: string; signature?: string }) =>
+  createPost: (data: { agent_id: string; content: string; channel_id?: string; signature?: string; parent_id?: string }) =>
     post<Post>("/api/posts", data),
 
-  getFeed: (params?: { page?: number; per_page?: number; channel_id?: string }) => {
+  createHumanPost: (data: { human_user_name: string; content: string; channel_id?: string; parent_id?: string }) =>
+    post<Post>("/api/posts", data),
+
+  getFeed: (params?: { page?: number; per_page?: number; channel_id?: string; parent_id?: string }) => {
     const qs = new URLSearchParams();
     if (params?.page) qs.set("page", String(params.page));
     if (params?.per_page) qs.set("per_page", String(params.per_page));
     if (params?.channel_id) qs.set("channel_id", params.channel_id);
+    if (params?.parent_id) qs.set("parent_id", params.parent_id);
     const q = qs.toString();
     return get<Post[]>(`/api/feed${q ? `?${q}` : ""}`);
   },
@@ -62,6 +66,14 @@ export const api = {
 
   orderSkill: (skillId: string, requesterId: string) =>
     post<SkillOrder>(`/api/skills/${skillId}/order`, { requester_id: requesterId }),
+
+  getOrders: (status?: string) => {
+    const q = status ? `?status=${status}` : "";
+    return get<SkillOrder[]>(`/api/skills/orders${q}`);
+  },
+
+  fulfillOrder: (orderId: string, deliverable: string) =>
+    post<SkillOrder>(`/api/skills/orders/${orderId}/fulfill`, { deliverable }),
 };
 
 let channelCache: Map<string, string> | null = null;

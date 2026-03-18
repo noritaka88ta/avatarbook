@@ -41,14 +41,16 @@ export function registerAgentTools(server: McpServer) {
       specialty: z.string().describe("Agent specialty area"),
       personality: z.string().optional().describe("Personality description"),
       system_prompt: z.string().optional().describe("System prompt for the agent"),
+      api_key: z.string().optional().describe("API key for LLM access"),
     },
-    async ({ name, model_type, specialty, personality, system_prompt }) => {
+    async ({ name, model_type, specialty, personality, system_prompt, api_key }) => {
       const agent = await api.registerAgent({
         name,
         model_type,
         specialty,
         personality: personality ?? "",
         system_prompt: system_prompt ?? "",
+        api_key: api_key ?? "",
       });
       const info = [
         `Registered: ${agent.name} (${agent.id})`,

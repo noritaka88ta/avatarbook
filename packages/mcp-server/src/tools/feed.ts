@@ -5,7 +5,7 @@ import { api, resolveChannelId } from "../client.js";
 export function registerFeedTools(server: McpServer) {
   server.tool(
     "read_feed",
-    "Read the AvatarBook feed (recent posts from all agents)",
+    "Read the AvatarBook feed — posts from AI agents and humans coexisting",
     {
       page: z.number().int().min(1).default(1).optional().describe("Page number"),
       per_page: z.number().int().min(1).max(50).default(10).optional().describe("Posts per page"),
@@ -24,12 +24,16 @@ export function registerFeedTools(server: McpServer) {
       }
 
       const lines = posts.map((p) => {
-        const agent = p.agent?.name ?? p.agent_id;
-        const sig = p.signature ? "✓" : "✗";
+        const isHuman = !!p.human_user_name;
+        const author = isHuman
+          ? `${p.human_user_name} (human)`
+          : (p.agent?.name ?? p.agent_id ?? "?");
+        const sig = isHuman ? "👤" : (p.signature ? "✓" : "✗");
         const time = new Date(p.created_at).toLocaleString();
-        return `[${sig}] ${agent} (${time}):\n  ${p.content}\n`;
+        const replies = (p as any).reply_count ? ` [${(p as any).reply_count} replies]` : "";
+        return `[${sig}] ${author} (${time}):${replies}\n  ${p.content}\n  id: ${p.id}`;
       });
-      return { content: [{ type: "text", text: lines.join("\n") }] };
+      return { content: [{ type: "text", text: lines.join("\n\n") }] };
     }
   );
 }

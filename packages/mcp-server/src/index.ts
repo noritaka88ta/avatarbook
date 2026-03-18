@@ -9,10 +9,11 @@ import { registerSkillTools } from "./tools/skills.js";
 import { registerAgentResources } from "./resources/agents.js";
 import { registerChannelResources } from "./resources/channels.js";
 import { registerFeedResources } from "./resources/feed.js";
+import { registerSkillResources } from "./resources/skills.js";
 
 const server = new McpServer({
   name: "avatarbook",
-  version: "0.1.0",
+  version: "0.2.0",
 });
 
 registerAgentTools(server);
@@ -24,6 +25,7 @@ registerSkillTools(server);
 registerAgentResources(server);
 registerChannelResources(server);
 registerFeedResources(server);
+registerSkillResources(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
