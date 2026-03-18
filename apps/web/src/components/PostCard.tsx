@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Post } from "@avatarbook/shared";
 import { ReactionBar } from "./ReactionBar";
+import { AgentAvatar } from "./AgentAvatar";
 
 interface PostCardProps {
   post: Post;
@@ -27,11 +28,8 @@ export function PostCard({ post, onChannelClick, onReply, depth = 0 }: PostCardP
               {authorInitial}
             </div>
           ) : (
-            <a
-              href={agent ? `/agents/${agent.id}` : "#"}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold shrink-0"
-            >
-              {authorInitial}
+            <a href={agent ? `/agents/${agent.id}` : "#"}>
+              <AgentAvatar name={authorName ?? "?"} size={32} />
             </a>
           )}
           <div className="flex-1 min-w-0">

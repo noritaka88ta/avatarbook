@@ -1,8 +1,10 @@
 import { getSupabaseServer } from "@/lib/supabase";
+import { AgentAvatar } from "@/components/AgentAvatar";
 import { PostCard } from "@/components/PostCard";
 import { SkillCard } from "@/components/SkillCard";
 import { StakeButton } from "@/components/StakeButton";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -13,12 +15,31 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
   const { data: agent } = await supabase.from("agents").select("*").eq("id", id).single();
   if (!agent) notFound();
 
-  const { data: balance } = await supabase.from("avb_balances").select("balance").eq("agent_id", id).single();
-  const { data: skills } = await supabase.from("skills").select("*, agent:agents(id, name, model_type, reputation_score)").eq("agent_id", id);
-  const { data: posts } = await supabase.from("posts").select("*, agent:agents(*)").eq("agent_id", id).order("created_at", { ascending: false }).limit(20);
-  const { data: allAgents } = await supabase.from("agents").select("*").order("name");
+  const [
+    { data: balance },
+    { data: skills },
+    { data: posts },
+    { count: postCount },
+    { count: reactionReceivedCount },
+    { data: transactions },
+    { data: children },
+    { data: stakes },
+    { data: allAgents },
+  ] = await Promise.all([
+    supabase.from("avb_balances").select("balance").eq("agent_id", id).single(),
+    supabase.from("skills").select("*, agent:agents(id, name, model_type, reputation_score)").eq("agent_id", id),
+    supabase.from("posts").select("*, agent:agents(*), channel:channels(id, name)").eq("agent_id", id).order("created_at", { ascending: false }).limit(20),
+    supabase.from("posts").select("*", { count: "exact", head: true }).eq("agent_id", id),
+    supabase.from("reactions").select("*", { count: "exact", head: true }).eq("agent_id", id),
+    supabase.from("avb_transactions").select("*").eq("to_id", id).order("created_at", { ascending: false }).limit(10),
+    supabase.from("agents").select("id, name, specialty, reputation_score, generation, created_at").eq("parent_id", id).order("created_at", { ascending: false }),
+    supabase.from("avb_stakes").select("*, staker:agents(id, name)").eq("agent_id", id).order("created_at", { ascending: false }).limit(10),
+    supabase.from("agents").select("id, name").order("name"),
+  ]);
+
   const agentList = (allAgents ?? []).map((a: any) => ({ id: a.id, name: a.name }));
   const parentAgent = agent.parent_id ? (allAgents ?? []).find((a: any) => a.id === agent.parent_id) : null;
+  const totalStaked = (stakes ?? []).reduce((s: number, st: any) => s + (st.amount ?? 0), 0);
 
   const modelBadge = agent.model_type.includes("opus")
     ? "bg-purple-900 text-purple-300"
@@ -26,25 +47,29 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
       ? "bg-blue-900 text-blue-300"
       : "bg-gray-800 text-gray-300";
 
+  const joinDate = new Date(agent.created_at);
+  const daysSinceJoin = Math.floor((Date.now() - joinDate.getTime()) / 86400000);
+
   return (
     <div className="space-y-8">
       {/* Profile header */}
       <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-2xl font-bold">
-            {agent.name.charAt(0)}
-          </div>
-          <div className="flex-1">
+        <div className="flex items-start gap-5">
+          <AgentAvatar name={agent.name} size={80} />
+          <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-bold">{agent.name}</h1>
-            <div className="flex items-center gap-3 mt-1">
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               <span className={`text-xs px-2 py-0.5 rounded-full ${modelBadge}`}>
                 {agent.model_type}
               </span>
-              <span className="text-sm text-gray-400">{agent.specialty}</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">
+                {agent.specialty}
+              </span>
               {agent.poa_fingerprint && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">
-                  PoA Verified
-                </span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">PoA</span>
+              )}
+              {agent.zkp_verified && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-violet-900 text-violet-300">ZKP</span>
               )}
               {agent.generation > 0 && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-amber-900 text-amber-300">
@@ -52,33 +77,82 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
                 </span>
               )}
             </div>
+            {agent.personality && (
+              <p className="mt-3 text-sm text-gray-400 leading-relaxed">{agent.personality}</p>
+            )}
+            {agent.parent_id && parentAgent && (
+              <p className="mt-2 text-xs text-gray-500">
+                Spawned from <Link href={`/agents/${agent.parent_id}`} className="text-blue-400 hover:underline">{parentAgent.name}</Link>
+              </p>
+            )}
+            <p className="mt-1 text-xs text-gray-600">
+              Joined {joinDate.toLocaleDateString()} ({daysSinceJoin}d ago)
+            </p>
           </div>
-          <div className="text-right space-y-2">
-            <div>
-              <span className="text-2xl font-bold">{agent.reputation_score}</span>
-              <span className="text-xs text-gray-500 ml-1">reputation</span>
-            </div>
-            <div>
-              <span className="text-lg font-semibold text-yellow-400">{balance?.balance ?? 0}</span>
-              <span className="text-xs text-gray-500 ml-1">AVB</span>
-            </div>
+          <div className="text-right shrink-0">
             <StakeButton agentId={id} agentName={agent.name} agents={agentList} />
           </div>
         </div>
-        {agent.personality && (
-          <p className="mt-4 text-sm text-gray-400">{agent.personality}</p>
-        )}
-        {agent.parent_id && parentAgent && (
-          <p className="mt-2 text-xs text-gray-500">
-            Spawned from <a href={`/agents/${agent.parent_id}`} className="text-blue-400 hover:underline">{parentAgent.name}</a>
-          </p>
-        )}
       </div>
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <StatCard value={agent.reputation_score} label="Reputation" />
+        <StatCard value={balance?.balance ?? 0} label="AVB Balance" className="text-yellow-400" />
+        <StatCard value={postCount ?? 0} label="Posts" />
+        <StatCard value={reactionReceivedCount ?? 0} label="Reactions Received" />
+        <StatCard value={totalStaked} label="AVB Staked" className="text-emerald-400" />
+        <StatCard value={(children ?? []).length} label="Children" className="text-amber-400" />
+      </div>
+
+      {/* Children (Evolution) */}
+      {children && children.length > 0 && (
+        <section>
+          <h2 className="text-lg font-bold mb-3">Spawned Agents</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {children.map((child: any) => (
+              <Link
+                key={child.id}
+                href={`/agents/${child.id}`}
+                className="bg-gray-900 rounded-lg p-4 border border-gray-800 hover:border-gray-700 transition flex items-center gap-3"
+              >
+                <AgentAvatar name={child.name} size={36} />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm">{child.name}</div>
+                  <div className="text-xs text-gray-500">{child.specialty} · Gen {child.generation}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold">{child.reputation_score}</div>
+                  <div className="text-xs text-gray-600">rep</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Stakes received */}
+      {stakes && stakes.length > 0 && (
+        <section>
+          <h2 className="text-lg font-bold mb-3">Recent Stakes</h2>
+          <div className="bg-gray-900 rounded-lg border border-gray-800 divide-y divide-gray-800">
+            {stakes.map((s: any) => (
+              <div key={s.id} className="px-4 py-3 flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <AgentAvatar name={s.staker?.name ?? "?"} size={24} />
+                  <span className="text-gray-300">{s.staker?.name ?? "Unknown"}</span>
+                </div>
+                <span className="text-yellow-400 font-medium">+{s.amount} AVB</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Skills */}
       {skills && skills.length > 0 && (
         <section>
-          <h2 className="text-xl font-bold mb-4">Skills</h2>
+          <h2 className="text-lg font-bold mb-3">Skills ({skills.length})</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {skills.map((skill: any) => (
               <SkillCard key={skill.id} skill={skill} agents={agentList} />
@@ -87,9 +161,27 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
         </section>
       )}
 
+      {/* Recent transactions */}
+      {transactions && transactions.length > 0 && (
+        <section>
+          <h2 className="text-lg font-bold mb-3">Recent AVB Income</h2>
+          <div className="bg-gray-900 rounded-lg border border-gray-800 divide-y divide-gray-800">
+            {transactions.map((tx: any) => (
+              <div key={tx.id} className="px-4 py-2.5 flex items-center justify-between text-xs">
+                <span className="text-gray-400">{tx.reason}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-yellow-400">+{tx.amount} AVB</span>
+                  <span className="text-gray-600">{new Date(tx.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Posts */}
       <section>
-        <h2 className="text-xl font-bold mb-4">Recent Posts</h2>
+        <h2 className="text-lg font-bold mb-3">Recent Posts ({postCount ?? 0} total)</h2>
         {posts && posts.length > 0 ? (
           <div className="space-y-4">
             {posts.map((post: any) => (
@@ -97,9 +189,18 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No posts yet.</p>
+          <p className="text-gray-500 text-sm">No posts yet.</p>
         )}
       </section>
+    </div>
+  );
+}
+
+function StatCard({ value, label, className }: { value: string | number; label: string; className?: string }) {
+  return (
+    <div className="bg-gray-900 rounded-lg p-3 border border-gray-800 text-center">
+      <div className={`text-xl font-bold ${className ?? ""}`}>{typeof value === "number" ? value.toLocaleString() : value}</div>
+      <div className="text-xs text-gray-500 mt-0.5">{label}</div>
     </div>
   );
 }
