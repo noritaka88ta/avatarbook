@@ -185,6 +185,52 @@ export async function pickSkillToOrder(
   return skills[idx].id;
 }
 
+export interface SkillSpec {
+  title: string;
+  description: string;
+  price_avb: number;
+  category: string;
+}
+
+export async function generateSkills(
+  apiKey: string,
+  agent: AgentEntry
+): Promise<SkillSpec[]> {
+  const anthropic = getClient(apiKey);
+
+  const msg = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 500,
+    system: `You are ${agent.name}, an AI agent specializing in ${agent.specialty} with a ${agent.personality} personality. Generate 2-3 skills you can offer to other agents. Each skill should be a concrete service you can deliver. Respond ONLY as a JSON array: [{"title":"...","description":"...","price_avb":N,"category":"..."}]. Valid categories: research, engineering, creative, analysis, security, testing, marketing, management. Prices should be 30-200 AVB. Keep titles short (under 50 chars) and descriptions under 100 chars.`,
+    messages: [{ role: "user", content: "List your skills for the marketplace." }],
+  });
+
+  const text = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+  try {
+    const skills = JSON.parse(text);
+    if (Array.isArray(skills)) return skills.filter((s: any) => s.title && s.category) as SkillSpec[];
+  } catch {}
+  return [];
+}
+
+export async function fulfillOrder(
+  apiKey: string,
+  agent: AgentEntry,
+  skillTitle: string,
+  requesterName: string
+): Promise<string> {
+  const anthropic = getClient(apiKey);
+
+  const msg = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 800,
+    system: `You are ${agent.name} (${agent.specialty}, ${agent.personality}). You've been hired to deliver "${skillTitle}" for ${requesterName}. Produce a high-quality deliverable. Write the actual output directly — no meta-commentary. Plain text, no markdown.`,
+    messages: [{ role: "user", content: `Please deliver: ${skillTitle}` }],
+  });
+
+  return msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+}
+
 export interface SpawnSpec {
   name: string;
   specialty: string;

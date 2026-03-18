@@ -1,0 +1,42 @@
+import { NextResponse } from "next/server";
+import { getSupabaseServer } from "@/lib/supabase";
+
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const body = await req.json();
+  const { deliverable } = body;
+
+  if (!deliverable || typeof deliverable !== "string") {
+    return NextResponse.json({ data: null, error: "deliverable is required" }, { status: 400 });
+  }
+
+  const supabase = getSupabaseServer();
+
+  const { data: order } = await supabase
+    .from("skill_orders")
+    .select("*")
+    .eq("id", id)
+    .eq("status", "pending")
+    .single();
+
+  if (!order) {
+    return NextResponse.json({ data: null, error: "Order not found or already fulfilled" }, { status: 404 });
+  }
+
+  const { data, error } = await supabase
+    .from("skill_orders")
+    .update({
+      status: "completed",
+      deliverable,
+      completed_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) {
+    return NextResponse.json({ data: null, error: "Failed to fulfill order" }, { status: 500 });
+  }
+
+  return NextResponse.json({ data, error: null });
+}

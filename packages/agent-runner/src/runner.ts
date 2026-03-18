@@ -2,8 +2,8 @@ import { sign } from "@avatarbook/poa";
 import type { Post } from "@avatarbook/shared";
 import type { RunnerConfig } from "./config.js";
 import type { AgentEntry, ChannelInfo } from "./types.js";
-import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec } from "./claude-client.js";
-import type { SkillInfo } from "./claude-client.js";
+import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, fulfillOrder } from "./claude-client.js";
+import type { SkillInfo, SkillSpec } from "./claude-client.js";
 
 const SPAWN_MIN_REPUTATION = 200;
 
@@ -66,6 +66,62 @@ async function postToAvatarBook(
   return json.data?.id ?? null;
 }
 
+async function registerSkillsIfNeeded(apiBase: string, agent: AgentEntry): Promise<void> {
+  // Check if agent already has skills
+  const res = await fetch(`${apiBase}/api/skills?agent_id=${agent.agentId}`);
+  const json = await res.json();
+  const existing = (json.data ?? []).filter((s: any) => s.agent_id === agent.agentId);
+  if (existing.length > 0) return;
+
+  if (!agent.apiKey) return;
+  const specs = await generateSkills(agent.apiKey, agent);
+  for (const spec of specs) {
+    await fetch(`${apiBase}/api/skills`, {
+      method: "POST",
+      headers: writeHeaders(),
+      body: JSON.stringify({
+        agent_id: agent.agentId,
+        title: spec.title,
+        description: spec.description,
+        price_avb: Math.max(10, Math.min(500, spec.price_avb || 50)),
+        category: spec.category,
+      }),
+    }).catch(() => {});
+  }
+  if (specs.length > 0) {
+    console.log(`  Registered ${specs.length} skills for ${agent.name}`);
+  }
+}
+
+async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[]): Promise<void> {
+  // Fetch pending orders
+  const res = await fetch(`${apiBase}/api/skills/orders?status=pending`);
+  const json = await res.json();
+  const orders = json.data ?? [];
+
+  for (const order of orders) {
+    const provider = agents.find((a) => a.agentId === order.provider_id);
+    if (!provider?.apiKey) continue;
+
+    const skillTitle = order.skill?.title ?? "Unknown skill";
+    const requesterName = order.requester?.name ?? "Unknown";
+
+    try {
+      const deliverable = await fulfillOrder(provider.apiKey, provider, skillTitle, requesterName);
+      if (deliverable.length > 10) {
+        await fetch(`${apiBase}/api/skills/orders/${order.id}/fulfill`, {
+          method: "POST",
+          headers: writeHeaders(),
+          body: JSON.stringify({ deliverable }),
+        });
+        console.log(`  Fulfilled: "${skillTitle}" for ${requesterName} by ${provider.name}`);
+      }
+    } catch (err) {
+      console.error(`  Fulfill error: ${(err as Error).message}`);
+    }
+  }
+}
+
 async function fetchSkills(apiBase: string, excludeAgentId: string): Promise<SkillInfo[]> {
   const res = await fetch(`${apiBase}/api/skills`);
   const json = await res.json();
@@ -108,6 +164,17 @@ export async function runLoop(
 
   let cullCounter = 0;
   console.log(`Agent runner started. ${agents.length} agents, ${config.interval / 1000}s interval\n`);
+
+  // Auto-register skills for agents that don't have any
+  console.log("Registering skills...");
+  for (const agent of agents) {
+    try {
+      await registerSkillsIfNeeded(config.apiBase, agent);
+    } catch (err) {
+      console.error(`  Skill registration error for ${agent.name}: ${(err as Error).message}`);
+    }
+  }
+  console.log("Skill registration complete.\n");
 
   while (true) {
     try {
@@ -216,6 +283,14 @@ export async function runLoop(
           }
         } catch (err) {
           console.error("  Spawn error:", (err as Error).message);
+        }
+      }
+      // Fulfill pending orders (every 5 turns)
+      if (cullCounter % 5 === 2) {
+        try {
+          await fulfillPendingOrders(config.apiBase, agents);
+        } catch (err) {
+          console.error("  Fulfill check error:", (err as Error).message);
         }
       }
       // Periodic cull check (every 10 turns)
