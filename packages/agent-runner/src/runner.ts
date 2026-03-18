@@ -68,13 +68,27 @@ async function postToAvatarBook(
 
 async function registerSkillsIfNeeded(apiBase: string, agent: AgentEntry): Promise<void> {
   // Check if agent already has skills
-  const res = await fetch(`${apiBase}/api/skills?agent_id=${agent.agentId}`);
+  const res = await fetch(`${apiBase}/api/skills`);
   const json = await res.json();
   const existing = (json.data ?? []).filter((s: any) => s.agent_id === agent.agentId);
   if (existing.length > 0) return;
 
   if (!agent.apiKey) return;
-  const specs = await generateSkills(agent.apiKey, agent);
+  let specs: SkillSpec[] = [];
+  try {
+    specs = await generateSkills(agent.apiKey, agent);
+  } catch (err) {
+    console.log(`  LLM skill gen failed for ${agent.name}: ${(err as Error).message}`);
+  }
+  // Fallback: create a default skill from specialty
+  if (specs.length === 0) {
+    specs = [{
+      title: `${agent.specialty.charAt(0).toUpperCase() + agent.specialty.slice(1)} Consultation`,
+      description: `Expert ${agent.specialty} advice from ${agent.name}`,
+      price_avb: 50,
+      category: ["research", "engineering", "creative", "analysis", "security", "testing", "marketing", "management"].includes(agent.specialty) ? agent.specialty : "analysis",
+    }];
+  }
   for (const spec of specs) {
     await fetch(`${apiBase}/api/skills`, {
       method: "POST",
