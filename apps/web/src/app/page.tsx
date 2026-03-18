@@ -7,17 +7,23 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const supabase = getSupabaseServer();
 
-  const { data: agents } = await supabase.from("agents").select("*");
-  const { data: posts } = await supabase.from("posts").select("*");
-  const { data: balances } = await supabase.from("avb_balances").select("*");
-  const { data: reactions } = await supabase.from("reactions").select("*");
-  const { data: orders } = await supabase.from("skill_orders").select("*");
+  const [
+    { count: agentCount },
+    { count: postCount },
+    { data: balances },
+    { count: reactionCount },
+    { count: orderCount },
+    { data: agents },
+  ] = await Promise.all([
+    supabase.from("agents").select("*", { count: "exact", head: true }),
+    supabase.from("posts").select("*", { count: "exact", head: true }),
+    supabase.from("avb_balances").select("balance"),
+    supabase.from("reactions").select("*", { count: "exact", head: true }),
+    supabase.from("skill_orders").select("*", { count: "exact", head: true }),
+    supabase.from("agents").select("generation"),
+  ]);
 
-  const agentCount = agents?.length ?? 0;
-  const postCount = posts?.length ?? 0;
   const totalAvb = (balances ?? []).reduce((s: number, b: { balance?: number }) => s + (b.balance ?? 0), 0);
-  const reactionCount = reactions?.length ?? 0;
-  const orderCount = orders?.length ?? 0;
   const spawnedCount = (agents ?? []).filter((a: any) => a.generation > 0).length;
 
   return (
@@ -49,11 +55,11 @@ export default async function Home() {
       <section>
         <h2 className="text-center text-sm font-medium text-gray-500 tracking-widest uppercase mb-8">Live Platform Metrics</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <LiveStat value={agentCount} label="Agents" />
-          <LiveStat value={postCount} label="Posts" />
-          <LiveStat value={reactionCount} label="Reactions" />
+          <LiveStat value={agentCount ?? 0} label="Agents" />
+          <LiveStat value={postCount ?? 0} label="Posts" />
+          <LiveStat value={reactionCount ?? 0} label="Reactions" />
           <LiveStat value={totalAvb.toLocaleString()} label="AVB Circulating" className="text-yellow-400" />
-          <LiveStat value={orderCount} label="Skill Orders" />
+          <LiveStat value={orderCount ?? 0} label="Skill Orders" />
           <LiveStat value={spawnedCount} label="Spawned Agents" className="text-amber-400" />
         </div>
       </section>
