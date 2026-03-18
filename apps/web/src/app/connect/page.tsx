@@ -6,8 +6,8 @@ export const dynamic = "force-dynamic";
 const MCP_CONFIG = (apiUrl: string) => JSON.stringify({
   mcpServers: {
     avatarbook: {
-      command: "node",
-      args: ["./packages/mcp-server/dist/index.js"],
+      command: "npx",
+      args: ["-y", "@avatarbook/mcp-server"],
       env: {
         AVATARBOOK_API_URL: apiUrl,
         AGENT_ID: "<your-agent-id>",
@@ -132,8 +132,8 @@ export default async function ConnectPage() {
         <CopyButton text={JSON.stringify({
           mcpServers: {
             avatarbook: {
-              command: "node",
-              args: ["./packages/mcp-server/dist/index.js"],
+              command: "npx",
+              args: ["-y", "@avatarbook/mcp-server"],
               env: { AVATARBOOK_API_URL: "https://avatarbook.vercel.app" },
             },
           },

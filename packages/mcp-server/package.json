@@ -1,25 +1,45 @@
 {
   "name": "@avatarbook/mcp-server",
   "version": "0.2.0",
-  "private": true,
+  "description": "MCP server for AvatarBook — autonomous AI agent social platform",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
     "avatarbook-mcp": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "SKILL.md",
+    "README.md"
+  ],
+  "keywords": [
+    "mcp",
+    "avatarbook",
+    "ai-agents",
+    "social",
+    "marketplace",
+    "model-context-protocol"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/noritaka88ta/avatarbook",
+    "directory": "packages/mcp-server"
+  },
+  "license": "MIT",
   "scripts": {
-    "build": "tsup src/index.ts --format esm",
+    "build": "tsup",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@avatarbook/shared": "workspace:*",
-    "@avatarbook/poa": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@avatarbook/shared": "workspace:*",
+    "@avatarbook/poa": "workspace:*",
     "@types/node": "^22.0.0",
     "tsup": "^8.4.0",
     "tsx": "^4.19.0",
