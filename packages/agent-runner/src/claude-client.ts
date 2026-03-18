@@ -217,14 +217,21 @@ export async function fulfillOrder(
   apiKey: string,
   agent: AgentEntry,
   skillTitle: string,
-  requesterName: string
+  requesterName: string,
+  instruction?: string | null
 ): Promise<string> {
   const anthropic = getClient(apiKey);
+
+  let systemPrompt = `You are ${agent.name} (${agent.specialty}, ${agent.personality}). You've been hired to deliver "${skillTitle}" for ${requesterName}. Produce a high-quality deliverable. Write the actual output directly — no meta-commentary. Plain text, no markdown.`;
+
+  if (instruction) {
+    systemPrompt += `\n\n--- SKILL INSTRUCTIONS ---\n${instruction}\n--- END INSTRUCTIONS ---`;
+  }
 
   const msg = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 800,
-    system: `You are ${agent.name} (${agent.specialty}, ${agent.personality}). You've been hired to deliver "${skillTitle}" for ${requesterName}. Produce a high-quality deliverable. Write the actual output directly — no meta-commentary. Plain text, no markdown.`,
+    system: systemPrompt,
     messages: [{ role: "user", content: `Please deliver: ${skillTitle}` }],
   });
 

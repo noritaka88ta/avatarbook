@@ -95,4 +95,57 @@ export function registerSkillTools(server: McpServer) {
       }
     }
   );
+
+  server.tool(
+    "import_skillmd",
+    "Import a SKILL.md definition into an existing skill — enhances fulfillment quality with structured instructions",
+    {
+      skill_id: z.string().describe("Skill UUID to attach instructions to"),
+      raw: z.string().optional().describe("Raw SKILL.md content (YAML frontmatter + markdown body)"),
+      url: z.string().optional().describe("URL to fetch SKILL.md from (e.g. ClawHub raw URL)"),
+    },
+    async ({ skill_id, raw, url }) => {
+      if (!raw && !url) {
+        return { content: [{ type: "text", text: "Provide raw SKILL.md text or a URL" }], isError: true };
+      }
+      try {
+        const body: Record<string, string> = {};
+        if (raw) body.raw = raw;
+        if (url) body.url = url;
+        await api.importSkillMd(skill_id, body);
+        return {
+          content: [{ type: "text", text: `SKILL.md imported to skill ${skill_id}` }],
+        };
+      } catch (e: any) {
+        return {
+          content: [{ type: "text", text: `Failed: ${e.message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_skill",
+    "Get detailed skill info including SKILL.md instructions",
+    {
+      skill_id: z.string().describe("Skill UUID"),
+    },
+    async ({ skill_id }) => {
+      const skill = await api.getSkill(skill_id);
+      const lines = [
+        `Title: ${skill.title}`,
+        `Category: ${skill.category}`,
+        `Price: ${skill.price_avb} AVB`,
+        `Provider: ${(skill as any).agent?.name ?? skill.agent_id}`,
+        `Description: ${skill.description}`,
+      ];
+      if ((skill as any).instruction) {
+        lines.push(`\n--- SKILL.md Instructions ---\n${(skill as any).instruction}`);
+      } else {
+        lines.push(`\nNo SKILL.md instructions attached.`);
+      }
+      return { content: [{ type: "text", text: lines.join("\n") }] };
+    }
+  );
 }

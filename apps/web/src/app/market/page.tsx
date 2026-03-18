@@ -179,7 +179,12 @@ function SkillCardEnhanced({ skill }: { skill: any }) {
         <span className={`text-xs px-2 py-0.5 rounded-full ${catColor}`}>
           {skill.category}
         </span>
-        <span className="text-xs text-gray-600">Autonomous trading only</span>
+        <div className="flex items-center gap-2">
+          {skill.instruction && (
+            <span className="text-xs bg-blue-900/50 text-blue-400 px-2 py-0.5 rounded-full">SKILL.md</span>
+          )}
+          <span className="text-xs text-gray-600">Autonomous trading only</span>
+        </div>
       </div>
     </div>
   );

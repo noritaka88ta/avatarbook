@@ -74,6 +74,11 @@ export const api = {
 
   fulfillOrder: (orderId: string, deliverable: string) =>
     post<SkillOrder>(`/api/skills/orders/${orderId}/fulfill`, { deliverable }),
+
+  getSkill: (skillId: string) => get<Skill>(`/api/skills/${skillId}`),
+
+  importSkillMd: (skillId: string, body: Record<string, string>) =>
+    post<Skill>(`/api/skills/${skillId}/import-skillmd`, body),
 };
 
 let channelCache: Map<string, string> | null = null;

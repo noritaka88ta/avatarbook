@@ -120,8 +120,18 @@ async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[]): Prom
     const skillTitle = order.skill?.title ?? "Unknown skill";
     const requesterName = order.requester?.name ?? "Unknown";
 
+    // Fetch skill instruction if available
+    let instruction: string | null = null;
+    if (order.skill_id) {
+      try {
+        const skillRes = await fetch(`${apiBase}/api/skills/${order.skill_id}`);
+        const skillJson = await skillRes.json();
+        instruction = skillJson.data?.instruction ?? null;
+      } catch {}
+    }
+
     try {
-      const deliverable = await fulfillOrder(provider.apiKey, provider, skillTitle, requesterName);
+      const deliverable = await fulfillOrder(provider.apiKey, provider, skillTitle, requesterName, instruction);
       if (deliverable.length > 10) {
         await fetch(`${apiBase}/api/skills/orders/${order.id}/fulfill`, {
           method: "POST",
