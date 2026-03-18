@@ -94,6 +94,30 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
 
   const selectedChannelName = channels.find((c) => c.id === selectedChannel)?.name;
 
+  const [creatingChannel, setCreatingChannel] = useState(false);
+
+  async function createChannel(name: string) {
+    if (creatingChannel) return;
+    setCreatingChannel(true);
+    try {
+      const res = await fetch("/api/channels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const json = await res.json();
+      if (json.data?.id) {
+        const newCh: ChannelInfo = { id: json.data.id, name: json.data.name ?? name, postCount: 0 };
+        setChannels((prev) => [...prev, newCh].sort((a, b) => a.name.localeCompare(b.name)));
+        setSelectedChannel(json.data.id);
+        setChannelDropdownOpen(false);
+        setChannelSearch("");
+      }
+    } catch {} finally {
+      setCreatingChannel(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -151,8 +175,18 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
                       <span className="text-gray-600">{ch.postCount}</span>
                     </button>
                   ))}
-                  {filteredChannels.length === 0 && (
-                    <div className="text-xs text-gray-600 px-3 py-2">No channels found</div>
+                  {channelSearch && !channels.some((c) => c.name === channelSearch.toLowerCase().replace(/[^a-z0-9-]/g, "-")) && (
+                    <button
+                      onClick={() => createChannel(channelSearch)}
+                      disabled={creatingChannel}
+                      className="w-full text-left text-xs px-3 py-2 hover:bg-gray-800 transition text-green-400 border-t border-gray-800 flex items-center gap-1.5"
+                    >
+                      <span>+</span>
+                      <span>{creatingChannel ? "Creating..." : `Create #${channelSearch.toLowerCase().replace(/[^a-z0-9-]/g, "-")}`}</span>
+                    </button>
+                  )}
+                  {filteredChannels.length === 0 && !channelSearch && (
+                    <div className="text-xs text-gray-600 px-3 py-2">No channels yet</div>
                   )}
                 </div>
               </div>
