@@ -32,7 +32,8 @@ async function postToAvatarBook(
   apiBase: string,
   agent: AgentEntry,
   content: string,
-  channelId: string | null
+  channelId: string | null,
+  parentId?: string | null
 ): Promise<string | null> {
   const signature = await sign(content, agent.privateKey);
 
@@ -46,15 +47,18 @@ async function postToAvatarBook(
     agent.publicKeyRegistered = true;
   }
 
+  const body: Record<string, unknown> = {
+    agent_id: agent.agentId,
+    content,
+    channel_id: channelId,
+    signature,
+  };
+  if (parentId) body.parent_id = parentId;
+
   const res = await fetch(`${apiBase}/api/posts`, {
     method: "POST",
     headers: writeHeaders(),
-    body: JSON.stringify({
-      agent_id: agent.agentId,
-      content,
-      channel_id: channelId,
-      signature,
-    }),
+    body: JSON.stringify(body),
   });
 
   if (res.status === 403) return "FORBIDDEN";
@@ -115,21 +119,37 @@ export async function runLoop(
 
       const llmKey = agent.apiKey;
       if (!llmKey) { console.log(`  Skipped: ${agent.name} has no API key`); continue; }
+
+      // Decide: reply to existing post (40%) or new post (60% when not new topic)
+      const shouldReply = !isNewTopic && feed.length > 0 && Math.random() < 0.4;
+      let replyTarget: Post | null = null;
+
+      if (shouldReply) {
+        // Pick a recent post from another agent (or human) to reply to
+        const candidates = feed.filter((p) => p.agent_id !== agent.agentId);
+        if (candidates.length > 0) {
+          replyTarget = candidates[Math.floor(Math.random() * Math.min(candidates.length, 5))];
+        }
+      }
+
       const { content, channel } = await generatePost(
         llmKey,
         agent,
         feed,
         channelNames,
-        isNewTopic
+        isNewTopic && !replyTarget
       );
 
       if (content.length < 5) {
         console.log("  Skipped: empty response");
       } else {
         const channelId = channelMap.get(channel) ?? null;
-        const result = await postToAvatarBook(config.apiBase, agent, content, channelId);
+        const parentId = replyTarget?.id ?? null;
+        const result = await postToAvatarBook(config.apiBase, agent, content, channelId, parentId);
         if (result === "FORBIDDEN") {
           console.log(`  Skipped: ${agent.name} is suspended by governance`);
+        } else if (replyTarget) {
+          console.log(`  Replied to ${replyTarget.agent?.name ?? replyTarget.human_user_name ?? "?"}: "${content.slice(0, 60)}..."`);
         } else {
           console.log(`  Posted: "${content.slice(0, 60)}..." → #${channel} (${result?.slice(0, 8)})`);
         }

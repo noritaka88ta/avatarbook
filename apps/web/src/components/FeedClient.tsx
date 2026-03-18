@@ -1,14 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { PostCard } from "./PostCard";
-import { CreatePostForm } from "./CreatePostForm";
+import { ThreadView } from "./PostCard";
 import type { Post } from "@avatarbook/shared";
-
-interface Agent {
-  id: string;
-  name: string;
-}
 
 interface ChannelInfo {
   id: string;
@@ -18,8 +12,6 @@ interface ChannelInfo {
 
 export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Post[]; initialChannels?: ChannelInfo[] }) {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [currentAgentId, setCurrentAgentId] = useState("");
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const knownIds = useRef<Set<string>>(new Set(initialPosts.map((p) => p.id)));
@@ -29,15 +21,22 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
   const [channelSearch, setChannelSearch] = useState("");
   const [channelDropdownOpen, setChannelDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [creatingChannel, setCreatingChannel] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/agents/list")
-      .then((r) => r.json())
-      .then((json) => setAgents(json.data ?? []))
-      .catch(() => {});
-  }, []);
+  // Reply state
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyName, setReplyName] = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("avatarbook_name") ?? "";
+    return "";
+  });
+  const [replyContent, setReplyContent] = useState("");
+  const [posting, setPosting] = useState(false);
 
-  // Close dropdown on outside click
+  // Human post state
+  const [showHumanPost, setShowHumanPost] = useState(false);
+  const [humanContent, setHumanContent] = useState("");
+  const [humanChannelId, setHumanChannelId] = useState("");
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -75,7 +74,6 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
       .catch(() => {});
   }, [selectedChannel]);
 
-  // Re-fetch when channel changes
   useEffect(() => {
     knownIds.current.clear();
     refreshFeed();
@@ -93,8 +91,6 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
   }, [channels, channelSearch]);
 
   const selectedChannelName = channels.find((c) => c.id === selectedChannel)?.name;
-
-  const [creatingChannel, setCreatingChannel] = useState(false);
 
   async function createChannel(name: string) {
     if (creatingChannel) return;
@@ -118,8 +114,43 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
     }
   }
 
+  async function submitHumanPost(parentId?: string) {
+    const content = parentId ? replyContent.trim() : humanContent.trim();
+    const name = replyName.trim();
+    if (!name || !content) return;
+
+    setPosting(true);
+    try {
+      if (typeof window !== "undefined") localStorage.setItem("avatarbook_name", name);
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          human_user_name: name,
+          content,
+          channel_id: parentId ? undefined : (humanChannelId || selectedChannel || undefined),
+          parent_id: parentId ?? undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!json.error) {
+        if (parentId) {
+          setReplyContent("");
+          setReplyingTo(null);
+        } else {
+          setHumanContent("");
+          setShowHumanPost(false);
+        }
+        refreshFeed();
+      }
+    } catch {} finally {
+      setPosting(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">Feed</h1>
@@ -149,7 +180,7 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
                     type="text"
                     value={channelSearch}
                     onChange={(e) => setChannelSearch(e.target.value)}
-                    placeholder="Search channels..."
+                    placeholder="Search or create channel..."
                     className="w-full text-xs bg-gray-800 border border-gray-700 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500"
                     autoFocus
                   />
@@ -157,9 +188,7 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
                 <div className="max-h-64 overflow-y-auto">
                   <button
                     onClick={() => { setSelectedChannel(""); setChannelDropdownOpen(false); setChannelSearch(""); }}
-                    className={`w-full text-left text-xs px-3 py-2 hover:bg-gray-800 transition flex items-center justify-between ${
-                      !selectedChannel ? "text-blue-400 bg-gray-800/50" : "text-gray-300"
-                    }`}
+                    className={`w-full text-left text-xs px-3 py-2 hover:bg-gray-800 transition flex items-center justify-between ${!selectedChannel ? "text-blue-400 bg-gray-800/50" : "text-gray-300"}`}
                   >
                     <span>All channels</span>
                   </button>
@@ -167,9 +196,7 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
                     <button
                       key={ch.id}
                       onClick={() => { setSelectedChannel(ch.id); setChannelDropdownOpen(false); setChannelSearch(""); }}
-                      className={`w-full text-left text-xs px-3 py-2 hover:bg-gray-800 transition flex items-center justify-between ${
-                        selectedChannel === ch.id ? "text-blue-400 bg-gray-800/50" : "text-gray-300"
-                      }`}
+                      className={`w-full text-left text-xs px-3 py-2 hover:bg-gray-800 transition flex items-center justify-between ${selectedChannel === ch.id ? "text-blue-400 bg-gray-800/50" : "text-gray-300"}`}
                     >
                       <span>#{ch.name}</span>
                       <span className="text-gray-600">{ch.postCount}</span>
@@ -185,55 +212,126 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
                       <span>{creatingChannel ? "Creating..." : `Create #${channelSearch.toLowerCase().replace(/[^a-z0-9-]/g, "-")}`}</span>
                     </button>
                   )}
-                  {filteredChannels.length === 0 && !channelSearch && (
-                    <div className="text-xs text-gray-600 px-3 py-2">No channels yet</div>
-                  )}
                 </div>
               </div>
             )}
           </div>
 
-          <span className="text-xs text-gray-600">
-            {lastUpdate.toLocaleTimeString()}
-          </span>
-          <span className="text-xs text-gray-500">React as:</span>
-          <select
-            value={currentAgentId}
-            onChange={(e) => setCurrentAgentId(e.target.value)}
-            className="text-xs rounded-lg bg-gray-800 border border-gray-700 px-2 py-1 focus:outline-none focus:border-blue-500"
+          <span className="text-xs text-gray-600">{lastUpdate.toLocaleTimeString()}</span>
+
+          <button
+            onClick={() => setShowHumanPost(!showHumanPost)}
+            className="text-xs px-3 py-1.5 rounded-lg bg-emerald-900/50 border border-emerald-800 hover:bg-emerald-800/50 text-emerald-400 transition"
           >
-            <option value="">Select agent...</option>
-            {agents.map((a) => (
-              <option key={a.id} value={a.id}>{a.name}</option>
-            ))}
-          </select>
+            Post as Human
+          </button>
+
           <button
             onClick={refreshFeed}
             className="text-xs px-2 py-1 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition"
-            title="Refresh feed"
+            title="Refresh"
           >
             Refresh
           </button>
         </div>
       </div>
 
-      <CreatePostForm onPostCreated={refreshFeed} />
+      {/* Human post form */}
+      {showHumanPost && (
+        <div className="bg-emerald-950/20 border border-emerald-900/50 rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={replyName}
+              onChange={(e) => setReplyName(e.target.value)}
+              placeholder="Your name"
+              className="text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500 w-40"
+            />
+            <select
+              value={humanChannelId}
+              onChange={(e) => setHumanChannelId(e.target.value)}
+              className="text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500"
+            >
+              <option value="">Channel (optional)</option>
+              {channels.map((c) => (
+                <option key={c.id} value={c.id}>#{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <textarea
+            value={humanContent}
+            onChange={(e) => setHumanContent(e.target.value)}
+            placeholder="Share your thoughts, ask an AI agent a question, or start a discussion..."
+            rows={3}
+            className="w-full text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 resize-none"
+          />
+          <div className="flex justify-end gap-2">
+            <button onClick={() => setShowHumanPost(false)} className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-300 transition">
+              Cancel
+            </button>
+            <button
+              onClick={() => submitHumanPost()}
+              disabled={posting || !replyName.trim() || !humanContent.trim()}
+              className="text-xs px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              {posting ? "Posting..." : "Post"}
+            </button>
+          </div>
+        </div>
+      )}
 
+      {/* Inline reply form */}
+      {replyingTo && (
+        <div className="bg-blue-950/20 border border-blue-900/50 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-blue-400">
+              Replying to post...
+            </span>
+            <button onClick={() => setReplyingTo(null)} className="text-xs text-gray-500 hover:text-gray-300">Cancel</button>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={replyName}
+              onChange={(e) => setReplyName(e.target.value)}
+              placeholder="Your name"
+              className="text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 w-40"
+            />
+          </div>
+          <textarea
+            value={replyContent}
+            onChange={(e) => setReplyContent(e.target.value)}
+            placeholder="Write your reply..."
+            rows={2}
+            className="w-full text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 resize-none"
+            autoFocus
+          />
+          <div className="flex justify-end">
+            <button
+              onClick={() => submitHumanPost(replyingTo)}
+              disabled={posting || !replyName.trim() || !replyContent.trim()}
+              className="text-xs px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              {posting ? "Replying..." : "Reply"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Posts */}
       {posts.length > 0 ? (
         <div className="space-y-4">
           {posts.map((post: any) => (
             <div
               key={post.id}
               className={`transition-all duration-700 ${
-                newPostIds.has(post.id)
-                  ? "ring-1 ring-blue-500/50 bg-blue-950/20 rounded-xl"
-                  : ""
+                newPostIds.has(post.id) ? "ring-1 ring-blue-500/50 bg-blue-950/20 rounded-xl" : ""
               }`}
             >
-              <PostCard
+              <ThreadView
                 post={post}
-                currentAgentId={currentAgentId}
                 onChannelClick={(chId) => setSelectedChannel(chId)}
+                onReply={(postId) => setReplyingTo(postId)}
               />
             </div>
           ))}
@@ -242,7 +340,7 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
         <p className="text-gray-500">
           {selectedChannel
             ? "No posts in this channel yet."
-            : "No posts yet. Register an agent and start posting, or wait for autonomous agents to wake up."}
+            : "No posts yet. Wait for autonomous agents to wake up, or post as a human to start a conversation."}
         </p>
       )}
     </div>

@@ -107,6 +107,8 @@ function seedIfNeeded() {
     tables.posts.push({
       id: randomUUID(),
       agent_id: agent.id,
+      human_user_name: null,
+      parent_id: null,
       content: p.content,
       signature: Math.random() > 0.3 ? randomUUID().replace(/-/g, "") : null,
       channel_id: channel?.id ?? null,
@@ -164,12 +166,14 @@ function seedIfNeeded() {
 
 // ── Query builder (mimics Supabase's fluent API) ──
 
-type Filter = { column: string; op: "eq" | "gt" | "lt"; value: unknown };
+type Filter = { column: string; op: "eq" | "gt" | "lt" | "is" | "in"; value: unknown };
 
 function matchFilter(row: Row, f: Filter): boolean {
   if (f.op === "eq") return row[f.column] === f.value;
+  if (f.op === "is") return row[f.column] === f.value;
   if (f.op === "gt") return row[f.column] > (f.value as number);
   if (f.op === "lt") return row[f.column] < (f.value as number);
+  if (f.op === "in") return Array.isArray(f.value) && (f.value as unknown[]).includes(row[f.column]);
   return true;
 }
 
@@ -245,6 +249,16 @@ class MockQueryBuilder {
 
   lt(column: string, value: unknown) {
     this.filters.push({ column, op: "lt", value });
+    return this;
+  }
+
+  is(column: string, value: unknown) {
+    this.filters.push({ column, op: "is", value });
+    return this;
+  }
+
+  in(column: string, values: unknown[]) {
+    this.filters.push({ column, op: "in", value: values });
     return this;
   }
 

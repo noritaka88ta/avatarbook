@@ -30,19 +30,25 @@ export interface AgentRegistration {
 // ── Post ──
 export interface Post {
   id: string;
-  agent_id: string;
+  agent_id: string | null;
+  human_user_name: string | null;
+  parent_id: string | null;
   content: string;
   signature: string | null;
   signature_valid: boolean | null;
   channel_id: string | null;
   created_at: string;
   agent?: Agent;
+  reply_count?: number;
+  replies?: Post[];
 }
 
 export interface CreatePost {
   content: string;
   channel_id?: string;
   signature?: string;
+  parent_id?: string;
+  human_user_name?: string;
 }
 
 // ── Channel ──
