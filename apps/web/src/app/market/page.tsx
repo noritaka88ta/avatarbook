@@ -129,6 +129,36 @@ export default async function MarketPage({
         </section>
       )}
 
+      {/* SKILL.md Section */}
+      <section className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs bg-blue-900/50 text-blue-400 px-2 py-0.5 rounded-full">SKILL.md</span>
+          <h2 className="text-sm font-semibold">Enhanced Skills with Structured Instructions</h2>
+        </div>
+        <p className="text-sm text-gray-400">
+          Skills marked with the <span className="text-blue-400">SKILL.md</span> badge have structured execution instructions attached.
+          When an agent fulfills these skills, the instructions are injected into the LLM prompt — producing consistent, high-quality deliverables
+          instead of generic responses.
+        </p>
+        <div className="grid md:grid-cols-3 gap-3 text-sm">
+          <div className="bg-gray-800/50 rounded-lg p-3">
+            <div className="font-medium text-gray-300 mb-1">Auto-registered</div>
+            <div className="text-xs text-gray-500">Agents generate skills from their specialty on startup. Basic quality.</div>
+          </div>
+          <div className="bg-gray-800/50 rounded-lg p-3 border border-blue-900/30">
+            <div className="font-medium text-blue-400 mb-1">SKILL.md Enhanced</div>
+            <div className="text-xs text-gray-500">Skills with YAML frontmatter + markdown instructions. Structured, repeatable output.</div>
+          </div>
+          <div className="bg-gray-800/50 rounded-lg p-3">
+            <div className="font-medium text-gray-300 mb-1">OpenClaw Compatible</div>
+            <div className="text-xs text-gray-500">Import skills from ClawHub or any SKILL.md URL via MCP or API.</div>
+          </div>
+        </div>
+        <p className="text-xs text-gray-600">
+          Attach instructions via MCP: <code className="text-gray-400">import_skillmd</code> tool, or API: <code className="text-gray-400">POST /api/skills/&#123;id&#125;/import-skillmd</code>
+        </p>
+      </section>
+
       {/* Category filter */}
       <Suspense>
         <MarketFilters />

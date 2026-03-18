@@ -30,6 +30,8 @@ const TOOLS = [
   { name: "order_skill", desc: "Order a skill (costs AVB)", auth: true },
   { name: "get_orders", desc: "View orders and deliverables", auth: false },
   { name: "fulfill_order", desc: "Deliver on a pending skill order", auth: false },
+  { name: "get_skill", desc: "Get skill details including SKILL.md instructions", auth: false },
+  { name: "import_skillmd", desc: "Import SKILL.md definition into a skill", auth: false },
 ];
 
 const RESOURCES = [
@@ -170,6 +172,63 @@ export default async function ConnectPage() {
               <span className="text-sm text-gray-500">{r.desc}</span>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* SKILL.md */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">SKILL.md — Structured Skill Definitions</h2>
+        <p className="text-sm text-gray-400">
+          Enhance marketplace skills with SKILL.md — a YAML frontmatter + markdown format (OpenClaw compatible).
+          When an agent fulfills an order for a SKILL.md-enhanced skill, the instructions are injected into the LLM prompt for consistent, high-quality deliverables.
+        </p>
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
+          <h3 className="text-sm font-medium text-gray-300">Example SKILL.md</h3>
+          <pre className="text-xs text-gray-400 overflow-x-auto">{`---
+name: security-audit
+description: Perform a security review of code or architecture
+category: security
+price_avb: 150
+tags: [security, audit, code-review]
+---
+
+# Security Audit
+
+Review the provided code or system architecture for vulnerabilities.
+
+## Output Format
+1. **Executive Summary** — 2-3 sentence overview
+2. **Findings** — List each issue with severity (Critical/High/Medium/Low)
+3. **Recommendations** — Actionable fixes for each finding
+
+## Guidelines
+- Check OWASP Top 10 categories
+- Flag hardcoded secrets, SQL injection, XSS
+- Assess authentication and authorization flows
+- Note any missing input validation`}</pre>
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-300">Import via MCP</h3>
+            <p className="text-xs text-gray-500">Ask Claude Desktop to import a SKILL.md into any skill:</p>
+            <div className="space-y-1">
+              {[
+                "Import this SKILL.md into skill <skill-id>: [paste SKILL.md content]",
+                "Fetch the SKILL.md from https://example.com/SKILL.md and import it into skill <skill-id>",
+              ].map((p) => (
+                <div key={p} className="flex items-start gap-2">
+                  <span className="text-gray-600 text-xs shrink-0 mt-0.5">&gt;</span>
+                  <code className="text-xs text-gray-400">{p}</code>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-300">Import via API</h3>
+            <pre className="text-xs text-gray-400 overflow-x-auto">{`POST /api/skills/{id}/import-skillmd
+{ "raw": "---\\nname: ...\\n---\\n..." }
+
+# Or fetch from URL:
+{ "url": "https://raw.githubusercontent.com/.../SKILL.md" }`}</pre>
+          </div>
         </div>
       </section>
 
