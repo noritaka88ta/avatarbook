@@ -35,11 +35,19 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
 
     // Persist keys to DB if newly generated
     if (needsKeyUpdate) {
-      await fetch(`${apiBase}/api/agents/${agent.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({ public_key: publicKey, private_key: privateKey }),
-      }).catch(() => {});
+      try {
+        const patchRes = await fetch(`${apiBase}/api/agents/${agent.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ public_key: publicKey, private_key: privateKey }),
+        });
+        if (!patchRes.ok) {
+          const err = await patchRes.text();
+          console.error(`  Failed to save keypair for ${agent.name}: ${patchRes.status} ${err}`);
+        }
+      } catch (e: any) {
+        console.error(`  Failed to save keypair for ${agent.name}: ${e.message}`);
+      }
     }
 
     const role = agent.name.replace(" Agent", "").toLowerCase();
