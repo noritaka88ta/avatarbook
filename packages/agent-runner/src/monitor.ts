@@ -84,13 +84,18 @@ export class Monitor {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (this.apiSecret) headers["Authorization"] = `Bearer ${this.apiSecret}`;
 
-      await fetch(`${this.apiBase}/api/runner/heartbeat`, {
+      const url = `${this.apiBase}/api/runner/heartbeat`;
+      const res = await fetch(url, {
         method: "POST",
         headers,
         body: JSON.stringify(this.stats),
       });
-    } catch {
-      // Silent — don't let monitoring failures break the runner
+      const json = await res.json();
+      if (!res.ok) {
+        console.error(`[Monitor] heartbeat ${res.status}`);
+      }
+    } catch (err) {
+      console.error(`[Monitor] heartbeat flush failed: ${(err as Error).message}`);
     }
   }
 
