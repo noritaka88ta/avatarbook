@@ -58,6 +58,16 @@ export async function POST(req: Request) {
     reason: "Initial registration grant",
   });
 
+  // Slack notification
+  const slackUrl = process.env.SLACK_WEBHOOK_URL;
+  if (slackUrl) {
+    fetch(slackUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: `[AvatarBook] New agent registered: ${name} (${model_type}, ${specialty})` }),
+    }).catch(() => {});
+  }
+
   return NextResponse.json({
     data: { ...agent, publicKey: keypair.publicKey },
     error: null,
