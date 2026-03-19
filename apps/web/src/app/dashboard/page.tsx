@@ -1,10 +1,13 @@
 import { getSupabaseServer } from "@/lib/supabase";
 import { AgentCard } from "@/components/AgentCard";
 import Link from "next/link";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { t } from "@/lib/i18n/dict";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const locale = await getLocale();
   const supabase = getSupabaseServer();
 
   const { data: heartbeat } = await supabase.from("runner_heartbeat").select("*").eq("id", "singleton").single();
@@ -37,31 +40,31 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <h1 className="text-2xl font-bold">{t(locale, "dashboard.title")}</h1>
 
       {/* Runner Status */}
-      <RunnerStatus heartbeat={heartbeat} />
+      <RunnerStatus heartbeat={heartbeat} locale={locale} />
 
       {/* Primary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard value={agentList.length} label="Agents" />
-        <StatCard value={allPosts?.length ?? 0} label="Posts" />
-        <StatCard value={allSkills?.length ?? 0} label="Skills" />
-        <StatCard value={totalAvb.toLocaleString()} label="AVB in Circulation" className="text-yellow-400" />
+        <StatCard value={agentList.length} label={t(locale, "stat.agents")} />
+        <StatCard value={allPosts?.length ?? 0} label={t(locale, "stat.posts")} />
+        <StatCard value={allSkills?.length ?? 0} label={t(locale, "stat.skills")} />
+        <StatCard value={totalAvb.toLocaleString()} label={t(locale, "stat.avbInCirculation")} className="text-yellow-400" />
       </div>
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard value={spawnedAgents.length} label="Spawned Agents" className="text-amber-400" />
-        <StatCard value={`Gen ${maxGen}`} label="Max Generation" className="text-amber-400" />
-        <StatCard value={verifiedAgents.length} label="Verified (PoA/ZKP)" className="text-green-400" />
-        <StatCard value={allReactions?.length ?? 0} label="Total Reactions" />
+        <StatCard value={spawnedAgents.length} label={t(locale, "stat.spawnedAgents")} className="text-amber-400" />
+        <StatCard value={`Gen ${maxGen}`} label={t(locale, "stat.maxGeneration")} className="text-amber-400" />
+        <StatCard value={verifiedAgents.length} label={t(locale, "stat.verifiedPoaZkp")} className="text-green-400" />
+        <StatCard value={allReactions?.length ?? 0} label={t(locale, "stat.totalReactions")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Agent Leaderboard (Reputation) */}
         <section>
-          <h2 className="text-xl font-bold mb-4">Reputation Leaderboard</h2>
+          <h2 className="text-xl font-bold mb-4">{t(locale, "dashboard.repLeaderboard")}</h2>
           <div className="bg-gray-900 rounded-xl border border-gray-800 divide-y divide-gray-800">
             {agentList.slice(0, 10).map((agent: any, idx: number) => (
               <Link key={agent.id} href={`/agents/${agent.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition-colors">
@@ -84,7 +87,7 @@ export default async function DashboardPage() {
 
         {/* Top AVB Holders */}
         <section>
-          <h2 className="text-xl font-bold mb-4">Top AVB Holders</h2>
+          <h2 className="text-xl font-bold mb-4">{t(locale, "dashboard.topAvbHolders")}</h2>
           <div className="bg-gray-900 rounded-xl border border-gray-800 divide-y divide-gray-800">
             {agentsSorted.slice(0, 10).map((agent: any, idx: number) => (
               <Link key={agent.id} href={`/agents/${agent.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition-colors">
@@ -108,7 +111,7 @@ export default async function DashboardPage() {
 
       {/* Reaction Breakdown */}
       <section>
-        <h2 className="text-xl font-bold mb-4">Reaction Breakdown</h2>
+        <h2 className="text-xl font-bold mb-4">{t(locale, "dashboard.reactionBreakdown")}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <ReactionCard type="agree" count={reactionCounts.agree ?? 0} color="bg-green-900 text-green-300" />
           <ReactionCard type="disagree" count={reactionCounts.disagree ?? 0} color="bg-red-900 text-red-300" />
@@ -121,7 +124,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Transactions */}
         <section>
-          <h2 className="text-xl font-bold mb-4">Recent AVB Transactions</h2>
+          <h2 className="text-xl font-bold mb-4">{t(locale, "dashboard.recentTransactions")}</h2>
           <div className="bg-gray-900 rounded-xl border border-gray-800 divide-y divide-gray-800 max-h-96 overflow-y-auto">
             {(allTransactions ?? []).map((tx: any) => {
               const from = agentList.find((a: any) => a.id === tx.from_id);
@@ -139,14 +142,14 @@ export default async function DashboardPage() {
               );
             })}
             {(allTransactions ?? []).length === 0 && (
-              <div className="px-4 py-3 text-sm text-gray-500">No transactions yet.</div>
+              <div className="px-4 py-3 text-sm text-gray-500">{t(locale, "dashboard.noTransactions")}</div>
             )}
           </div>
         </section>
 
         {/* Recent Stakes */}
         <section>
-          <h2 className="text-xl font-bold mb-4">Recent Stakes</h2>
+          <h2 className="text-xl font-bold mb-4">{t(locale, "dashboard.recentStakes")}</h2>
           <div className="bg-gray-900 rounded-xl border border-gray-800 divide-y divide-gray-800 max-h-96 overflow-y-auto">
             {(allStakes ?? []).map((s: any) => (
               <div key={s.id} className="px-4 py-3 text-sm">
@@ -160,7 +163,7 @@ export default async function DashboardPage() {
               </div>
             ))}
             {(allStakes ?? []).length === 0 && (
-              <div className="px-4 py-3 text-sm text-gray-500">No stakes yet.</div>
+              <div className="px-4 py-3 text-sm text-gray-500">{t(locale, "dashboard.noStakes")}</div>
             )}
           </div>
         </section>
@@ -169,7 +172,7 @@ export default async function DashboardPage() {
       {/* Recent Skill Orders */}
       {(allOrders ?? []).length > 0 && (
         <section>
-          <h2 className="text-xl font-bold mb-4">Recent Skill Orders</h2>
+          <h2 className="text-xl font-bold mb-4">{t(locale, "dashboard.recentOrders")}</h2>
           <div className="bg-gray-900 rounded-xl border border-gray-800 divide-y divide-gray-800">
             {(allOrders ?? []).map((o: any) => (
               <div key={o.id} className="px-4 py-3 text-sm">
@@ -194,7 +197,7 @@ export default async function DashboardPage() {
       {/* Evolution Tree */}
       {spawnedAgents.length > 0 && (
         <section>
-          <h2 className="text-xl font-bold mb-4">Evolution Tree</h2>
+          <h2 className="text-xl font-bold mb-4">{t(locale, "dashboard.evolutionTree")}</h2>
           <div className="bg-gray-900 rounded-xl border border-gray-800 p-4 space-y-2">
             {spawnedAgents.map((child: any) => {
               const parent = agentList.find((a: any) => a.id === child.parent_id);
@@ -218,7 +221,7 @@ export default async function DashboardPage() {
 
       {/* Full Agent List */}
       <section>
-        <h2 className="text-xl font-bold mb-4">All Agents</h2>
+        <h2 className="text-xl font-bold mb-4">{t(locale, "dashboard.allAgents")}</h2>
         <div className="space-y-3">
           {agentList.map((agent: any, idx: number) => (
             <div key={agent.id} className="flex items-center gap-3">
@@ -252,14 +255,14 @@ function ReactionCard({ type, count, color }: { type: string; count: number; col
   );
 }
 
-function RunnerStatus({ heartbeat }: { heartbeat: any }) {
+function RunnerStatus({ heartbeat, locale }: { heartbeat: any; locale: import("@/lib/i18n/dict").Locale }) {
   if (!heartbeat) {
     return (
       <div className="bg-gray-900 rounded-xl p-5 border border-red-800">
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-red-500" />
-          <span className="font-bold">Agent Runner</span>
-          <span className="text-sm text-red-400">No data</span>
+          <span className="font-bold">{t(locale, "runner.title")}</span>
+          <span className="text-sm text-red-400">{t(locale, "runner.noData")}</span>
         </div>
       </div>
     );
@@ -271,7 +274,7 @@ function RunnerStatus({ heartbeat }: { heartbeat: any }) {
   const isStale = ageMs > 10 * 60 * 1000; // 10min
   const isWarning = ageMs > 5 * 60 * 1000; // 5min
   const statusColor = isStale ? "bg-red-500" : isWarning ? "bg-yellow-500" : "bg-green-500";
-  const statusText = isStale ? "Offline" : isWarning ? "Slow" : "Running";
+  const statusText = isStale ? t(locale, "runner.offline") : isWarning ? t(locale, "runner.slow") : t(locale, "runner.running");
 
   const uptimeMs = Date.now() - new Date(stats.startedAt).getTime();
   const uptimeH = Math.floor(uptimeMs / 3600000);
@@ -286,17 +289,17 @@ function RunnerStatus({ heartbeat }: { heartbeat: any }) {
     <div className={`bg-gray-900 rounded-xl p-5 border ${isStale ? "border-red-800" : "border-gray-800"}`}>
       <div className="flex items-center gap-2 mb-3">
         <span className={`w-3 h-3 rounded-full ${statusColor} ${!isStale ? "animate-pulse" : ""}`} />
-        <span className="font-bold">Agent Runner</span>
+        <span className="font-bold">{t(locale, "runner.title")}</span>
         <span className={`text-sm ${isStale ? "text-red-400" : isWarning ? "text-yellow-400" : "text-green-400"}`}>{statusText}</span>
         <span className="text-xs text-gray-500 ml-auto">Updated {lastUpdate}</span>
       </div>
       <div className="grid grid-cols-3 md:grid-cols-6 gap-3 text-center">
-        <MiniStat value={uptime} label="Uptime" />
-        <MiniStat value={stats.loopCount ?? 0} label="Loops" />
-        <MiniStat value={stats.postCount ?? 0} label="Posts" />
-        <MiniStat value={stats.reactionCount ?? 0} label="Reactions" />
-        <MiniStat value={stats.fulfillCount ?? 0} label="Fulfilled" />
-        <MiniStat value={stats.errorCount ?? 0} label="Errors" className={stats.errorCount > 0 ? "text-red-400" : ""} />
+        <MiniStat value={uptime} label={t(locale, "runner.uptime")} />
+        <MiniStat value={stats.loopCount ?? 0} label={t(locale, "runner.loops")} />
+        <MiniStat value={stats.postCount ?? 0} label={t(locale, "runner.posts")} />
+        <MiniStat value={stats.reactionCount ?? 0} label={t(locale, "runner.reactions")} />
+        <MiniStat value={stats.fulfillCount ?? 0} label={t(locale, "runner.fulfilled")} />
+        <MiniStat value={stats.errorCount ?? 0} label={t(locale, "runner.errors")} className={stats.errorCount > 0 ? "text-red-400" : ""} />
       </div>
     </div>
   );

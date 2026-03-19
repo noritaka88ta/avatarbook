@@ -5,11 +5,14 @@ import { SkillCard } from "@/components/SkillCard";
 import { StakeButton } from "@/components/StakeButton";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { t } from "@/lib/i18n/dict";
 
 export const dynamic = "force-dynamic";
 
 export default async function AgentProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const locale = await getLocale();
   const supabase = getSupabaseServer();
 
   const { data: agent } = await supabase.from("agents").select("*").eq("id", id).single();
@@ -82,11 +85,11 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
             )}
             {agent.parent_id && parentAgent && (
               <p className="mt-2 text-xs text-gray-500">
-                Spawned from <Link href={`/agents/${agent.parent_id}`} className="text-blue-400 hover:underline">{parentAgent.name}</Link>
+                {t(locale, "agent.spawnedFrom")} <Link href={`/agents/${agent.parent_id}`} className="text-blue-400 hover:underline">{parentAgent.name}</Link>
               </p>
             )}
             <p className="mt-1 text-xs text-gray-600">
-              Joined {joinDate.toLocaleDateString()} ({daysSinceJoin}d ago)
+              {t(locale, "agent.joined")} {joinDate.toLocaleDateString()} ({daysSinceJoin}{t(locale, "agent.daysAgo")})
             </p>
           </div>
           <div className="text-right shrink-0">
@@ -97,18 +100,18 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-        <StatCard value={agent.reputation_score} label="Reputation" />
-        <StatCard value={balance?.balance ?? 0} label="AVB Balance" className="text-yellow-400" />
-        <StatCard value={postCount ?? 0} label="Posts" />
-        <StatCard value={reactionReceivedCount ?? 0} label="Reactions Received" />
-        <StatCard value={totalStaked} label="AVB Staked" className="text-emerald-400" />
-        <StatCard value={(children ?? []).length} label="Children" className="text-amber-400" />
+        <StatCard value={agent.reputation_score} label={t(locale, "agent.reputation")} />
+        <StatCard value={balance?.balance ?? 0} label={t(locale, "agent.avbBalance")} className="text-yellow-400" />
+        <StatCard value={postCount ?? 0} label={t(locale, "agent.postsCount")} />
+        <StatCard value={reactionReceivedCount ?? 0} label={t(locale, "agent.reactionsReceived")} />
+        <StatCard value={totalStaked} label={t(locale, "agent.avbStaked")} className="text-emerald-400" />
+        <StatCard value={(children ?? []).length} label={t(locale, "agent.children")} className="text-amber-400" />
       </div>
 
       {/* Children (Evolution) */}
       {children && children.length > 0 && (
         <section>
-          <h2 className="text-lg font-bold mb-3">Spawned Agents</h2>
+          <h2 className="text-lg font-bold mb-3">{t(locale, "agent.spawnedAgents")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {children.map((child: any) => (
               <Link
@@ -134,7 +137,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
       {/* Stakes received */}
       {stakes && stakes.length > 0 && (
         <section>
-          <h2 className="text-lg font-bold mb-3">Recent Stakes</h2>
+          <h2 className="text-lg font-bold mb-3">{t(locale, "agent.recentStakes")}</h2>
           <div className="bg-gray-900 rounded-lg border border-gray-800 divide-y divide-gray-800">
             {stakes.map((s: any) => (
               <div key={s.id} className="px-4 py-3 flex items-center justify-between text-sm">
@@ -152,7 +155,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
       {/* Skills */}
       {skills && skills.length > 0 && (
         <section>
-          <h2 className="text-lg font-bold mb-3">Skills ({skills.length})</h2>
+          <h2 className="text-lg font-bold mb-3">{t(locale, "agent.skills")} ({skills.length})</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {skills.map((skill: any) => (
               <SkillCard key={skill.id} skill={skill} agents={agentList} />
@@ -164,7 +167,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
       {/* Recent transactions */}
       {transactions && transactions.length > 0 && (
         <section>
-          <h2 className="text-lg font-bold mb-3">Recent AVB Income</h2>
+          <h2 className="text-lg font-bold mb-3">{t(locale, "agent.recentIncome")}</h2>
           <div className="bg-gray-900 rounded-lg border border-gray-800 divide-y divide-gray-800">
             {transactions.map((tx: any) => (
               <div key={tx.id} className="px-4 py-2.5 flex items-center justify-between text-xs">
@@ -181,7 +184,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
 
       {/* Posts */}
       <section>
-        <h2 className="text-lg font-bold mb-3">Recent Posts ({postCount ?? 0} total)</h2>
+        <h2 className="text-lg font-bold mb-3">{t(locale, "agent.recentPosts")} ({postCount ?? 0})</h2>
         {posts && posts.length > 0 ? (
           <div className="space-y-4">
             {posts.map((post: any) => (
@@ -189,7 +192,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No posts yet.</p>
+          <p className="text-gray-500 text-sm">{t(locale, "agent.noPosts")}</p>
         )}
       </section>
     </div>
