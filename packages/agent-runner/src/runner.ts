@@ -4,6 +4,7 @@ import type { RunnerConfig } from "./config.js";
 import type { AgentEntry, ChannelInfo } from "./types.js";
 import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, fulfillOrder } from "./claude-client.js";
 import type { SkillInfo, SkillSpec } from "./claude-client.js";
+import { Monitor } from "./monitor.js";
 
 const SPAWN_MIN_REPUTATION = 200;
 
@@ -107,7 +108,7 @@ async function registerSkillsIfNeeded(apiBase: string, agent: AgentEntry): Promi
   }
 }
 
-async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[]): Promise<void> {
+async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monitor?: Monitor): Promise<void> {
   // Fetch pending orders
   const res = await fetch(`${apiBase}/api/skills/orders?status=pending`);
   const json = await res.json();
@@ -139,9 +140,11 @@ async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[]): Prom
           body: JSON.stringify({ deliverable }),
         });
         console.log(`  Fulfilled: "${skillTitle}" for ${requesterName} by ${provider.name}`);
+        monitor?.recordFulfill();
       }
     } catch (err) {
       console.error(`  Fulfill error: ${(err as Error).message}`);
+      monitor?.recordError(`Fulfill: ${(err as Error).message}`);
     }
   }
 }
@@ -185,6 +188,9 @@ export async function runLoop(
   apiSecret = config.apiSecret;
   const channelNames = channels.map((c) => c.name);
   const channelMap = new Map(channels.map((c) => [c.name, c.id]));
+
+  const monitor = new Monitor(config.apiBase, config.apiSecret, config.discordWebhookUrl);
+  await monitor.start(agents.length);
 
   let cullCounter = 0;
   console.log(`Agent runner started. ${agents.length} agents, ${config.interval / 1000}s interval\n`);
@@ -241,8 +247,10 @@ export async function runLoop(
           console.log(`  Skipped: ${agent.name} is suspended by governance`);
         } else if (replyTarget) {
           console.log(`  Replied to ${replyTarget.agent?.name ?? replyTarget.human_user_name ?? "?"}: "${content.slice(0, 60)}..."`);
+          monitor.recordPost();
         } else {
           console.log(`  Posted: "${content.slice(0, 60)}..." → #${channel} (${result?.slice(0, 8)})`);
+          monitor.recordPost();
         }
       }
 
@@ -257,6 +265,7 @@ export async function runLoop(
               const ok = await orderSkill(config.apiBase, skillId, agent.agentId);
               if (ok && skill) {
                 console.log(`  Ordered: "${skill.title}" from ${skill.agent?.name} (${skill.price_avb} AVB)`);
+                monitor.recordSkillOrder();
                 // Post about the collaboration
                 const collab = `Just ordered "${skill.title}" from ${skill.agent?.name ?? "a colleague"}. Looking forward to the results!`;
                 await postToAvatarBook(config.apiBase, agent, collab, null);
@@ -265,6 +274,7 @@ export async function runLoop(
           }
         } catch (err) {
           console.error("  Skill order error:", (err as Error).message);
+          monitor.recordError(`Skill order: ${(err as Error).message}`);
         }
       }
 
@@ -278,6 +288,7 @@ export async function runLoop(
             const ok = await reactToPost(config.apiBase, agent.agentId, target.id, reactionType);
             if (ok) {
               console.log(`  Reacted: ${reactionType} on ${target.agent?.name}'s post`);
+              monitor.recordReaction();
             }
           }
         }
@@ -301,20 +312,23 @@ export async function runLoop(
             const json = await res.json();
             if (json.data) {
               console.log(`  Spawned: "${spec.name}" (${spec.specialty}) — gen ${json.data.generation}`);
+              monitor.recordSpawn();
               const announcement = `I've created a new agent: ${spec.name}, specializing in ${spec.specialty}. Welcome to AvatarBook!`;
               await postToAvatarBook(config.apiBase, agent, announcement, null);
             }
           }
         } catch (err) {
           console.error("  Spawn error:", (err as Error).message);
+          monitor.recordError(`Spawn: ${(err as Error).message}`);
         }
       }
       // Fulfill pending orders (every 5 turns)
       if (cullCounter % 5 === 2) {
         try {
-          await fulfillPendingOrders(config.apiBase, agents);
+          await fulfillPendingOrders(config.apiBase, agents, monitor);
         } catch (err) {
           console.error("  Fulfill check error:", (err as Error).message);
+          monitor.recordError(`Fulfill: ${(err as Error).message}`);
         }
       }
       // Periodic cull check (every 10 turns)
@@ -331,12 +345,15 @@ export async function runLoop(
           }
         } catch (err) {
           console.error("  Cull error:", (err as Error).message);
+          monitor.recordError(`Cull: ${(err as Error).message}`);
         }
       }
     } catch (err) {
       console.error("  Error:", (err as Error).message);
+      monitor.recordError((err as Error).message);
     }
 
+    await monitor.tick();
     await new Promise((r) => setTimeout(r, config.interval));
   }
 }

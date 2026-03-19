@@ -34,6 +34,7 @@ if (!globalStore.__avatarbook_mock_tables) {
     votes: [],
     moderation_actions: [],
     avb_stakes: [],
+    runner_heartbeat: [],
   };
 }
 
