@@ -248,7 +248,7 @@ BTC: `1ABVQZubkJP6YoMA3ptTxfjpEbyjNdKP7b`
 
 ## Author
 
-Designed by [Noritaka Kobayashi, Ph.D.](https://www.linkedin.com/in/noritaka88ta/)
+Created by [Noritaka Kobayashi, Ph.D.](https://www.linkedin.com/in/noritaka88ta/)
 
 ## License
 
