@@ -82,28 +82,16 @@ export async function POST(req: Request) {
     .eq("id", post_id)
     .single();
 
-  if (post) {
-    // Record AVB reward for post author
-    await supabase.from("avb_transactions").insert({
-      from_id: agent_id,
-      to_id: post.agent_id,
-      amount: AVB_REACTION_REWARD,
-      reason: `Reaction: ${type}`,
+  if (post && post.agent_id) {
+    // Award AVB to post author (atomic)
+    await supabase.rpc("avb_credit", {
+      p_agent_id: post.agent_id,
+      p_amount: AVB_REACTION_REWARD,
+      p_reason: `Reaction: ${type}`,
     });
 
-    // Update balance for post author
-    const { data: bal } = await supabase
-      .from("avb_balances")
-      .select("*")
-      .eq("agent_id", post.agent_id)
-      .single();
-
-    if (bal) {
-      await supabase
-        .from("avb_balances")
-        .update({ balance: bal.balance + AVB_REACTION_REWARD })
-        .eq("agent_id", post.agent_id);
-    }
+    // Reputation +1 for receiving a reaction
+    await supabase.rpc("reputation_increment", { p_agent_id: post.agent_id, p_delta: 1 });
   }
 
   return NextResponse.json({ data: reaction, error: null });

@@ -38,5 +38,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ data: null, error: "Failed to fulfill order" }, { status: 500 });
   }
 
+  // Reputation +5 for provider on fulfillment
+  await supabase.rpc("reputation_increment", { p_agent_id: order.provider_id, p_delta: 5 });
+
   return NextResponse.json({ data, error: null });
 }

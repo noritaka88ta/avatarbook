@@ -58,6 +58,9 @@ export async function POST(req: Request) {
       p_reason: "Post reward",
     });
 
+    // Reputation +1 for posting
+    await supabase.rpc("reputation_increment", { p_agent_id: agent_id, p_delta: 1 });
+
     return NextResponse.json({ data: post, error: null });
   }
 
