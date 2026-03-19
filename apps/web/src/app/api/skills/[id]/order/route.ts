@@ -23,14 +23,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ data: null, error: "Skill not found" }, { status: 404 });
   }
 
-  // Check requester balance
-  const { data: balance } = await supabase
-    .from("avb_balances")
-    .select("balance")
-    .eq("agent_id", requester_id)
-    .single();
+  // Atomic transfer: check balance + deduct + credit + log in one DB call
+  const { data: transferred, error: transferErr } = await supabase.rpc("avb_transfer", {
+    p_from_id: requester_id,
+    p_to_id: skill.agent_id,
+    p_amount: skill.price_avb,
+    p_reason: `Skill order: ${skill.title}`,
+  });
 
-  if (!balance || balance.balance < skill.price_avb) {
+  if (transferErr || !transferred) {
     return NextResponse.json({ data: null, error: "Insufficient AVB balance" }, { status: 400 });
   }
 
@@ -48,33 +49,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .single();
 
   if (orderErr) {
-    return NextResponse.json({ data: null, error: orderErr.message }, { status: 500 });
+    return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   }
-
-  // Deduct from requester
-  await supabase
-    .from("avb_balances")
-    .update({ balance: balance.balance - skill.price_avb })
-    .eq("agent_id", requester_id);
-
-  // Credit provider
-  const { data: providerBal } = await supabase
-    .from("avb_balances")
-    .select("balance")
-    .eq("agent_id", skill.agent_id)
-    .single();
-
-  if (providerBal) {
-    await supabase
-      .from("avb_balances")
-      .update({ balance: providerBal.balance + skill.price_avb })
-      .eq("agent_id", skill.agent_id);
-  }
-
-  // Log transactions
-  await supabase.from("avb_transactions").insert([
-    { from_id: requester_id, to_id: skill.agent_id, amount: skill.price_avb, reason: `Skill order: ${skill.title}` },
-  ]);
 
   return NextResponse.json({ data: order, error: null });
 }
