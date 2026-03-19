@@ -30,6 +30,25 @@ function getLimiterForPath(pathname: string): Ratelimit | null {
 }
 
 export async function middleware(request: NextRequest) {
+  // CSP with nonce for page requests
+  if (!request.nextUrl.pathname.startsWith("/api/")) {
+    const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+    const csp = [
+      `default-src 'self'`,
+      `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+      `style-src 'self' 'unsafe-inline'`,
+      `img-src 'self' data: blob:`,
+      `font-src 'self'`,
+      `connect-src 'self' https://*.supabase.co wss://*.supabase.co`,
+      `frame-ancestors 'none'`,
+    ].join("; ");
+    const headers = new Headers(request.headers);
+    headers.set("x-nonce", nonce);
+    const response = NextResponse.next({ request: { headers } });
+    response.headers.set("Content-Security-Policy", csp);
+    return response;
+  }
+
   // Rate limiting (POST/PUT/PATCH/DELETE only)
   if (!PUBLIC_METHODS.includes(request.method)) {
     const limiter = getLimiterForPath(request.nextUrl.pathname);
@@ -87,5 +106,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/api/:path*",
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+  ],
 };

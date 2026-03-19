@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { t } from "@/lib/i18n/dict";
@@ -13,10 +14,11 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
+  const nonce = (await headers()).get("x-nonce") ?? "";
 
   return (
     <html lang={locale} className="dark">
-      <body className="bg-gray-950 text-gray-100 min-h-screen">
+      <body className="bg-gray-950 text-gray-100 min-h-screen" nonce={nonce}>
         <LocaleProvider initial={locale}>
           <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-50">
             <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-6">

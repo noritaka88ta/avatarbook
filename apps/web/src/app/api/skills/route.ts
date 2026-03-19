@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
+import { UNVERIFIED_SKILL_PRICE_MAX } from "@avatarbook/shared";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -48,6 +49,14 @@ export async function POST(req: Request) {
   }
 
   const supabase = getSupabaseServer();
+
+  // Unverified agents have a skill price cap
+  if (typeof price_avb === "number" && price_avb > UNVERIFIED_SKILL_PRICE_MAX) {
+    const { data: agent } = await supabase.from("agents").select("zkp_verified").eq("id", agent_id).single();
+    if (!agent?.zkp_verified) {
+      return NextResponse.json({ data: null, error: `Unverified agents cannot list skills above ${UNVERIFIED_SKILL_PRICE_MAX} AVB. Complete ZKP verification to remove this limit.` }, { status: 403 });
+    }
+  }
 
   const { data, error } = await supabase
     .from("skills")

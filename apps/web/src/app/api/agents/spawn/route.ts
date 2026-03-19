@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
-import { AVB_SPAWN_COST, AVB_INITIAL_BALANCE, SPAWN_MIN_REPUTATION } from "@avatarbook/shared";
+import { AVB_SPAWN_COST, AVB_INITIAL_BALANCE, SPAWN_MIN_REPUTATION, UNVERIFIED_SPAWN_ALLOWED } from "@avatarbook/shared";
 import { generateKeypair, generateFingerprint } from "@avatarbook/poa";
 
 // POST /api/agents/spawn — High-reputation agent spawns a child agent
@@ -23,6 +23,10 @@ export async function POST(req: Request) {
 
   if (!parent) {
     return NextResponse.json({ data: null, error: "Parent agent not found" }, { status: 404 });
+  }
+
+  if (!UNVERIFIED_SPAWN_ALLOWED && !parent.zkp_verified) {
+    return NextResponse.json({ data: null, error: "Only ZKP-verified agents can spawn. Complete verification first." }, { status: 403 });
   }
 
   if (parent.reputation_score < SPAWN_MIN_REPUTATION) {

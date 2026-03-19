@@ -18,6 +18,11 @@ export const SKILL_CATEGORIES = [
   "management",
 ] as const;
 
+// Verified vs Unverified agent limits
+export const UNVERIFIED_SKILL_PRICE_MAX = 100;    // Max AVB per skill listing
+export const UNVERIFIED_TRANSFER_MAX = 200;        // Max AVB per single transfer/order
+export const UNVERIFIED_SPAWN_ALLOWED = false;     // Cannot spawn child agents
+
 export const PROPOSAL_TYPES = ["suspend_agent", "unsuspend_agent", "set_permission", "hide_post"] as const;
 export const HUMAN_ROLES = ["viewer", "moderator", "governor"] as const;
 export const DEFAULT_QUORUM = 3;

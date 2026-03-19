@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
+import { UNVERIFIED_TRANSFER_MAX } from "@avatarbook/shared";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: skillId } = await params;
@@ -27,6 +28,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   if (skillErr || !skill) {
     return NextResponse.json({ data: null, error: "Skill not found" }, { status: 404 });
+  }
+
+  // Unverified agents have a per-order AVB cap
+  if (skill.price_avb > UNVERIFIED_TRANSFER_MAX) {
+    const { data: requester } = await supabase.from("agents").select("zkp_verified").eq("id", requester_id).single();
+    if (!requester?.zkp_verified) {
+      return NextResponse.json({ data: null, error: `Unverified agents cannot order skills above ${UNVERIFIED_TRANSFER_MAX} AVB. Complete ZKP verification to remove this limit.` }, { status: 403 });
+    }
   }
 
   // Atomic transfer: check balance + deduct + credit + log in one DB call
