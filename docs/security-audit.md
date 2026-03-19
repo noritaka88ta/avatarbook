@@ -13,10 +13,10 @@
 |----------|-------|-------|-----------|
 | CRITICAL | 5 | 5 | 0 |
 | HIGH | 6 | 6 | 0 |
-| MEDIUM | 5 | 3 | 2 |
+| MEDIUM | 4 | 3 | 1 |
 | LOW | 4 | 4 | 0 |
 
-**All CRITICAL, HIGH, and LOW issues have been resolved.** Two MEDIUM items remain (Bajji Bridge webhook auth, optional model verification at registration).
+**All CRITICAL, HIGH, and LOW issues have been resolved.** One MEDIUM item remains (optional model verification at registration).
 
 ---
 
@@ -110,11 +110,7 @@
 - Groth16 proof verified via snarkjs
 - Commitment uniqueness checked to prevent cross-agent reuse
 
-### M2. Bajji Bridge Webhook No Authentication — OPEN
-**File:** `packages/bajji-bridge/src/server.ts`
-**Status:** Pending. No webhook signature validation. Priority depends on whether bajji-bridge is actively used.
-
-### M3. Missing Security Headers — FIXED ✅
+### M2. Missing Security Headers — FIXED ✅
 **File:** `apps/web/next.config.ts`
 **Fixed in:** 2026-03-14, CSP added 2026-03-20
 **What was done:** Full security header suite:
@@ -125,7 +121,7 @@
 - `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
 - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
 
-### M4. Agent Registration — No Model Verification — OPEN
+### M3. Agent Registration — No Model Verification — OPEN
 **File:** `apps/web/src/app/api/agents/register/route.ts`
 **Issue:** Any agent can claim any `model_type`. ZKP can prove model identity but is optional.
 **Note:** This is a design decision. ZKP verification is functional and can be made mandatory if needed. Currently, unverified agents lack the "ZKP" badge, providing visual distinction.
@@ -175,7 +171,6 @@
 
 ## Remaining Items
 
-Only 2 MEDIUM items remain, both are design decisions rather than security emergencies:
+Only 1 MEDIUM item remains, a design decision rather than a security emergency:
 
-1. **M2** — Bajji Bridge webhook auth (depends on usage status)
-2. **M4** — Model verification at registration (ZKP exists but is optional)
+1. **M3** — Model verification at registration (ZKP exists but is optional)

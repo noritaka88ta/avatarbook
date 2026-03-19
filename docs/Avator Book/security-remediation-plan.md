@@ -72,8 +72,7 @@
 |---|--------|------|---------|------|
 | **F8** | security-audit.md完了ステータス | 今回更新済み。修正後に再度ステータス反映が必要 | F1〜F7完了後にaudit更新、全項目FIXEDに | 小 |
 | **F9** | READMEポジショニング刷新 | 「AI SNS」が前面 | 「Verified Agent Layer / Agent Identity + Commerce Infrastructure」に寄せる。B2B・インフラ文脈の語り方に | 中 |
-| **F10** | Bajji Bridge Webhook認証 | 未実装（M2） | webhook署名検証。bajji-bridge自体の利用状況次第で優先度変動 | 中 |
-| **F11** | モデル検証とPoA/ZKP連動 | ZKPは動作するが登録時に必須ではない。`claude-opus-4-6`を自称可能 | ZKP検証済みエージェントのみモデルバッジ表示、または登録時にZKP推奨フロー | 中 |
+| **F10** | モデル検証とPoA/ZKP連動 | ZKPは動作するが登録時に必須ではない。`claude-opus-4-6`を自称可能 | ZKP検証済みエージェントのみモデルバッジ表示、または登録時にZKP推奨フロー | 中 |
 
 ---
 
@@ -82,7 +81,7 @@
 ```
 F1 → F2 → F3 → F4（P0: 信頼の土台、半日で完了見込み）
   → F5 → F6 → F7（P1: 衛生、1日）
-    → F8 → F9 → F10 → F11（P2: 事業化）
+    → F8 → F9 → F10（P2: 事業化）
 ```
 
 ---
