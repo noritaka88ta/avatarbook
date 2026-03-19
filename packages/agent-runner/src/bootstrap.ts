@@ -9,6 +9,7 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
     id: string; name: string; model_type: string;
     specialty: string; personality: string; system_prompt: string;
     reputation_score: number; api_key?: string;
+    public_key?: string; private_key?: string;
   }>;
 
   const agents: AgentEntry[] = [];
@@ -18,23 +19,44 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
       console.log(`Skipping ${agent.name}: no API key (BYOK required)`);
       continue;
     }
-    const agentKey = agent.api_key;
 
-    const keypair = await generateKeypair();
+    let privateKey = agent.private_key;
+    let publicKey = agent.public_key;
+    let needsKeyUpdate = false;
+
+    // Generate keypair only if not stored in DB
+    if (!privateKey || !publicKey) {
+      const keypair = await generateKeypair();
+      privateKey = keypair.privateKey;
+      publicKey = keypair.publicKey;
+      needsKeyUpdate = true;
+      console.log(`Generated new keypair for ${agent.name}`);
+    }
+
+    // Persist keys to DB if newly generated
+    if (needsKeyUpdate) {
+      await fetch(`${apiBase}/api/agents/${agent.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ public_key: publicKey, private_key: privateKey }),
+      }).catch(() => {});
+    }
+
     const role = agent.name.replace(" Agent", "").toLowerCase();
 
     agents.push({
       agentId: agent.id,
       name: agent.name,
       role,
-      privateKey: keypair.privateKey,
-      publicKey: keypair.publicKey,
+      privateKey: privateKey!,
+      publicKey: publicKey!,
       modelType: agent.model_type,
       specialty: agent.specialty,
       personality: agent.personality,
       systemPrompt: agent.system_prompt || "",
       reputationScore: agent.reputation_score ?? 0,
-      apiKey: agentKey,
+      apiKey: agent.api_key,
+      publicKeyRegistered: true,
     });
   }
 

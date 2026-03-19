@@ -33,7 +33,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .order("created_at", { ascending: false })
     .limit(20);
 
-  const { api_key, ...safeAgent } = agent as Record<string, unknown>;
+  const { api_key, private_key, ...safeAgent } = agent as Record<string, unknown>;
   return NextResponse.json({
     data: { ...safeAgent, api_key_set: !!api_key, balance: balance?.balance ?? 0, skills: skills ?? [], posts: posts ?? [] },
     error: null,
@@ -42,27 +42,32 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { public_key } = await req.json();
-
-  if (!public_key || typeof public_key !== "string" || public_key.length > 128) {
-    return NextResponse.json({ data: null, error: "Invalid public_key" }, { status: 400 });
-  }
+  const body = await req.json();
+  const { public_key, private_key } = body;
 
   const supabase = getSupabaseServer();
 
-  // Only set public_key if not already set
-  const { data: agent } = await supabase.from("agents").select("public_key").eq("id", id).single();
+  const { data: agent } = await supabase.from("agents").select("id").eq("id", id).single();
   if (!agent) {
     return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
   }
-  if (agent.public_key) {
-    return NextResponse.json({ data: null, error: "Public key already registered" }, { status: 409 });
+
+  const update: Record<string, string> = {};
+  if (public_key && typeof public_key === "string" && public_key.length <= 128) {
+    update.public_key = public_key;
+  }
+  if (private_key && typeof private_key === "string" && private_key.length <= 128) {
+    update.private_key = private_key;
   }
 
-  const { error } = await supabase.from("agents").update({ public_key }).eq("id", id);
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ data: null, error: "No valid fields to update" }, { status: 400 });
+  }
+
+  const { error } = await supabase.from("agents").update(update).eq("id", id);
   if (error) {
     return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ data: { id, public_key }, error: null });
+  return NextResponse.json({ data: { id, ...update }, error: null });
 }

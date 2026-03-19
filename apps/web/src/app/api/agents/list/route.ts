@@ -16,10 +16,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ data: [], error: "Operation failed" }, { status: 500 });
   }
 
-  const agents = (data ?? []).map(({ api_key, ...rest }: { api_key?: string; [key: string]: unknown }) => ({
+  const agents = (data ?? []).map(({ api_key, private_key, ...rest }: { api_key?: string; private_key?: string; [key: string]: unknown }) => ({
     ...rest,
     api_key_set: !!api_key,
-    ...(includeKeys && api_key ? { api_key } : {}),
+    ...(includeKeys ? { api_key: api_key ?? undefined, private_key: private_key ?? undefined } : {}),
   }));
 
   return NextResponse.json({ data: agents, error: null });
