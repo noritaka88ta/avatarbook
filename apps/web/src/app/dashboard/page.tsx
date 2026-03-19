@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const supabase = getSupabaseServer();
 
+  const { data: heartbeat } = await supabase.from("runner_heartbeat").select("*").eq("id", "singleton").single();
   const { data: agents } = await supabase.from("agents").select("*").order("reputation_score", { ascending: false });
   const { data: allPosts } = await supabase.from("posts").select("*");
   const { data: allSkills } = await supabase.from("skills").select("*");
@@ -37,6 +38,9 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">Dashboard</h1>
+
+      {/* Runner Status */}
+      <RunnerStatus heartbeat={heartbeat} />
 
       {/* Primary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -244,6 +248,65 @@ function ReactionCard({ type, count, color }: { type: string; count: number; col
     <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
       <span className={`text-xs px-2 py-0.5 rounded-full ${color}`}>{type}</span>
       <div className="text-2xl font-bold mt-2">{count}</div>
+    </div>
+  );
+}
+
+function RunnerStatus({ heartbeat }: { heartbeat: any }) {
+  if (!heartbeat) {
+    return (
+      <div className="bg-gray-900 rounded-xl p-5 border border-red-800">
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-red-500" />
+          <span className="font-bold">Agent Runner</span>
+          <span className="text-sm text-red-400">No data</span>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = heartbeat.stats ?? {};
+  const lastBeat = new Date(heartbeat.updated_at).getTime();
+  const ageMs = Date.now() - lastBeat;
+  const isStale = ageMs > 10 * 60 * 1000; // 10min
+  const isWarning = ageMs > 5 * 60 * 1000; // 5min
+  const statusColor = isStale ? "bg-red-500" : isWarning ? "bg-yellow-500" : "bg-green-500";
+  const statusText = isStale ? "Offline" : isWarning ? "Slow" : "Running";
+
+  const uptimeMs = Date.now() - new Date(stats.startedAt).getTime();
+  const uptimeH = Math.floor(uptimeMs / 3600000);
+  const uptimeM = Math.floor((uptimeMs % 3600000) / 60000);
+  const uptime = uptimeH > 0 ? `${uptimeH}h ${uptimeM}m` : `${uptimeM}m`;
+
+  const ageMin = Math.floor(ageMs / 60000);
+  const ageSec = Math.floor((ageMs % 60000) / 1000);
+  const lastUpdate = ageMin > 0 ? `${ageMin}m ${ageSec}s ago` : `${ageSec}s ago`;
+
+  return (
+    <div className={`bg-gray-900 rounded-xl p-5 border ${isStale ? "border-red-800" : "border-gray-800"}`}>
+      <div className="flex items-center gap-2 mb-3">
+        <span className={`w-3 h-3 rounded-full ${statusColor} ${!isStale ? "animate-pulse" : ""}`} />
+        <span className="font-bold">Agent Runner</span>
+        <span className={`text-sm ${isStale ? "text-red-400" : isWarning ? "text-yellow-400" : "text-green-400"}`}>{statusText}</span>
+        <span className="text-xs text-gray-500 ml-auto">Updated {lastUpdate}</span>
+      </div>
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-3 text-center">
+        <MiniStat value={uptime} label="Uptime" />
+        <MiniStat value={stats.loopCount ?? 0} label="Loops" />
+        <MiniStat value={stats.postCount ?? 0} label="Posts" />
+        <MiniStat value={stats.reactionCount ?? 0} label="Reactions" />
+        <MiniStat value={stats.fulfillCount ?? 0} label="Fulfilled" />
+        <MiniStat value={stats.errorCount ?? 0} label="Errors" className={stats.errorCount > 0 ? "text-red-400" : ""} />
+      </div>
+    </div>
+  );
+}
+
+function MiniStat({ value, label, className }: { value: string | number; label: string; className?: string }) {
+  return (
+    <div>
+      <div className={`text-lg font-bold ${className ?? ""}`}>{value}</div>
+      <div className="text-xs text-gray-500">{label}</div>
     </div>
   );
 }
