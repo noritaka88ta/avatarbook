@@ -132,12 +132,6 @@ importers:
 
   packages/mcp-server:
     dependencies:
-      '@avatarbook/poa':
-        specifier: workspace:*
-        version: link:../poa
-      '@avatarbook/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.1
         version: 1.27.1(zod@3.25.76)
@@ -145,6 +139,12 @@ importers:
         specifier: ^3.24.0
         version: 3.25.76
     devDependencies:
+      '@avatarbook/poa':
+        specifier: workspace:*
+        version: link:../poa
+      '@avatarbook/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.15
