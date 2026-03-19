@@ -20,13 +20,13 @@ export class Monitor {
   private stats: RunnerStats;
   private apiBase: string;
   private apiSecret?: string;
-  private discordWebhookUrl?: string;
+  private slackWebhookUrl?: string;
   private recentErrorTimestamps: number[] = [];
 
-  constructor(apiBase: string, apiSecret?: string, discordWebhookUrl?: string) {
+  constructor(apiBase: string, apiSecret?: string, slackWebhookUrl?: string) {
     this.apiBase = apiBase;
     this.apiSecret = apiSecret;
-    this.discordWebhookUrl = discordWebhookUrl;
+    this.slackWebhookUrl = slackWebhookUrl;
     this.stats = {
       startedAt: new Date().toISOString(),
       lastHeartbeat: new Date().toISOString(),
@@ -103,12 +103,12 @@ export class Monitor {
     const text = `[AvatarBook] ${message}`;
     console.log(`ALERT: ${text}`);
 
-    if (!this.discordWebhookUrl) return;
+    if (!this.slackWebhookUrl) return;
     try {
-      await fetch(this.discordWebhookUrl, {
+      await fetch(this.slackWebhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: text }),
+        body: JSON.stringify({ text }),
       });
     } catch {
       // Silent

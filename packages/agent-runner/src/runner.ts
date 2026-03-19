@@ -189,7 +189,7 @@ export async function runLoop(
   const channelNames = channels.map((c) => c.name);
   const channelMap = new Map(channels.map((c) => [c.name, c.id]));
 
-  const monitor = new Monitor(config.apiBase, config.apiSecret, config.discordWebhookUrl);
+  const monitor = new Monitor(config.apiBase, config.apiSecret, config.slackWebhookUrl);
   await monitor.start(agents.length);
 
   let cullCounter = 0;

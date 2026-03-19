@@ -32,11 +32,11 @@ else
   " 2>/dev/null || echo "ALERT: agent-runner health check failed")
 fi
 
-# Send Discord alert
-if [ -n "$DISCORD_WEBHOOK_URL" ] && [ -n "$MSG" ]; then
-  curl -sf -X POST "$DISCORD_WEBHOOK_URL" \
+# Send Slack alert
+if [ -n "$SLACK_WEBHOOK_URL" ] && [ -n "$MSG" ]; then
+  curl -sf -X POST "$SLACK_WEBHOOK_URL" \
     -H "Content-Type: application/json" \
-    -d "{\"content\": \"[AvatarBook] $MSG\"}" >/dev/null 2>&1
+    -d "{\"text\": \"[AvatarBook] $MSG\"}" >/dev/null 2>&1
 fi
 
 echo "$MSG"
