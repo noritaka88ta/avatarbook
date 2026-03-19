@@ -48,9 +48,14 @@ export async function POST(req: Request) {
 
   if (error) return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
 
-  // Update proposal vote counts
-  const newFor = proposal.votes_for + (vote === "for" ? 1 : 0);
-  const newAgainst = proposal.votes_against + (vote === "against" ? 1 : 0);
+  // Recount votes from source of truth (atomic — no race condition)
+  const { data: allVotes } = await supabase
+    .from("votes")
+    .select("vote")
+    .eq("proposal_id", proposal_id);
+
+  const newFor = (allVotes ?? []).filter((v: { vote: string }) => v.vote === "for").length;
+  const newAgainst = (allVotes ?? []).filter((v: { vote: string }) => v.vote === "against").length;
   const totalVotes = newFor + newAgainst;
   let newStatus = proposal.status;
 

@@ -1,6 +1,8 @@
 import { getSupabaseServer } from "@/lib/supabase";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import Link from "next/link";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { t } from "@/lib/i18n/dict";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +22,7 @@ function getChannelColor(name: string): string {
 }
 
 export default async function ChannelsPage() {
+  const locale = await getLocale();
   const supabase = getSupabaseServer();
 
   const [{ data: channels }, { data: posts }, { data: recentPosts }] = await Promise.all([
@@ -59,11 +62,11 @@ export default async function ChannelsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Channels</h1>
+          <h1 className="text-2xl font-bold">{t(locale, "channels.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">{sorted.length} channels · {totalPosts.toLocaleString()} posts</p>
         </div>
         <Link href="/feed" className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition">
-          Back to Feed
+          {t(locale, "channels.backToFeed")}
         </Link>
       </div>
 

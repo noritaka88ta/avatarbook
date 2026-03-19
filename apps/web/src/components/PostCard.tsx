@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Post } from "@avatarbook/shared";
 import { ReactionBar } from "./ReactionBar";
 import { AgentAvatar } from "./AgentAvatar";
+import { useT } from "@/lib/i18n/context";
 
 interface PostCardProps {
   post: Post;
@@ -13,6 +14,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, onChannelClick, onReply, depth = 0 }: PostCardProps) {
+  const t = useT();
   const agent = post.agent;
   const isHuman = !!post.human_user_name;
   const authorName = isHuman ? post.human_user_name : (agent?.name ?? "Unknown Agent");
@@ -35,7 +37,7 @@ export function PostCard({ post, onChannelClick, onReply, depth = 0 }: PostCardP
           <div className="flex-1 min-w-0">
             <span className="font-medium text-sm">{authorName}</span>
             {isHuman ? (
-              <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-emerald-900/50 text-emerald-400">Human</span>
+              <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-emerald-900/50 text-emerald-400">{t("post.human")}</span>
             ) : agent?.model_type ? (
               <span className="ml-2 text-xs text-gray-500">{agent.model_type}</span>
             ) : null}
@@ -43,13 +45,13 @@ export function PostCard({ post, onChannelClick, onReply, depth = 0 }: PostCardP
           {/* Verification badges (agent only) */}
           {!isHuman && (
             agent?.zkp_verified ? (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-violet-900 text-violet-300" title="Zero-Knowledge Proof Verified">ZKP</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-violet-900 text-violet-300" title="Zero-Knowledge Proof Verified">{t("post.zkp")}</span>
             ) : post.signature_valid === true ? (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300" title="PoA Verified">Verified</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300" title="PoA Verified">{t("post.verified")}</span>
             ) : post.signature_valid === false ? (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-red-900 text-red-300">Invalid Sig</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-red-900 text-red-300">{t("post.invalidSig")}</span>
             ) : post.signature ? (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-900 text-yellow-300">Unverified</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-900 text-yellow-300">{t("post.unverified")}</span>
             ) : null
           )}
         </div>
@@ -80,7 +82,7 @@ export function PostCard({ post, onChannelClick, onReply, depth = 0 }: PostCardP
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
               </svg>
-              {post.reply_count ? `${post.reply_count}` : "Reply"}
+              {post.reply_count ? `${post.reply_count}` : t("post.reply")}
             </button>
             <ReactionBar postId={post.id} />
           </div>
@@ -91,6 +93,7 @@ export function PostCard({ post, onChannelClick, onReply, depth = 0 }: PostCardP
 }
 
 export function ThreadView({ post, onChannelClick, onReply }: { post: Post; onChannelClick?: (channelId: string) => void; onReply?: (postId: string) => void }) {
+  const t = useT();
   const [replies, setReplies] = useState<Post[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -119,7 +122,7 @@ export function ThreadView({ post, onChannelClick, onReply }: { post: Post; onCh
           onClick={toggleReplies}
           className="ml-4 mt-1 text-xs text-blue-400 hover:text-blue-300 transition"
         >
-          {loading ? "Loading..." : expanded ? "Hide replies" : `Show ${post.reply_count} ${post.reply_count === 1 ? "reply" : "replies"}`}
+          {loading ? "Loading..." : expanded ? t("post.hideReplies") : `${t("post.showReplies")} (${post.reply_count})`}
         </button>
       )}
       {expanded && replies.length > 0 && (

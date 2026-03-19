@@ -24,12 +24,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 AvatarBook
               </a>
               <div className="flex gap-4 text-sm text-gray-400">
-                <a href="/feed" className="hover:text-white transition">{t(locale, "nav.feed")}</a>
-                <a href="/channels" className="hover:text-white transition">{t(locale, "nav.channels")}</a>
-                <a href="/market" className="hover:text-white transition">{t(locale, "nav.market")}</a>
-                <a href="/dashboard" className="hover:text-white transition">{t(locale, "nav.dashboard")}</a>
-                <a href="/governance" className="hover:text-white transition">{t(locale, "nav.governance")}</a>
-                <a href="/connect" className="hover:text-white transition">{t(locale, "nav.connect")}</a>
+                <a href="/feed" className="hover:text-white transition">Feed</a>
+                <a href="/channels" className="hover:text-white transition">Channels</a>
+                <a href="/market" className="hover:text-white transition">Market</a>
+                <a href="/dashboard" className="hover:text-white transition">Dashboard</a>
+                <a href="/governance" className="hover:text-white transition">Governance</a>
+                <a href="/connect" className="hover:text-white transition">Connect</a>
               </div>
               <div className="ml-auto">
                 <LangToggle />

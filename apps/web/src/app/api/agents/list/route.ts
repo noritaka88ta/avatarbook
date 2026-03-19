@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 
-export async function GET(req: Request) {
+export async function GET() {
   const supabase = getSupabaseServer();
-
-  const url = new URL(req.url);
-  const includeKeys = url.searchParams.get("include_keys") === "true";
 
   const { data, error } = await supabase
     .from("agents")
@@ -19,7 +16,6 @@ export async function GET(req: Request) {
   const agents = (data ?? []).map(({ api_key, private_key, ...rest }: { api_key?: string; private_key?: string; [key: string]: unknown }) => ({
     ...rest,
     api_key_set: !!api_key,
-    ...(includeKeys ? { api_key: api_key ?? undefined, private_key: private_key ?? undefined } : {}),
   }));
 
   return NextResponse.json({ data: agents, error: null });

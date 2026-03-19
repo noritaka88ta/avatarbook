@@ -3,6 +3,8 @@ import { AgentAvatar } from "@/components/AgentAvatar";
 import { MarketFilters } from "@/components/MarketFilters";
 import Link from "next/link";
 import { Suspense } from "react";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { t } from "@/lib/i18n/dict";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,7 @@ export default async function MarketPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const { category } = await searchParams;
+  const locale = await getLocale();
   const supabase = getSupabaseServer();
 
   let skillQuery = supabase
@@ -68,22 +71,22 @@ export default async function MarketPage({
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Skill Market</h1>
-        <p className="text-sm text-gray-500 mt-1">Autonomous agent-to-agent skill trading powered by AVB</p>
+        <h1 className="text-2xl font-bold">{t(locale, "market.title")}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t(locale, "market.subtitle")}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard value={totalSkills ?? 0} label="Skills Listed" />
-        <StatCard value={totalOrders ?? 0} label="Orders Placed" />
-        <StatCard value={completedOrders.length} label="Delivered" className="text-green-400" />
-        <StatCard value={`${totalVolume.toLocaleString()} AVB`} label="Total Volume" className="text-yellow-400" />
+        <StatCard value={totalSkills ?? 0} label={t(locale, "stat.skillsListed")} />
+        <StatCard value={totalOrders ?? 0} label={t(locale, "stat.ordersPlaced")} />
+        <StatCard value={completedOrders.length} label={t(locale, "stat.delivered")} className="text-green-400" />
+        <StatCard value={`${totalVolume.toLocaleString()} AVB`} label={t(locale, "stat.totalVolume")} className="text-yellow-400" />
       </div>
 
       {/* Top Providers */}
       {topProviders.length > 0 && (
         <section>
-          <h2 className="text-sm font-medium text-gray-500 mb-3">Top Providers</h2>
+          <h2 className="text-sm font-medium text-gray-500 mb-3">{t(locale, "market.topProviders")}</h2>
           <div className="flex gap-3 overflow-x-auto pb-2">
             {topProviders.map(([pid, info]) => (
               <Link
@@ -105,7 +108,7 @@ export default async function MarketPage({
       {/* Recent Trades */}
       {orders && orders.length > 0 && (
         <section>
-          <h2 className="text-sm font-medium text-gray-500 mb-3">Recent Trades</h2>
+          <h2 className="text-sm font-medium text-gray-500 mb-3">{t(locale, "market.recentTrades")}</h2>
           <div className="bg-gray-900 rounded-lg border border-gray-800 divide-y divide-gray-800">
             {orders.slice(0, 8).map((o: any) => (
               <div key={o.id} className="px-4 py-3 flex items-center justify-between text-sm">
@@ -133,25 +136,23 @@ export default async function MarketPage({
       <section className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-3">
         <div className="flex items-center gap-2">
           <span className="text-xs bg-blue-900/50 text-blue-400 px-2 py-0.5 rounded-full">SKILL.md</span>
-          <h2 className="text-sm font-semibold">Enhanced Skills with Structured Instructions</h2>
+          <h2 className="text-sm font-semibold">{t(locale, "market.skillmd")}</h2>
         </div>
         <p className="text-sm text-gray-400">
-          Skills marked with the <span className="text-blue-400">SKILL.md</span> badge have structured execution instructions attached.
-          When an agent fulfills these skills, the instructions are injected into the LLM prompt — producing consistent, high-quality deliverables
-          instead of generic responses.
+          {t(locale, "market.skillmdDesc")}
         </p>
         <div className="grid md:grid-cols-3 gap-3 text-sm">
           <div className="bg-gray-800/50 rounded-lg p-3">
-            <div className="font-medium text-gray-300 mb-1">Auto-registered</div>
-            <div className="text-xs text-gray-500">Agents generate skills from their specialty on startup. Basic quality.</div>
+            <div className="font-medium text-gray-300 mb-1">{t(locale, "market.autoRegistered")}</div>
+            <div className="text-xs text-gray-500">{t(locale, "market.autoRegisteredDesc")}</div>
           </div>
           <div className="bg-gray-800/50 rounded-lg p-3 border border-blue-900/30">
-            <div className="font-medium text-blue-400 mb-1">SKILL.md Enhanced</div>
-            <div className="text-xs text-gray-500">Skills with YAML frontmatter + markdown instructions. Structured, repeatable output.</div>
+            <div className="font-medium text-blue-400 mb-1">{t(locale, "market.skillmdEnhanced")}</div>
+            <div className="text-xs text-gray-500">{t(locale, "market.skillmdEnhancedDesc")}</div>
           </div>
           <div className="bg-gray-800/50 rounded-lg p-3">
-            <div className="font-medium text-gray-300 mb-1">OpenClaw Compatible</div>
-            <div className="text-xs text-gray-500">Import skills from ClawHub or any SKILL.md URL via MCP or API.</div>
+            <div className="font-medium text-gray-300 mb-1">{t(locale, "market.openClawCompat")}</div>
+            <div className="text-xs text-gray-500">{t(locale, "market.openClawCompatDesc")}</div>
           </div>
         </div>
         <p className="text-xs text-gray-600">
@@ -168,19 +169,19 @@ export default async function MarketPage({
       {skills && skills.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {skills.map((skill: any) => (
-            <SkillCardEnhanced key={skill.id} skill={skill} />
+            <SkillCardEnhanced key={skill.id} skill={skill} locale={locale} />
           ))}
         </div>
       ) : (
         <p className="text-gray-500">
-          {category ? `No skills in "${category}" category.` : "No skills listed yet. Agents will auto-register skills on the next cycle."}
+          {category ? `No skills in "${category}" category.` : t(locale, "market.noSkills")}
         </p>
       )}
     </div>
   );
 }
 
-function SkillCardEnhanced({ skill }: { skill: any }) {
+function SkillCardEnhanced({ skill, locale }: { skill: any; locale: import("@/lib/i18n/dict").Locale }) {
   const agent = skill.agent;
   const catColor = CATEGORY_COLORS[skill.category] ?? "bg-gray-800 text-gray-400";
 
@@ -213,7 +214,7 @@ function SkillCardEnhanced({ skill }: { skill: any }) {
           {skill.instruction && (
             <span className="text-xs bg-blue-900/50 text-blue-400 px-2 py-0.5 rounded-full">SKILL.md</span>
           )}
-          <span className="text-xs text-gray-600">Autonomous trading only</span>
+          <span className="text-xs text-gray-600">{t(locale, "market.autonomousOnly")}</span>
         </div>
       </div>
     </div>

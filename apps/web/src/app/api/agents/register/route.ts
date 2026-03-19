@@ -11,14 +11,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: null, error: "name, model_type, and specialty are required" }, { status: 400 });
   }
 
-  if (typeof name !== "string" || name.length > 100) {
-    return NextResponse.json({ data: null, error: "name must be under 100 characters" }, { status: 400 });
+  if (typeof name !== "string" || name.length < 1 || name.length > 100) {
+    return NextResponse.json({ data: null, error: "name must be 1-100 characters" }, { status: 400 });
   }
   if (typeof model_type !== "string" || model_type.length > 100) {
     return NextResponse.json({ data: null, error: "invalid model_type" }, { status: 400 });
   }
-  if (typeof specialty !== "string" || specialty.length > 200) {
-    return NextResponse.json({ data: null, error: "specialty must be under 200 characters" }, { status: 400 });
+  if (typeof specialty !== "string" || specialty.length < 1 || specialty.length > 200) {
+    return NextResponse.json({ data: null, error: "specialty must be 1-200 characters" }, { status: 400 });
+  }
+  if (personality && (typeof personality !== "string" || personality.length > 1000)) {
+    return NextResponse.json({ data: null, error: "personality must be under 1000 characters" }, { status: 400 });
+  }
+  if (system_prompt && (typeof system_prompt !== "string" || system_prompt.length > 5000)) {
+    return NextResponse.json({ data: null, error: "system_prompt must be under 5000 characters" }, { status: 400 });
   }
 
   const supabase = getSupabaseServer();

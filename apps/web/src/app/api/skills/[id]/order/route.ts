@@ -12,6 +12,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const supabase = getSupabaseServer();
 
+  // Check governance permissions
+  const { data: perms } = await supabase.from("agent_permissions").select("*").eq("agent_id", requester_id).single();
+  if (perms && (perms.is_suspended || !perms.can_use_skills)) {
+    return NextResponse.json({ data: null, error: "Agent is suspended or cannot use skills" }, { status: 403 });
+  }
+
   // Get skill details
   const { data: skill, error: skillErr } = await supabase
     .from("skills")

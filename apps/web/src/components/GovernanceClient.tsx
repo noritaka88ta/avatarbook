@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useT } from "@/lib/i18n/context";
 
 function authHeaders(): Record<string, string> {
   const secret = typeof window !== "undefined" ? localStorage.getItem("avatarbook_api_secret") : null;
@@ -18,6 +19,7 @@ interface ModAction { id: string; action: string; target_id: string; reason: str
 type Tab = "permissions" | "proposals" | "audit";
 
 export function GovernanceClient() {
+  const t = useT();
   const [tab, setTab] = useState<Tab>("permissions");
   const [agents, setAgents] = useState<Agent[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -114,55 +116,55 @@ export function GovernanceClient() {
   const agentName = (id: string) => agents.find(a => a.id === id)?.name ?? id.slice(0, 8);
   const currentUser = users.find(u => u.id === currentUserId);
 
-  const tabClass = (t: Tab) =>
-    `px-4 py-2 text-sm font-medium rounded-t ${tab === t ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`;
+  const tabClass = (tb: Tab) =>
+    `px-4 py-2 text-sm font-medium rounded-t ${tab === tb ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`;
 
   return (
     <div className="space-y-6">
       {/* API Secret */}
       <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
-        <div className="text-sm font-medium mb-1">Admin Secret</div>
+        <div className="text-sm font-medium mb-1">{t("gov.adminSecret")}</div>
         <p className="text-xs text-gray-500 mb-3">
-          Required for governance actions (voting, moderation, permission changes). Only platform administrators need this.
+          {t("gov.adminHelp")}
         </p>
         <div className="flex gap-2">
-          <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="Enter API secret" className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm flex-1" />
-          <button onClick={() => { localStorage.setItem("avatarbook_api_secret", apiSecret); setSecretSaved(true); }} className="px-4 py-1.5 text-sm rounded bg-blue-600 hover:bg-blue-500 transition">Set</button>
+          <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder={t("gov.enterSecret")} className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm flex-1" />
+          <button onClick={() => { localStorage.setItem("avatarbook_api_secret", apiSecret); setSecretSaved(true); }} className="px-4 py-1.5 text-sm rounded bg-blue-600 hover:bg-blue-500 transition">{t("gov.set")}</button>
         </div>
-        {secretSaved && <p className="text-xs text-green-400 mt-2">Saved to this browser. You can now create agents, post, and use governance features.</p>}
+        {secretSaved && <p className="text-xs text-green-400 mt-2">{t("gov.saved")}</p>}
       </div>
 
       {/* User selector */}
       <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
-        <div className="text-sm text-gray-400 mb-2">Governing as:</div>
+        <div className="text-sm text-gray-400 mb-2">{t("gov.governingAs")}</div>
         {currentUser ? (
           <div className="flex items-center gap-3">
             <span className="font-medium">{currentUser.display_name}</span>
             <span className="text-xs px-2 py-0.5 rounded bg-violet-900 text-violet-300">{currentUser.role}</span>
-            <button onClick={() => { setCurrentUserId(""); localStorage.removeItem("governance_user_id"); }} className="text-xs text-gray-500 hover:text-gray-300 ml-auto">Switch</button>
+            <button onClick={() => { setCurrentUserId(""); localStorage.removeItem("governance_user_id"); }} className="text-xs text-gray-500 hover:text-gray-300 ml-auto">{t("gov.switch")}</button>
           </div>
         ) : (
           <div className="flex gap-2">
             <select onChange={e => selectUser(e.target.value)} value="" className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm flex-1">
-              <option value="">Select user...</option>
+              <option value="">{t("gov.selectUser")}</option>
               {users.map(u => <option key={u.id} value={u.id}>{u.display_name} ({u.role})</option>)}
             </select>
-            <span className="text-gray-600 text-sm self-center">or</span>
-            <input value={userName} onChange={e => setUserName(e.target.value)} placeholder="New name" className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm w-40" />
-            <button onClick={createUser} className="bg-violet-600 hover:bg-violet-500 text-white text-sm px-3 py-1.5 rounded">Create</button>
+            <span className="text-gray-600 text-sm self-center">{t("gov.or")}</span>
+            <input value={userName} onChange={e => setUserName(e.target.value)} placeholder={t("gov.newName")} className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm w-40" />
+            <button onClick={createUser} className="bg-violet-600 hover:bg-violet-500 text-white text-sm px-3 py-1.5 rounded">{t("gov.create")}</button>
           </div>
         )}
       </div>
 
-      {!currentUserId && <p className="text-gray-500 text-sm">Select or create a user to manage governance.</p>}
+      {!currentUserId && <p className="text-gray-500 text-sm">{t("gov.selectOrCreate")}</p>}
 
       {currentUserId && (
         <>
           {/* Tabs */}
           <div className="flex gap-1 border-b border-gray-800">
-            <button className={tabClass("permissions")} onClick={() => setTab("permissions")}>Permissions</button>
-            <button className={tabClass("proposals")} onClick={() => setTab("proposals")}>Proposals</button>
-            <button className={tabClass("audit")} onClick={() => setTab("audit")}>Audit Log</button>
+            <button className={tabClass("permissions")} onClick={() => setTab("permissions")}>{t("gov.permissions")}</button>
+            <button className={tabClass("proposals")} onClick={() => setTab("proposals")}>{t("gov.proposals")}</button>
+            <button className={tabClass("audit")} onClick={() => setTab("audit")}>{t("gov.auditLog")}</button>
           </div>
 
           {/* Permissions tab */}
@@ -171,12 +173,12 @@ export function GovernanceClient() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-800/50">
                   <tr>
-                    <th className="text-left px-4 py-3 font-medium text-gray-400">Agent</th>
-                    <th className="px-4 py-3 font-medium text-gray-400">Post</th>
-                    <th className="px-4 py-3 font-medium text-gray-400">React</th>
-                    <th className="px-4 py-3 font-medium text-gray-400">Skills</th>
-                    <th className="px-4 py-3 font-medium text-gray-400">Status</th>
-                    <th className="px-4 py-3 font-medium text-gray-400">Actions</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-400">{t("gov.agent")}</th>
+                    <th className="px-4 py-3 font-medium text-gray-400">{t("gov.post")}</th>
+                    <th className="px-4 py-3 font-medium text-gray-400">{t("gov.react")}</th>
+                    <th className="px-4 py-3 font-medium text-gray-400">{t("gov.skills")}</th>
+                    <th className="px-4 py-3 font-medium text-gray-400">{t("gov.status")}</th>
+                    <th className="px-4 py-3 font-medium text-gray-400">{t("gov.actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800">
@@ -200,15 +202,15 @@ export function GovernanceClient() {
                         </td>
                         <td className="px-4 py-3 text-center">
                           {perm.is_suspended
-                            ? <span className="text-xs px-2 py-0.5 rounded bg-red-900 text-red-300">Suspended</span>
-                            : <span className="text-xs px-2 py-0.5 rounded bg-green-900 text-green-300">Active</span>}
+                            ? <span className="text-xs px-2 py-0.5 rounded bg-red-900 text-red-300">{t("gov.suspended")}</span>
+                            : <span className="text-xs px-2 py-0.5 rounded bg-green-900 text-green-300">{t("gov.active")}</span>}
                         </td>
                         <td className="px-4 py-3 text-center">
                           <button
                             onClick={() => suspendAgent(agent.id, !perm.is_suspended)}
                             className={`text-xs px-3 py-1 rounded ${perm.is_suspended ? "bg-green-800 hover:bg-green-700 text-green-200" : "bg-red-800 hover:bg-red-700 text-red-200"}`}
                           >
-                            {perm.is_suspended ? "Unsuspend" : "Suspend"}
+                            {perm.is_suspended ? t("gov.unsuspend") : t("gov.suspend")}
                           </button>
                         </td>
                       </tr>
@@ -224,22 +226,22 @@ export function GovernanceClient() {
             <div className="space-y-4">
               {/* Create proposal form */}
               <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 space-y-3">
-                <h3 className="font-medium text-sm text-gray-300">New Proposal</h3>
+                <h3 className="font-medium text-sm text-gray-300">{t("gov.newProposal")}</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <select value={proposalForm.type} onChange={e => setProposalForm(f => ({ ...f, type: e.target.value }))} className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm">
-                    <option value="suspend_agent">Suspend Agent</option>
-                    <option value="unsuspend_agent">Unsuspend Agent</option>
-                    <option value="set_permission">Set Permission</option>
-                    <option value="hide_post">Hide Post</option>
+                    <option value="suspend_agent">{t("gov.suspendAgent")}</option>
+                    <option value="unsuspend_agent">{t("gov.unsuspendAgent")}</option>
+                    <option value="set_permission">{t("gov.setPermission")}</option>
+                    <option value="hide_post">{t("gov.hidePost")}</option>
                   </select>
                   <select value={proposalForm.target_id} onChange={e => setProposalForm(f => ({ ...f, target_id: e.target.value }))} className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm">
-                    <option value="">Select target...</option>
+                    <option value="">{t("gov.selectTarget")}</option>
                     {agents.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                   </select>
                 </div>
-                <input value={proposalForm.title} onChange={e => setProposalForm(f => ({ ...f, title: e.target.value }))} placeholder="Proposal title" className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm" />
-                <textarea value={proposalForm.description} onChange={e => setProposalForm(f => ({ ...f, description: e.target.value }))} placeholder="Description (optional)" rows={2} className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm" />
-                <button onClick={createProposal} className="bg-violet-600 hover:bg-violet-500 text-white text-sm px-4 py-1.5 rounded">Submit Proposal</button>
+                <input value={proposalForm.title} onChange={e => setProposalForm(f => ({ ...f, title: e.target.value }))} placeholder={t("gov.proposalTitle")} className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm" />
+                <textarea value={proposalForm.description} onChange={e => setProposalForm(f => ({ ...f, description: e.target.value }))} placeholder={t("gov.descriptionOptional")} rows={2} className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm" />
+                <button onClick={createProposal} className="bg-violet-600 hover:bg-violet-500 text-white text-sm px-4 py-1.5 rounded">{t("gov.submitProposal")}</button>
               </div>
 
               {/* Proposals list */}
@@ -256,19 +258,19 @@ export function GovernanceClient() {
                   </div>
                   {p.description && <p className="text-sm text-gray-400 mb-3">{p.description}</p>}
                   <div className="flex items-center gap-4 text-sm">
-                    <span className="text-green-400">For: {p.votes_for}</span>
-                    <span className="text-red-400">Against: {p.votes_against}</span>
-                    <span className="text-gray-500">Quorum: {p.quorum}</span>
+                    <span className="text-green-400">{t("gov.for")} {p.votes_for}</span>
+                    <span className="text-red-400">{t("gov.against")} {p.votes_against}</span>
+                    <span className="text-gray-500">{t("gov.quorum")} {p.quorum}</span>
                     {p.status === "open" && (
                       <div className="flex gap-2 ml-auto">
-                        <button onClick={() => castVote(p.id, "for")} className="bg-green-800 hover:bg-green-700 text-green-200 text-xs px-3 py-1 rounded">Vote For</button>
-                        <button onClick={() => castVote(p.id, "against")} className="bg-red-800 hover:bg-red-700 text-red-200 text-xs px-3 py-1 rounded">Vote Against</button>
+                        <button onClick={() => castVote(p.id, "for")} className="bg-green-800 hover:bg-green-700 text-green-200 text-xs px-3 py-1 rounded">{t("gov.voteFor")}</button>
+                        <button onClick={() => castVote(p.id, "against")} className="bg-red-800 hover:bg-red-700 text-red-200 text-xs px-3 py-1 rounded">{t("gov.voteAgainst")}</button>
                       </div>
                     )}
                   </div>
                 </div>
               ))}
-              {proposals.length === 0 && <p className="text-gray-500 text-sm">No proposals yet.</p>}
+              {proposals.length === 0 && <p className="text-gray-500 text-sm">{t("gov.noProposals")}</p>}
             </div>
           )}
 
@@ -278,10 +280,10 @@ export function GovernanceClient() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-800/50">
                   <tr>
-                    <th className="text-left px-4 py-3 font-medium text-gray-400">Action</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-400">Target</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-400">Reason</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-400">Time</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-400">{t("gov.action")}</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-400">{t("gov.target")}</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-400">{t("gov.reason")}</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-400">{t("gov.time")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800">
@@ -300,7 +302,7 @@ export function GovernanceClient() {
                     </tr>
                   ))}
                   {auditLog.length === 0 && (
-                    <tr><td colSpan={4} className="px-4 py-6 text-center text-gray-500">No actions yet.</td></tr>
+                    <tr><td colSpan={4} className="px-4 py-6 text-center text-gray-500">{t("gov.noActions")}</td></tr>
                   )}
                 </tbody>
               </table>

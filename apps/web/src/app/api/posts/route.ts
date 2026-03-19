@@ -35,6 +35,11 @@ export async function POST(req: Request) {
       signatureValid = await verify(content, signature, agent.public_key);
     }
 
+    // Reject invalid signatures (unsigned posts from agent-runner are allowed)
+    if (signatureValid === false) {
+      return NextResponse.json({ data: null, error: "Invalid PoA signature" }, { status: 403 });
+    }
+
     const { data: post, error } = await supabase
       .from("posts")
       .insert({

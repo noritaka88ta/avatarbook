@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { ThreadView } from "./PostCard";
 import type { Post } from "@avatarbook/shared";
+import { useT } from "@/lib/i18n/context";
 
 interface ChannelInfo {
   id: string;
@@ -11,6 +12,7 @@ interface ChannelInfo {
 }
 
 export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Post[]; initialChannels?: ChannelInfo[] }) {
+  const t = useT();
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -153,10 +155,10 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">Feed</h1>
+          <h1 className="text-2xl font-bold">{t("feed.title")}</h1>
           <span className="flex items-center gap-1.5 text-xs text-gray-500">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            Live
+            {t("feed.live")}
           </span>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -167,7 +169,7 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
               className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition flex items-center gap-1.5 min-w-[120px]"
             >
               <span className="text-gray-400">#</span>
-              <span className="truncate">{selectedChannelName ?? "All channels"}</span>
+              <span className="truncate">{selectedChannelName ?? t("feed.allChannels")}</span>
               <svg className="w-3 h-3 text-gray-500 shrink-0 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
@@ -180,7 +182,7 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
                     type="text"
                     value={channelSearch}
                     onChange={(e) => setChannelSearch(e.target.value)}
-                    placeholder="Search or create channel..."
+                    placeholder={t("feed.searchChannel")}
                     className="w-full text-xs bg-gray-800 border border-gray-700 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500"
                     autoFocus
                   />
@@ -190,7 +192,7 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
                     onClick={() => { setSelectedChannel(""); setChannelDropdownOpen(false); setChannelSearch(""); }}
                     className={`w-full text-left text-xs px-3 py-2 hover:bg-gray-800 transition flex items-center justify-between ${!selectedChannel ? "text-blue-400 bg-gray-800/50" : "text-gray-300"}`}
                   >
-                    <span>All channels</span>
+                    <span>{t("feed.allChannels")}</span>
                   </button>
                   {filteredChannels.map((ch) => (
                     <button
@@ -209,7 +211,7 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
                       className="w-full text-left text-xs px-3 py-2 hover:bg-gray-800 transition text-green-400 border-t border-gray-800 flex items-center gap-1.5"
                     >
                       <span>+</span>
-                      <span>{creatingChannel ? "Creating..." : `Create #${channelSearch.toLowerCase().replace(/[^a-z0-9-]/g, "-")}`}</span>
+                      <span>{creatingChannel ? t("feed.creating") : `${t("feed.create")} #${channelSearch.toLowerCase().replace(/[^a-z0-9-]/g, "-")}`}</span>
                     </button>
                   )}
                 </div>
@@ -223,15 +225,15 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
             onClick={() => setShowHumanPost(!showHumanPost)}
             className="text-xs px-3 py-1.5 rounded-lg bg-emerald-900/50 border border-emerald-800 hover:bg-emerald-800/50 text-emerald-400 transition"
           >
-            Post as Human
+            {t("feed.postAsHuman")}
           </button>
 
           <button
             onClick={refreshFeed}
             className="text-xs px-2 py-1 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition"
-            title="Refresh"
+            title={t("feed.refresh")}
           >
-            Refresh
+            {t("feed.refresh")}
           </button>
         </div>
       </div>
@@ -244,7 +246,7 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
               type="text"
               value={replyName}
               onChange={(e) => setReplyName(e.target.value)}
-              placeholder="Your name"
+              placeholder={t("feed.yourName")}
               className="text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500 w-40"
             />
             <select
@@ -252,7 +254,7 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
               onChange={(e) => setHumanChannelId(e.target.value)}
               className="text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500"
             >
-              <option value="">Channel (optional)</option>
+              <option value="">{t("feed.channelOptional")}</option>
               {channels.map((c) => (
                 <option key={c.id} value={c.id}>#{c.name}</option>
               ))}
@@ -261,20 +263,20 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
           <textarea
             value={humanContent}
             onChange={(e) => setHumanContent(e.target.value)}
-            placeholder="Share your thoughts, ask an AI agent a question, or start a discussion..."
+            placeholder={t("feed.placeholder")}
             rows={3}
             className="w-full text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 resize-none"
           />
           <div className="flex justify-end gap-2">
             <button onClick={() => setShowHumanPost(false)} className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-300 transition">
-              Cancel
+              {t("feed.cancel")}
             </button>
             <button
               onClick={() => submitHumanPost()}
               disabled={posting || !replyName.trim() || !humanContent.trim()}
               className="text-xs px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed transition"
             >
-              {posting ? "Posting..." : "Post"}
+              {posting ? t("feed.posting") : t("feed.post")}
             </button>
           </div>
         </div>
@@ -285,23 +287,23 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
         <div className="bg-blue-950/20 border border-blue-900/50 rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs text-blue-400">
-              Replying to post...
+              {t("feed.replyingTo")}
             </span>
-            <button onClick={() => setReplyingTo(null)} className="text-xs text-gray-500 hover:text-gray-300">Cancel</button>
+            <button onClick={() => setReplyingTo(null)} className="text-xs text-gray-500 hover:text-gray-300">{t("feed.cancel")}</button>
           </div>
           <div className="flex items-center gap-2">
             <input
               type="text"
               value={replyName}
               onChange={(e) => setReplyName(e.target.value)}
-              placeholder="Your name"
+              placeholder={t("feed.yourName")}
               className="text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 w-40"
             />
           </div>
           <textarea
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
-            placeholder="Write your reply..."
+            placeholder={t("feed.replyPlaceholder")}
             rows={2}
             className="w-full text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 resize-none"
             autoFocus
@@ -312,7 +314,7 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
               disabled={posting || !replyName.trim() || !replyContent.trim()}
               className="text-xs px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition"
             >
-              {posting ? "Replying..." : "Reply"}
+              {posting ? t("feed.replying") : t("feed.reply")}
             </button>
           </div>
         </div>
@@ -339,8 +341,8 @@ export function FeedClient({ initialPosts, initialChannels }: { initialPosts: Po
       ) : (
         <p className="text-gray-500">
           {selectedChannel
-            ? "No posts in this channel yet."
-            : "No posts yet. Wait for autonomous agents to wake up, or post as a human to start a conversation."}
+            ? t("feed.noPostsChannel")
+            : t("feed.noPosts")}
         </p>
       )}
     </div>

@@ -23,6 +23,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ data: null, error: "Order not found or already fulfilled" }, { status: 404 });
   }
 
+  // Check governance permissions for provider
+  const { data: perms } = await supabase.from("agent_permissions").select("*").eq("agent_id", order.provider_id).single();
+  if (perms && (perms.is_suspended || !perms.can_use_skills)) {
+    return NextResponse.json({ data: null, error: "Provider is suspended or cannot use skills" }, { status: 403 });
+  }
+
   const { data, error } = await supabase
     .from("skill_orders")
     .update({

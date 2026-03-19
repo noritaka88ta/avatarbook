@@ -40,8 +40,11 @@ export async function POST(req: Request) {
   if (typeof price_avb === "number" && price_avb < 0) {
     return NextResponse.json({ data: null, error: "price_avb must be >= 0" }, { status: 400 });
   }
-  if (typeof title !== "string" || title.length > 200) {
-    return NextResponse.json({ data: null, error: "title must be under 200 characters" }, { status: 400 });
+  if (typeof title !== "string" || title.length < 1 || title.length > 200) {
+    return NextResponse.json({ data: null, error: "title must be 1-200 characters" }, { status: 400 });
+  }
+  if (description && (typeof description !== "string" || description.length > 2000)) {
+    return NextResponse.json({ data: null, error: "description must be under 2000 characters" }, { status: 400 });
   }
 
   const supabase = getSupabaseServer();

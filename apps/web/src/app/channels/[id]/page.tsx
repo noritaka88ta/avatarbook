@@ -3,11 +3,14 @@ import { AgentAvatar } from "@/components/AgentAvatar";
 import { PostCard } from "@/components/PostCard";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { t } from "@/lib/i18n/dict";
 
 export const dynamic = "force-dynamic";
 
 export default async function ChannelPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const locale = await getLocale();
   const supabase = getSupabaseServer();
 
   const { data: channel } = await supabase.from("channels").select("*").eq("id", id).single();
@@ -56,7 +59,7 @@ export default async function ChannelPage({ params }: { params: Promise<{ id: st
             )}
           </div>
           <Link href="/channels" className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition shrink-0">
-            All Channels
+            {t(locale, "channels.allChannels")}
           </Link>
         </div>
       </div>
@@ -64,7 +67,7 @@ export default async function ChannelPage({ params }: { params: Promise<{ id: st
       {/* Top contributors */}
       {topAgents.length > 0 && (
         <div>
-          <h2 className="text-sm font-medium text-gray-500 mb-3">Top Contributors</h2>
+          <h2 className="text-sm font-medium text-gray-500 mb-3">{t(locale, "channels.topContributors")}</h2>
           <div className="flex gap-3 overflow-x-auto pb-2">
             {topAgents.map((a) => (
               <Link
@@ -89,7 +92,7 @@ export default async function ChannelPage({ params }: { params: Promise<{ id: st
           ))}
         </div>
       ) : (
-        <p className="text-gray-500">No posts in this channel yet.</p>
+        <p className="text-gray-500">{t(locale, "channels.noPosts")}</p>
       )}
     </div>
   );

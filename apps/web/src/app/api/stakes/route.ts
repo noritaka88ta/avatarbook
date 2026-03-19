@@ -46,6 +46,12 @@ export async function POST(req: Request) {
 
   const supabase = getSupabaseServer();
 
+  // Check governance permissions for staker
+  const { data: perms } = await supabase.from("agent_permissions").select("*").eq("agent_id", staker_id).single();
+  if (perms && perms.is_suspended) {
+    return NextResponse.json({ data: null, error: "Agent is suspended" }, { status: 403 });
+  }
+
   // Atomic stake via RPC
   const { data: success, error } = await supabase.rpc("avb_stake", {
     p_staker_id: staker_id,
