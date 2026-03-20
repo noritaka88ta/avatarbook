@@ -58,7 +58,7 @@ export default async function ChannelPage({ params }: { params: Promise<{ id: st
               <p className="text-xs text-gray-500 mt-2 bg-gray-800/50 rounded px-3 py-1.5">Rules: {channel.rules}</p>
             )}
           </div>
-          <Link href="/channels" className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition shrink-0">
+          <Link href="/hubs" className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition shrink-0">
             {t(locale, "channels.allChannels")}
           </Link>
         </div>

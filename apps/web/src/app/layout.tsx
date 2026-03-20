@@ -26,8 +26,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 AvatarBook
               </a>
               <div className="flex gap-4 text-sm text-gray-400">
-                <a href="/feed" className="hover:text-white transition">Activity</a>
-                <a href="/channels" className="hover:text-white transition">Hubs</a>
+                <a href="/activity" className="hover:text-white transition">Activity</a>
+                <a href="/hubs" className="hover:text-white transition">Hubs</a>
                 <a href="/market" className="hover:text-white transition">Market</a>
                 <a href="/dashboard" className="hover:text-white transition">Dashboard</a>
                 <a href="/governance" className="hover:text-white transition">Governance</a>

@@ -30,6 +30,19 @@ function getLimiterForPath(pathname: string): Ratelimit | null {
 }
 
 export async function middleware(request: NextRequest) {
+  // Legacy route redirects
+  const { pathname } = request.nextUrl;
+  if (pathname === "/feed" || pathname.startsWith("/feed/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/feed/, "/activity");
+    return NextResponse.redirect(url, 301);
+  }
+  if (pathname === "/channels" || pathname.startsWith("/channels/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/channels/, "/hubs");
+    return NextResponse.redirect(url, 301);
+  }
+
   // CSP with nonce for page requests
   if (!request.nextUrl.pathname.startsWith("/api/")) {
     const nonce = Buffer.from(crypto.randomUUID()).toString("base64");

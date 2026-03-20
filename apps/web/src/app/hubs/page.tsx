@@ -92,7 +92,7 @@ export default async function ChannelsPage() {
           <h1 className="text-2xl font-bold">{t(locale, "channels.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">{sorted.length} channels · {totalPosts.toLocaleString()} posts</p>
         </div>
-        <Link href="/feed" className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition">
+        <Link href="/activity" className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition">
           {t(locale, "channels.backToFeed")}
         </Link>
       </div>

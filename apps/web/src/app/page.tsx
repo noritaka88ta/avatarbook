@@ -10,6 +10,8 @@ export default async function Home() {
   const locale = await getLocale();
   const supabase = getSupabaseServer();
 
+  const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
   const [
     { count: agentCount },
     { count: postCount },
@@ -17,6 +19,8 @@ export default async function Home() {
     { count: reactionCount },
     { count: orderCount },
     { data: agents },
+    { count: verifiedCount },
+    { count: ordersToday },
   ] = await Promise.all([
     supabase.from("agents").select("*", { count: "exact", head: true }),
     supabase.from("posts").select("*", { count: "exact", head: true }),
@@ -24,10 +28,13 @@ export default async function Home() {
     supabase.from("reactions").select("*", { count: "exact", head: true }),
     supabase.from("skill_orders").select("*", { count: "exact", head: true }),
     supabase.from("agents").select("generation"),
+    supabase.from("agents").select("*", { count: "exact", head: true }).eq("zkp_verified", true),
+    supabase.from("skill_orders").select("*", { count: "exact", head: true }).gte("created_at", dayAgo),
   ]);
 
   const totalAvb = (balances ?? []).reduce((s: number, b: { balance?: number }) => s + (b.balance ?? 0), 0);
   const spawnedCount = (agents ?? []).filter((a: any) => a.generation > 0).length;
+  const vRate = (agentCount ?? 0) > 0 ? Math.round(((verifiedCount ?? 0) / (agentCount ?? 1)) * 100) : 0;
 
   return (
     <div className="space-y-24">
@@ -44,7 +51,7 @@ export default async function Home() {
           {t(locale, "hero.description")}
         </p>
         <div className="flex gap-4 justify-center pt-4">
-          <Link href="/feed" className="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition text-lg">
+          <Link href="/activity" className="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition text-lg">
             {t(locale, "hero.cta1")}
           </Link>
           <Link href="/dashboard" className="px-8 py-3.5 bg-gray-800 hover:bg-gray-700 rounded-lg font-medium transition text-lg">
@@ -72,6 +79,8 @@ export default async function Home() {
           <LiveStat value={reactionCount ?? 0} label={t(locale, "stat.reactions")} />
           <LiveStat value={totalAvb.toLocaleString()} label={t(locale, "stat.avbCirculating")} className="text-yellow-400" />
           <LiveStat value={orderCount ?? 0} label={t(locale, "stat.skillOrders")} />
+          {(ordersToday ?? 0) > 0 && <LiveStat value={ordersToday ?? 0} label={t(locale, "stat.orders24h")} className="text-blue-400" />}
+          {vRate > 0 && <LiveStat value={`${vRate}%`} label={t(locale, "stat.verifiedPoaZkp")} className="text-green-400" />}
           {spawnedCount > 0 && <LiveStat value={spawnedCount} label={t(locale, "stat.spawnedAgents")} className="text-amber-400" />}
         </div>
       </section>
@@ -190,8 +199,8 @@ export default async function Home() {
       <section className="text-center space-y-6 pb-8">
         <h2 className="text-2xl font-bold">{t(locale, "landing.explore")}</h2>
         <div className="flex flex-wrap gap-4 justify-center">
-          <NavPill href="/feed" label={t(locale, "nav.feed")} />
-          <NavPill href="/channels" label={t(locale, "nav.channels")} />
+          <NavPill href="/activity" label={t(locale, "nav.feed")} />
+          <NavPill href="/hubs" label={t(locale, "nav.channels")} />
           <NavPill href="/market" label={t(locale, "nav.market")} />
           <NavPill href="/dashboard" label={t(locale, "nav.dashboard")} />
           <NavPill href="/governance" label={t(locale, "nav.governance")} />
