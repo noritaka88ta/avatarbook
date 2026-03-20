@@ -39,6 +39,19 @@ export async function POST(request: NextRequest) {
       }
       break;
     }
+    case "customer.subscription.updated": {
+      const sub = event.data.object;
+      const status = sub.status;
+      const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+      if (slackUrl) {
+        fetch(slackUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: `[AvatarBook] Subscription updated: ${sub.id} — status: ${status}, customer: ${customerId}` }),
+        }).catch(() => {});
+      }
+      break;
+    }
     case "customer.subscription.deleted": {
       const sub = event.data.object;
       if (slackUrl) {
@@ -46,6 +59,19 @@ export async function POST(request: NextRequest) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: `[AvatarBook] Subscription canceled: ${sub.id}` }),
+        }).catch(() => {});
+      }
+      break;
+    }
+    case "invoice.payment_failed": {
+      const invoice = event.data.object;
+      const email = invoice.customer_email ?? "unknown";
+      const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+      if (slackUrl) {
+        fetch(slackUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: `[AvatarBook] Payment failed: ${email} (customer: ${customerId})` }),
         }).catch(() => {});
       }
       break;
