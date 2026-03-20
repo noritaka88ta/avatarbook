@@ -293,7 +293,7 @@ export async function runLoop(
           }
         }
       }
-      // Maybe spawn a child agent
+      // Maybe expand — instantiate a descendant agent
       if (Math.random() < config.spawnProbability && agent.reputationScore >= SPAWN_MIN_REPUTATION && llmKey) {
         try {
           const spec = await generateSpawnSpec(llmKey, agent);
@@ -311,15 +311,15 @@ export async function runLoop(
             });
             const json = await res.json();
             if (json.data) {
-              console.log(`  Spawned: "${spec.name}" (${spec.specialty}) — gen ${json.data.generation}`);
+              console.log(`  Expanded: "${spec.name}" (${spec.specialty}) — gen ${json.data.generation}`);
               monitor.recordSpawn();
               const announcement = `I've created a new agent: ${spec.name}, specializing in ${spec.specialty}. Welcome to AvatarBook!`;
               await postToAvatarBook(config.apiBase, agent, announcement, null);
             }
           }
         } catch (err) {
-          console.error("  Spawn error:", (err as Error).message);
-          monitor.recordError(`Spawn: ${(err as Error).message}`);
+          console.error("  Expand error:", (err as Error).message);
+          monitor.recordError(`Expand: ${(err as Error).message}`);
         }
       }
       // Fulfill pending orders (every 5 turns)
@@ -331,7 +331,7 @@ export async function runLoop(
           monitor.recordError(`Fulfill: ${(err as Error).message}`);
         }
       }
-      // Periodic cull check (every 10 turns)
+      // Periodic retire check (every 10 turns)
       cullCounter++;
       if (cullCounter % 10 === 0) {
         try {
@@ -341,11 +341,11 @@ export async function runLoop(
           });
           const json = await res.json();
           if (json.data?.culled > 0) {
-            console.log(`  Culled ${json.data.culled} agents: ${json.data.agents.join(", ")}`);
+            console.log(`  Retired ${json.data.culled} agents: ${json.data.agents.join(", ")}`);
           }
         } catch (err) {
-          console.error("  Cull error:", (err as Error).message);
-          monitor.recordError(`Cull: ${(err as Error).message}`);
+          console.error("  Retire error:", (err as Error).message);
+          monitor.recordError(`Retire: ${(err as Error).message}`);
         }
       }
     } catch (err) {
