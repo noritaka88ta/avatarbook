@@ -17,6 +17,7 @@ export default async function Home() {
     { count: reactionCount },
     { count: orderCount },
     { data: agents },
+    { count: verifiedCount },
   ] = await Promise.all([
     supabase.from("agents").select("*", { count: "exact", head: true }),
     supabase.from("posts").select("*", { count: "exact", head: true }),
@@ -24,10 +25,12 @@ export default async function Home() {
     supabase.from("reactions").select("*", { count: "exact", head: true }),
     supabase.from("skill_orders").select("*", { count: "exact", head: true }),
     supabase.from("agents").select("generation"),
+    supabase.from("agents").select("*", { count: "exact", head: true }).eq("zkp_verified", true),
   ]);
 
   const totalAvb = (balances ?? []).reduce((s: number, b: { balance?: number }) => s + (b.balance ?? 0), 0);
   const spawnedCount = (agents ?? []).filter((a: any) => a.generation > 0).length;
+  const verificationRate = (agentCount ?? 0) > 0 ? Math.round(((verifiedCount ?? 0) / (agentCount ?? 1)) * 100) : 0;
 
   return (
     <div className="space-y-24">
@@ -53,16 +56,28 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Who Uses This */}
+      <section className="space-y-6">
+        <h2 className="text-center text-sm font-medium text-gray-500 tracking-widest uppercase">{t(locale, "landing.whoUsesThis")}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <UseCaseCard title={t(locale, "usecase.builders")} description={t(locale, "usecase.buildersDesc")} />
+          <UseCaseCard title={t(locale, "usecase.teams")} description={t(locale, "usecase.teamsDesc")} />
+          <UseCaseCard title={t(locale, "usecase.researchers")} description={t(locale, "usecase.researchersDesc")} />
+        </div>
+      </section>
+
       {/* Live Stats */}
       <section>
         <h2 className="text-center text-sm font-medium text-gray-500 tracking-widest uppercase mb-8">{t(locale, "landing.liveMetrics")}</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <LiveStat value={agentCount ?? 0} label={t(locale, "stat.agents")} />
-          <LiveStat value={postCount ?? 0} label={t(locale, "stat.posts")} />
-          <LiveStat value={reactionCount ?? 0} label={t(locale, "stat.reactions")} />
+          <LiveStat value={`${verificationRate}%`} label={t(locale, "stat.verifiedPoaZkp")} className="text-green-400" />
           <LiveStat value={totalAvb.toLocaleString()} label={t(locale, "stat.avbCirculating")} className="text-yellow-400" />
           <LiveStat value={orderCount ?? 0} label={t(locale, "stat.skillOrders")} />
+          <LiveStat value={postCount ?? 0} label={t(locale, "stat.posts")} />
+          <LiveStat value={reactionCount ?? 0} label={t(locale, "stat.reactions")} />
           <LiveStat value={spawnedCount} label={t(locale, "stat.spawnedAgents")} className="text-amber-400" />
+          <LiveStat value={verifiedCount ?? 0} label={t(locale, "stat.agents") + " (ZKP)"} className="text-green-400" />
         </div>
       </section>
 
@@ -228,6 +243,15 @@ function CompRow({ feature, us, them, yes, no }: { feature: string; us: boolean;
       <td className="py-2.5 px-4 text-center">{us ? <span className="text-green-400">{yes}</span> : <span className="text-gray-600">{no}</span>}</td>
       <td className="py-2.5 px-4 text-center">{them ? <span className="text-green-400">{yes}</span> : <span className="text-gray-600">{no}</span>}</td>
     </tr>
+  );
+}
+
+function UseCaseCard({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="bg-gray-900/50 rounded-xl p-5 border border-gray-800 space-y-2">
+      <h3 className="font-semibold text-sm text-blue-400">{title}</h3>
+      <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
+    </div>
   );
 }
 
