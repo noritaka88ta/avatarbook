@@ -1,6 +1,10 @@
 import { getLocale } from "@/lib/i18n/get-locale";
 import { t } from "@/lib/i18n/dict";
 import type { DictKey } from "@/lib/i18n/dict";
+import { CheckoutButton } from "./checkout-button";
+import { SuccessBanner } from "./success-banner";
+
+export const dynamic = "force-dynamic";
 
 export default async function PricingPage() {
   const locale = await getLocale();
@@ -11,6 +15,7 @@ export default async function PricingPage() {
     desc: DictKey;
     features: DictKey[];
     highlight?: boolean;
+    tier?: string;
     cta: DictKey;
     badge?: string;
   }[] = [
@@ -27,7 +32,8 @@ export default async function PricingPage() {
       desc: "pricing.verifiedDesc",
       features: ["pricing.verifiedF1", "pricing.verifiedF2", "pricing.verifiedF3", "pricing.verifiedF4", "pricing.verifiedF5", "pricing.verifiedF6"],
       highlight: true,
-      cta: "pricing.comingSoon",
+      tier: "verified",
+      cta: "pricing.subscribe",
       badge: "Most Popular",
     },
     {
@@ -35,14 +41,16 @@ export default async function PricingPage() {
       price: "pricing.builderPrice",
       desc: "pricing.builderDesc",
       features: ["pricing.builderF1", "pricing.builderF2", "pricing.builderF3", "pricing.builderF4", "pricing.builderF5", "pricing.builderF6"],
-      cta: "pricing.comingSoon",
+      tier: "builder",
+      cta: "pricing.subscribe",
     },
     {
       name: "pricing.team",
       price: "pricing.teamPrice",
       desc: "pricing.teamDesc",
       features: ["pricing.teamF1", "pricing.teamF2", "pricing.teamF3", "pricing.teamF4", "pricing.teamF5", "pricing.teamF6"],
-      cta: "pricing.comingSoon",
+      tier: "team",
+      cta: "pricing.subscribe",
     },
     {
       name: "pricing.enterprise",
@@ -61,6 +69,8 @@ export default async function PricingPage() {
 
   return (
     <div className="space-y-16">
+      <SuccessBanner label={t(locale, "pricing.paymentSuccess")} />
+
       {/* Header */}
       <section className="text-center space-y-4 pt-8">
         <h1 className="text-4xl md:text-5xl font-bold">{t(locale, "pricing.title")}</h1>
@@ -92,18 +102,24 @@ export default async function PricingPage() {
                 </li>
               ))}
             </ul>
-            <button
-              className={`mt-6 w-full py-2.5 rounded-lg text-sm font-medium transition ${
-                plan.highlight
-                  ? "bg-blue-600 hover:bg-blue-500 text-white"
-                  : plan.cta === "pricing.currentTier"
-                  ? "bg-gray-800 text-gray-400 cursor-default"
-                  : "bg-gray-800 hover:bg-gray-700 text-gray-300"
-              }`}
-              disabled={plan.cta === "pricing.currentTier"}
-            >
-              {t(locale, plan.cta)}
-            </button>
+            {plan.tier ? (
+              <CheckoutButton
+                tier={plan.tier}
+                label={t(locale, plan.cta)}
+                highlight={plan.highlight}
+              />
+            ) : (
+              <button
+                className={`mt-6 w-full py-2.5 rounded-lg text-sm font-medium transition ${
+                  plan.cta === "pricing.currentTier"
+                    ? "bg-gray-800 text-gray-400 cursor-default"
+                    : "bg-gray-800 hover:bg-gray-700 text-gray-300"
+                }`}
+                disabled={plan.cta === "pricing.currentTier"}
+              >
+                {t(locale, plan.cta)}
+              </button>
+            )}
           </div>
         ))}
       </section>
