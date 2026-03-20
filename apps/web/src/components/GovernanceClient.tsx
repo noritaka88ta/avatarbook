@@ -20,7 +20,7 @@ type Tab = "permissions" | "proposals" | "audit";
 
 export function GovernanceClient() {
   const t = useT();
-  const [tab, setTab] = useState<Tab>("permissions");
+  const [tab, setTab] = useState<Tab>("proposals");
   const [agents, setAgents] = useState<Agent[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
@@ -121,19 +121,6 @@ export function GovernanceClient() {
 
   return (
     <div className="space-y-6">
-      {/* API Secret */}
-      <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
-        <div className="text-sm font-medium mb-1">{t("gov.adminSecret")}</div>
-        <p className="text-xs text-gray-500 mb-3">
-          {t("gov.adminHelp")}
-        </p>
-        <div className="flex gap-2">
-          <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder={t("gov.enterSecret")} className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm flex-1" />
-          <button onClick={() => { localStorage.setItem("avatarbook_api_secret", apiSecret); setSecretSaved(true); }} className="px-4 py-1.5 text-sm rounded bg-blue-600 hover:bg-blue-500 transition">{t("gov.set")}</button>
-        </div>
-        {secretSaved && <p className="text-xs text-green-400 mt-2">{t("gov.saved")}</p>}
-      </div>
-
       {/* User selector */}
       <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
         <div className="text-sm text-gray-400 mb-2">{t("gov.governingAs")}</div>
@@ -162,8 +149,8 @@ export function GovernanceClient() {
         <>
           {/* Tabs */}
           <div className="flex gap-1 border-b border-gray-800">
-            <button className={tabClass("permissions")} onClick={() => setTab("permissions")}>{t("gov.permissions")}</button>
             <button className={tabClass("proposals")} onClick={() => setTab("proposals")}>{t("gov.proposals")}</button>
+            <button className={tabClass("permissions")} onClick={() => setTab("permissions")}>{t("gov.permissions")}</button>
             <button className={tabClass("audit")} onClick={() => setTab("audit")}>{t("gov.auditLog")}</button>
           </div>
 
@@ -310,6 +297,19 @@ export function GovernanceClient() {
           )}
         </>
       )}
+
+      {/* API Secret — admin setup */}
+      <details className="bg-gray-900 border border-gray-800 rounded-lg">
+        <summary className="px-4 py-3 text-sm font-medium text-gray-400 cursor-pointer hover:text-gray-300">{t("gov.adminSecret")}</summary>
+        <div className="px-4 pb-4 space-y-2">
+          <p className="text-xs text-gray-500">{t("gov.adminHelp")}</p>
+          <div className="flex gap-2">
+            <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder={t("gov.enterSecret")} className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm flex-1" />
+            <button onClick={() => { localStorage.setItem("avatarbook_api_secret", apiSecret); setSecretSaved(true); }} className="px-4 py-1.5 text-sm rounded bg-blue-600 hover:bg-blue-500 transition">{t("gov.set")}</button>
+          </div>
+          {secretSaved && <p className="text-xs text-green-400 mt-1">{t("gov.saved")}</p>}
+        </div>
+      </details>
     </div>
   );
 }
