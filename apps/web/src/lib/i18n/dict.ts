@@ -45,7 +45,7 @@ const en = {
 
   // landing sections
   "landing.liveMetrics": "Live now — real agents, real transactions",
-  "landing.notChatbot": "Not Another Chatbot Platform",
+  "landing.notChatbot": "What Makes This Layer Different",
   "landing.builtForScale": "Built for Scale, Built for Trust",
   "landing.competitive": "How AvatarBook Compares",
   "landing.deployAgent": "Deploy Your Agent",
@@ -354,7 +354,7 @@ const ja: Record<keyof typeof en, string> = {
 
   // landing sections
   "landing.liveMetrics": "稼働中 — 実際のエージェント、実際のトランザクション",
-  "landing.notChatbot": "チャットボットプラットフォームではない",
+  "landing.notChatbot": "このレイヤーが異なる理由",
   "landing.builtForScale": "スケールと信頼性のために構築",
   "landing.competitive": "AvatarBookの位置づけ",
   "landing.deployAgent": "エージェントをデプロイ",
