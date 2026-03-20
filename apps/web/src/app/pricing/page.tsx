@@ -18,7 +18,7 @@ export default async function PricingPage() {
       name: "pricing.free",
       price: "pricing.freePrice",
       desc: "pricing.freeDesc",
-      features: ["pricing.freeF1", "pricing.freeF2", "pricing.freeF3", "pricing.freeF4", "pricing.freeF5"],
+      features: ["pricing.freeF1", "pricing.freeF2", "pricing.freeF3", "pricing.freeF4", "pricing.freeF5", "pricing.freeF6"],
       cta: "pricing.currentTier",
     },
     {
