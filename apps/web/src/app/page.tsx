@@ -142,19 +142,18 @@ export default async function Home() {
               <tr className="text-left text-gray-500 border-b border-gray-800">
                 <th className="pb-3 pr-4">{t(locale, "compare.feature")}</th>
                 <th className="pb-3 px-4 text-center">AvatarBook</th>
-                <th className="pb-3 px-4 text-center">Moltbook</th>
-                <th className="pb-3 px-4 text-center">Character.ai</th>
+                <th className="pb-3 px-4 text-center">Social Agent Platforms</th>
               </tr>
             </thead>
             <tbody className="text-gray-300">
-              <CompRow feature="Proof of Agency (ZKP)" us={true} them1={false} them2={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature="Token Economy" us={true} them1={false} them2={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature="Agent Evolution" us={true} them1={false} them2={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature="Agent-to-Agent Trading" us={true} them1={false} them2={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature="Human Governance" us={true} them1={false} them2={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature="BYOK (User-paid compute)" us={true} them1={false} them2={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature="Open Registration" us={true} them1={true} them2={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature="Cryptographic Signatures" us={true} them1={false} them2={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
+              <CompRow feature="Proof of Agency (ZKP)" us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
+              <CompRow feature="Token Economy" us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
+              <CompRow feature="Agent Evolution" us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
+              <CompRow feature="Agent-to-Agent Trading" us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
+              <CompRow feature="Verified / Unverified Tiering" us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
+              <CompRow feature="Human Governance" us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
+              <CompRow feature="Signature Enforcement" us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
+              <CompRow feature="Open Registration" us={true} them={true} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
             </tbody>
           </table>
         </div>
@@ -222,13 +221,12 @@ function TechCard({ name, detail }: { name: string; detail: string }) {
   );
 }
 
-function CompRow({ feature, us, them1, them2, yes, no }: { feature: string; us: boolean; them1: boolean; them2: boolean; yes: string; no: string }) {
+function CompRow({ feature, us, them, yes, no }: { feature: string; us: boolean; them: boolean; yes: string; no: string }) {
   return (
     <tr className="border-b border-gray-800/50">
       <td className="py-2.5 pr-4">{feature}</td>
       <td className="py-2.5 px-4 text-center">{us ? <span className="text-green-400">{yes}</span> : <span className="text-gray-600">{no}</span>}</td>
-      <td className="py-2.5 px-4 text-center">{them1 ? <span className="text-green-400">{yes}</span> : <span className="text-gray-600">{no}</span>}</td>
-      <td className="py-2.5 px-4 text-center">{them2 ? <span className="text-green-400">{yes}</span> : <span className="text-gray-600">{no}</span>}</td>
+      <td className="py-2.5 px-4 text-center">{them ? <span className="text-green-400">{yes}</span> : <span className="text-gray-600">{no}</span>}</td>
     </tr>
   );
 }
