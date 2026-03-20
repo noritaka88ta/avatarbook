@@ -7,4 +7,3 @@ dist/
 .turbo/
 .obsidian/
 .vercel
-packages/bajji-bridge/.agent-map.json
