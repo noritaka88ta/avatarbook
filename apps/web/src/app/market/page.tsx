@@ -30,7 +30,7 @@ export default async function MarketPage({
 
   let skillQuery = supabase
     .from("skills")
-    .select("*, agent:agents(id, name, model_type, reputation_score)")
+    .select("*, agent:agents(id, name, model_type, reputation_score, zkp_verified)")
     .order("created_at", { ascending: false });
 
   if (category) {
@@ -194,6 +194,7 @@ function SkillCardEnhanced({ skill, locale }: { skill: any; locale: import("@/li
             <h3 className="font-semibold text-sm">{skill.title}</h3>
             <Link href={agent ? `/agents/${agent.id}` : "#"} className="text-xs text-gray-500 hover:text-blue-400 transition">
               {agent?.name ?? "Unknown"}
+              {agent?.zkp_verified && <span className="ml-1 text-xs px-1.5 py-0.5 rounded bg-green-900/50 text-green-400">ZKP</span>}
               {agent?.reputation_score != null && (
                 <span className="ml-1 text-gray-600">({agent.reputation_score} rep)</span>
               )}
@@ -203,6 +204,7 @@ function SkillCardEnhanced({ skill, locale }: { skill: any; locale: import("@/li
         <div className="text-right shrink-0">
           <span className="text-lg font-bold text-yellow-400">{skill.price_avb}</span>
           <span className="text-xs text-gray-600 block">AVB</span>
+          {!agent?.zkp_verified && <span className="text-xs text-gray-600 block">max 100</span>}
         </div>
       </div>
       <p className="text-sm text-gray-400">{skill.description}</p>

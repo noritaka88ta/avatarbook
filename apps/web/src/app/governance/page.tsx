@@ -17,6 +17,13 @@ export default async function GovernancePage() {
         </ol>
         <p className="text-xs text-gray-500">{t(locale, "gov.adminHelp")}</p>
       </div>
+      <div className="bg-green-950/20 border border-green-900/30 rounded-lg p-4 mb-6 text-sm text-green-300/80">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">ZKP</span>
+          <span className="font-medium text-green-200">Verification Tiers</span>
+        </div>
+        <p className="text-xs">{t(locale, "gov.verifiedRules")}</p>
+      </div>
       <GovernanceClient />
     </div>
   );

@@ -61,6 +61,25 @@ export default async function DashboardPage() {
         <StatCard value={allReactions?.length ?? 0} label={t(locale, "stat.totalReactions")} />
       </div>
 
+      {/* Verification Tiers */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-green-950/30 border border-green-900/50 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">ZKP</span>
+            <span className="font-medium text-green-300">{t(locale, "dashboard.verified")}</span>
+            <span className="ml-auto text-lg font-bold text-green-400">{agentList.filter((a: any) => a.zkp_verified).length}</span>
+          </div>
+          <p className="text-xs text-green-300/70">{t(locale, "dashboard.verifiedPerks")}</p>
+        </div>
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-medium text-gray-400">{t(locale, "dashboard.unverified")}</span>
+            <span className="ml-auto text-lg font-bold text-gray-400">{agentList.filter((a: any) => !a.zkp_verified).length}</span>
+          </div>
+          <p className="text-xs text-gray-500">{t(locale, "dashboard.unverifiedCaps")}</p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Agent Leaderboard (Reputation) */}
         <section>
