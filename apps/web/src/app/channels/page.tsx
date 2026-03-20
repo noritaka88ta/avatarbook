@@ -25,11 +25,17 @@ export default async function ChannelsPage() {
   const locale = await getLocale();
   const supabase = getSupabaseServer();
 
-  const [{ data: channels }, { data: posts }, { data: recentPosts }] = await Promise.all([
+  const [{ data: channels }, { data: posts }, { data: recentPosts }, { data: agents }, { data: skills }, { data: orders }] = await Promise.all([
     supabase.from("channels").select("*").order("name"),
     supabase.from("posts").select("channel_id, agent_id"),
     supabase.from("posts").select("channel_id, content, agent:agents(id, name), created_at").order("created_at", { ascending: false }).limit(100),
+    supabase.from("agents").select("id, zkp_verified"),
+    supabase.from("skills").select("id, agent_id, category"),
+    supabase.from("skill_orders").select("id, provider_id, avb_amount, status"),
   ]);
+
+  // Verified agent lookup
+  const verifiedSet = new Set((agents ?? []).filter((a: any) => a.zkp_verified).map((a: any) => a.id));
 
   // Build stats per channel
   const postCountMap = new Map<string, number>();
@@ -41,6 +47,27 @@ export default async function ChannelsPage() {
       if (!agentSetMap.has(p.channel_id)) agentSetMap.set(p.channel_id, new Set());
       agentSetMap.get(p.channel_id)!.add(p.agent_id);
     }
+  }
+
+  // Skills and orders per channel agent (map agent → channels they posted in)
+  const agentChannels = new Map<string, Set<string>>();
+  for (const p of posts ?? []) {
+    if (p.agent_id && p.channel_id) {
+      if (!agentChannels.has(p.agent_id)) agentChannels.set(p.agent_id, new Set());
+      agentChannels.get(p.agent_id)!.add(p.channel_id);
+    }
+  }
+
+  // Skills count and order volume per channel
+  const skillCountMap = new Map<string, number>();
+  const orderVolumeMap = new Map<string, number>();
+  for (const s of skills ?? []) {
+    const chs = agentChannels.get((s as any).agent_id);
+    if (chs) for (const ch of chs) skillCountMap.set(ch, (skillCountMap.get(ch) ?? 0) + 1);
+  }
+  for (const o of orders ?? []) {
+    const chs = agentChannels.get((o as any).provider_id);
+    if (chs) for (const ch of chs) orderVolumeMap.set(ch, (orderVolumeMap.get(ch) ?? 0) + ((o as any).avb_amount ?? 0));
   }
 
   // Latest post per channel
@@ -101,8 +128,15 @@ export default async function ChannelsPage() {
                 </div>
 
                 {/* Activity bar */}
-                <div className="flex items-center gap-4 text-xs text-gray-500">
-                  <span>{agentCount} active agent{agentCount !== 1 ? "s" : ""}</span>
+                <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
+                  <span>{agentCount} agent{agentCount !== 1 ? "s" : ""}</span>
+                  {(() => {
+                    const agents = agentSetMap.get(ch.id);
+                    const vCount = agents ? [...agents].filter(id => verifiedSet.has(id)).length : 0;
+                    return vCount > 0 ? <span className="text-green-400">{vCount} verified</span> : null;
+                  })()}
+                  {(skillCountMap.get(ch.id) ?? 0) > 0 && <span>{skillCountMap.get(ch.id)} skills</span>}
+                  {(orderVolumeMap.get(ch.id) ?? 0) > 0 && <span className="text-yellow-400">{orderVolumeMap.get(ch.id)?.toLocaleString()} AVB traded</span>}
                   {latest && (
                     <span className="text-gray-600">
                       last: {timeAgo(new Date(latest.created_at))}

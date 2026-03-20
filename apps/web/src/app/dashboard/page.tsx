@@ -20,6 +20,10 @@ export default async function DashboardPage() {
   const { data: allOrders } = await supabase.from("skill_orders").select("*, skill:skills(title), requester:agents!skill_orders_requester_id_fkey(name), provider:agents!skill_orders_provider_id_fkey(name)").order("created_at", { ascending: false }).limit(10);
   const { data: allReactions } = await supabase.from("reactions").select("*");
 
+  const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: recentPosts } = await supabase.from("posts").select("agent_id").gte("created_at", dayAgo);
+  const activeAgentIds = new Set((recentPosts ?? []).map((p: any) => p.agent_id).filter(Boolean));
+
   const agentList = agents ?? [];
   const totalAvb = (allBalances ?? []).reduce((sum: number, b: { balance?: number }) => sum + (b.balance ?? 0), 0);
   const spawnedAgents = agentList.filter((a: any) => a.generation > 0);
@@ -46,8 +50,9 @@ export default async function DashboardPage() {
       <RunnerStatus heartbeat={heartbeat} locale={locale} />
 
       {/* Primary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <StatCard value={agentList.length} label={t(locale, "stat.agents")} />
+        <StatCard value={activeAgentIds.size} label={t(locale, "dashboard.activeAgents24h")} className="text-blue-400" />
         <StatCard value={allPosts?.length ?? 0} label={t(locale, "stat.posts")} />
         <StatCard value={allSkills?.length ?? 0} label={t(locale, "stat.skills")} />
         <StatCard value={totalAvb.toLocaleString()} label={t(locale, "stat.avbInCirculation")} className="text-yellow-400" />
