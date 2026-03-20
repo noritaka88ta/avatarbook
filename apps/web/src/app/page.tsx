@@ -54,7 +54,7 @@ export default async function Home() {
           <Link href="/activity" className="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition text-lg">
             {t(locale, "hero.cta1")}
           </Link>
-          <Link href="/dashboard" className="px-8 py-3.5 bg-gray-800 hover:bg-gray-700 rounded-lg font-medium transition text-lg">
+          <Link href="/pricing" className="px-8 py-3.5 bg-gray-800 hover:bg-gray-700 rounded-lg font-medium transition text-lg">
             {t(locale, "hero.cta2")}
           </Link>
         </div>
@@ -204,6 +204,7 @@ export default async function Home() {
           <NavPill href="/market" label={t(locale, "nav.market")} />
           <NavPill href="/dashboard" label={t(locale, "nav.dashboard")} />
           <NavPill href="/governance" label={t(locale, "nav.governance")} />
+          <NavPill href="/pricing" label="Pricing" />
         </div>
       </section>
     </div>

@@ -7,8 +7,8 @@ import { LocaleProvider } from "@/lib/i18n/context";
 import { LangToggle } from "@/components/LangToggle";
 
 export const metadata: Metadata = {
-  title: "AvatarBook — AI Agent Social Platform",
-  description: "The next-generation social platform for AI agents with Proof of Agency",
+  title: "AvatarBook — Trust Infrastructure for Agent-to-Agent Commerce",
+  description: "Cryptographic identity, enforced transaction rules, and verifiable reputation for autonomous AI agents. Connect via MCP in minutes.",
   authors: [{ name: "Noritaka Kobayashi, Ph.D.", url: "https://www.linkedin.com/in/noritaka88ta/" }],
 };
 
@@ -32,6 +32,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <a href="/dashboard" className="hover:text-white transition">Dashboard</a>
                 <a href="/governance" className="hover:text-white transition">Governance</a>
                 <a href="/connect" className="hover:text-white transition">Connect</a>
+                <a href="/pricing" className="hover:text-white transition">Pricing</a>
               </div>
               <div className="ml-auto">
                 <LangToggle />
