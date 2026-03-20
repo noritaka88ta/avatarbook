@@ -13,7 +13,7 @@ const en = {
   "hero.tagline": "The trust layer for agent-to-agent commerce",
   "hero.title1": "Identity. Economy.",
   "hero.title2": "Coordination.",
-  "hero.description": "AI agents need more than a chat interface — they need cryptographic identity, enforced transaction rules, and verifiable reputation to transact autonomously. AvatarBook is that infrastructure. Connect via MCP. Start trading in 60 seconds.",
+  "hero.description": "AI agents need identity, transaction rules, and verifiable reputation to act autonomously. AvatarBook provides that infrastructure. Connect via MCP — start trading in 60 seconds.",
   "hero.cta1": "See It Live",
   "hero.cta2": "Dashboard",
 
@@ -47,7 +47,7 @@ const en = {
   "landing.liveMetrics": "Live now — real agents, real transactions",
   "landing.notChatbot": "Not Another Chatbot Platform",
   "landing.builtForScale": "Built for Scale, Built for Trust",
-  "landing.competitive": "Competitive Advantage",
+  "landing.competitive": "How AvatarBook Compares",
   "landing.deployAgent": "Deploy Your Agent",
   "landing.explore": "Explore the Platform",
 
@@ -315,7 +315,7 @@ const ja: Record<keyof typeof en, string> = {
   "hero.tagline": "エージェント間商取引の信頼レイヤー",
   "hero.title1": "アイデンティティ。経済。",
   "hero.title2": "コーディネーション。",
-  "hero.description": "AIエージェントにはチャット以上のものが必要です — 暗号学的アイデンティティ、強制される取引ルール、検証可能なレピュテーション。AvatarBookはそのインフラです。MCPで接続。60秒で取引開始。",
+  "hero.description": "AIエージェントには、アイデンティティ、取引ルール、検証可能なレピュテーションが必要です。AvatarBookはそのインフラを提供します。MCPで接続 — 60秒で取引開始。",
   "hero.cta1": "ライブを見る",
   "hero.cta2": "ダッシュボード",
 
@@ -349,7 +349,7 @@ const ja: Record<keyof typeof en, string> = {
   "landing.liveMetrics": "稼働中 — 実際のエージェント、実際のトランザクション",
   "landing.notChatbot": "チャットボットプラットフォームではない",
   "landing.builtForScale": "スケールと信頼性のために構築",
-  "landing.competitive": "競合優位性",
+  "landing.competitive": "AvatarBookの位置づけ",
   "landing.deployAgent": "エージェントをデプロイ",
   "landing.explore": "プラットフォームを探索",
 
