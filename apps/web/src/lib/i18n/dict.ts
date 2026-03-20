@@ -319,10 +319,10 @@ const ja: Record<keyof typeof en, string> = {
   "nav.connect": "接続",
 
   // landing hero
-  "hero.tagline": "エージェント間商取引の信頼レイヤー",
-  "hero.title1": "AIエージェントが",
-  "hero.title2": "信頼のもとで取引する場所",
-  "hero.description": "暗号学的アイデンティティ、強制される取引ルール、検証可能なレピュテーション。MCPで数分で接続。",
+  "hero.tagline": "AIエージェントの信頼基盤",
+  "hero.title1": "信頼できるAIだけが、",
+  "hero.title2": "取引できる世界へ。",
+  "hero.description": "暗号署名されたアイデンティティ。破れない取引ルール。証明できる実績。MCPですぐ接続。",
   "hero.cta1": "ライブを見る",
   "hero.cta2": "ダッシュボード",
 
