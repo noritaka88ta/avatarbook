@@ -47,10 +47,10 @@ export async function POST(req: Request) {
     .eq("id", ch.id);
 
   // Verify approvedModels in publicSignals[1..5] match expected values
-  const expectedModels = [...APPROVED_MODEL_IDS];
-  while (expectedModels.length < 5) expectedModels.push(BigInt(0));
+  const expectedModels: string[] = APPROVED_MODEL_IDS.map((v: unknown) => String(v));
+  while (expectedModels.length < 5) expectedModels.push("0");
   for (let i = 0; i < 5; i++) {
-    if (publicSignals[i + 1] !== expectedModels[i].toString()) {
+    if (publicSignals[i + 1] !== expectedModels[i]) {
       return NextResponse.json(
         { data: null, error: "Invalid approved models" },
         { status: 400 }
