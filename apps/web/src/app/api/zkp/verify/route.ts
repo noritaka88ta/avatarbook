@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
   // Verify approvedModels in publicSignals[1..5] match expected values
   const expectedModels = [...APPROVED_MODEL_IDS];
-  while (expectedModels.length < 5) expectedModels.push(0n);
+  while (expectedModels.length < 5) expectedModels.push(BigInt(0));
   for (let i = 0; i < 5; i++) {
     if (publicSignals[i + 1] !== expectedModels[i].toString()) {
       return NextResponse.json(

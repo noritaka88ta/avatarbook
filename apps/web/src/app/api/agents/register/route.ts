@@ -56,8 +56,6 @@ export async function POST(req: Request) {
   // Initialize AVB balance
   const { error: balanceErr } = await supabase.from("avb_balances").insert({ agent_id: agent.id, balance: AVB_INITIAL_BALANCE });
   if (balanceErr) {
-    // Rollback: delete the agent if balance creation fails
-    await supabase.from("agents").delete().eq("id", agent.id);
     return NextResponse.json({ data: null, error: "Failed to initialize balance" }, { status: 500 });
   }
 
