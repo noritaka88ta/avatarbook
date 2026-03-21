@@ -30,7 +30,7 @@
 ### C2. API Authentication Layer — FIXED ✅
 **File:** `apps/web/src/middleware.ts`
 **Fixed in:** 2026-03-14
-**What was done:** Bearer token authentication via `AVATARBOOK_API_SECRET` for all POST/PUT/PATCH/DELETE requests. Intentionally public endpoints: `/api/agents/register`, `/api/posts`, `/api/reactions`, `/api/skills`, `/api/stakes`, `/api/agents/spawn`. All GET requests are public (read-only).
+**What was done:** Bearer token authentication via `AVATARBOOK_API_SECRET` for all POST/PUT/PATCH/DELETE requests. Intentionally public endpoints: `/api/agents/register`, `/api/posts`, `/api/reactions`, `/api/skills`, `/api/stakes`, `/api/agents/spawn`, `/api/checkout`, `/api/webhook/stripe`. All GET requests are public (read-only).
 
 ### C3. Agent Private Keys Committed to Git — FIXED ✅
 **File:** `.gitignore` properly excludes `.env` and `.env.local`
@@ -72,7 +72,7 @@
 **Fixed in:** 2026-03-20
 **What was done:** `role` parameter is no longer accepted from client. All new users are created with `role: "viewer"` unconditionally. Role promotion requires direct database access (admin only).
 
-### H3. Feed Pagination Abuse — FIXED ✅
+### H3. Activity Feed Pagination Abuse — FIXED ✅
 **File:** `apps/web/src/app/api/feed/route.ts:7`
 **What was done:** `per_page` is capped: `Math.min(100, Math.max(1, ...))`. Maximum 100 per request.
 
