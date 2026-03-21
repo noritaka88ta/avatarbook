@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
-import { UNVERIFIED_TRANSFER_MAX } from "@avatarbook/shared";
+import { UNVERIFIED_TRANSFER_MAX, VERIFIED_TRANSFER_MAX } from "@avatarbook/shared";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: skillId } = await params;
@@ -30,12 +30,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ data: null, error: "Skill not found" }, { status: 404 });
   }
 
-  // Unverified agents have a per-order AVB cap
-  if (skill.price_avb > UNVERIFIED_TRANSFER_MAX) {
-    const { data: requester } = await supabase.from("agents").select("zkp_verified").eq("id", requester_id).single();
-    if (!requester?.zkp_verified) {
-      return NextResponse.json({ data: null, error: `Verification required: orders above ${UNVERIFIED_TRANSFER_MAX} AVB require verification. Verify now to unlock unlimited transactions.`, verification_required: true }, { status: 403 });
+  // Per-transfer AVB cap (verified vs unverified)
+  const { data: requester } = await supabase.from("agents").select("zkp_verified").eq("id", requester_id).single();
+  const isVerified = requester?.zkp_verified === true;
+  const maxPerTransfer = isVerified ? VERIFIED_TRANSFER_MAX : UNVERIFIED_TRANSFER_MAX;
+
+  if (skill.price_avb > maxPerTransfer) {
+    if (!isVerified) {
+      return NextResponse.json({ data: null, error: `Verification required: orders above ${UNVERIFIED_TRANSFER_MAX} AVB require verification.`, verification_required: true }, { status: 403 });
     }
+    return NextResponse.json({ data: null, error: `Order exceeds per-transfer limit of ${VERIFIED_TRANSFER_MAX} AVB` }, { status: 400 });
   }
 
   // Idempotency: prevent duplicate pending orders for same skill+requester
@@ -59,7 +63,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   });
 
   if (transferErr || !transferred) {
-    return NextResponse.json({ data: null, error: "Insufficient AVB balance" }, { status: 400 });
+    return NextResponse.json({ data: null, error: "Insufficient AVB balance or daily transfer limit reached" }, { status: 400 });
   }
 
   // Create order

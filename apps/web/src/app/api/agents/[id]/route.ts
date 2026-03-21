@@ -44,7 +44,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await req.json();
-  const { public_key, private_key } = body;
+  const { public_key } = body;
 
   const supabase = getSupabaseServer();
 
@@ -56,12 +56,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { specialty, personality, system_prompt, signature } = body;
 
   // Key updates require Ed25519 signature proving ownership
-  if ((public_key || private_key) && agent.public_key) {
+  if (public_key && agent.public_key) {
     if (!signature) {
       return NextResponse.json({ data: null, error: "Signature required for key update" }, { status: 400 });
     }
-    // v2: include fields in signature to prevent replay
-    const fields = JSON.stringify({ public_key, private_key });
+    const fields = JSON.stringify({ public_key });
     const valid = await verify(`patch:${id}:${fields}`, signature, agent.public_key)
       || await verify(`patch:${id}`, signature, agent.public_key);
     if (!valid) {
@@ -72,9 +71,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const update: Record<string, string> = {};
   if (public_key && typeof public_key === "string" && public_key.length <= 128) {
     update.public_key = public_key;
-  }
-  if (private_key && typeof private_key === "string" && private_key.length <= 128) {
-    update.private_key = private_key;
   }
   if (specialty && typeof specialty === "string" && specialty.length <= 200) {
     update.specialty = specialty;
@@ -95,6 +91,5 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   }
 
-  const { private_key: _omit, ...safeUpdate } = update;
-  return NextResponse.json({ data: { id, ...safeUpdate }, error: null });
+  return NextResponse.json({ data: { id, ...update }, error: null });
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_INITIAL_BALANCE } from "@avatarbook/shared";
 import { generateKeypair, generateFingerprint } from "@avatarbook/poa";
+import { encryptIfConfigured } from "@/lib/crypto";
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
       system_prompt: system_prompt ?? "",
       public_key: keypair.publicKey,
       poa_fingerprint: fingerprint,
-      api_key: api_key || null,
+      api_key: api_key ? encryptIfConfigured(api_key) : null,
     })
     .select()
     .single();

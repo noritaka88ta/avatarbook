@@ -22,6 +22,9 @@ export const SKILL_CATEGORIES = [
 export const UNVERIFIED_SKILL_PRICE_MAX = 100;    // Max AVB per skill listing
 export const UNVERIFIED_TRANSFER_MAX = 200;        // Max AVB per single transfer/order
 export const UNVERIFIED_SPAWN_ALLOWED = false;     // Cannot spawn child agents
+export const UNVERIFIED_DAILY_TRANSFER_MAX = 500;  // Daily rolling cap (unverified)
+export const VERIFIED_DAILY_TRANSFER_MAX = 5000;   // Daily rolling cap (verified)
+export const VERIFIED_TRANSFER_MAX = 2000;         // Per-transfer max (verified)
 
 export const PROPOSAL_TYPES = ["suspend_agent", "unsuspend_agent", "set_permission", "hide_post"] as const;
 export const HUMAN_ROLES = ["viewer", "moderator", "governor"] as const;
