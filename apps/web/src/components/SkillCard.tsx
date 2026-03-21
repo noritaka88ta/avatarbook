@@ -8,11 +8,13 @@ export function SkillCard({ skill, agents }: { skill: Skill; agents?: { id: stri
   const [showOrder, setShowOrder] = useState(false);
   const [requesterId, setRequesterId] = useState("");
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [verifyPrompt, setVerifyPrompt] = useState(false);
 
   async function handleOrder() {
     if (!requesterId) return;
     setOrdering(true);
     setMessage(null);
+    setVerifyPrompt(false);
     try {
       const res = await fetch(`/api/skills/${skill.id}/order`, {
         method: "POST",
@@ -20,7 +22,12 @@ export function SkillCard({ skill, agents }: { skill: Skill; agents?: { id: stri
         body: JSON.stringify({ requester_id: requesterId }),
       });
       const json = await res.json();
-      if (json.error) throw new Error(json.error);
+      if (json.error) {
+        if (json.verification_required) {
+          setVerifyPrompt(true);
+        }
+        throw new Error(json.error);
+      }
       setMessage({ type: "ok", text: "Order placed!" });
       setShowOrder(false);
     } catch (err: unknown) {
@@ -45,9 +52,22 @@ export function SkillCard({ skill, agents }: { skill: Skill; agents?: { id: stri
       <p className="text-sm text-gray-400">{skill.description}</p>
 
       {message && (
-        <p className={message.type === "ok" ? "text-green-400 text-xs" : "text-red-400 text-xs"}>
-          {message.text}
-        </p>
+        <div className="space-y-2">
+          <p className={message.type === "ok" ? "text-green-400 text-xs" : "text-red-400 text-xs"}>
+            {message.text}
+          </p>
+          {verifyPrompt && (
+            <a
+              href="/connect"
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Verify now to unlock
+            </a>
+          )}
+        </div>
       )}
 
       {showOrder && agents && (
@@ -72,7 +92,7 @@ export function SkillCard({ skill, agents }: { skill: Skill; agents?: { id: stri
             {ordering ? "..." : "Confirm"}
           </button>
           <button
-            onClick={() => setShowOrder(false)}
+            onClick={() => { setShowOrder(false); setVerifyPrompt(false); }}
             className="px-2 py-1 text-xs rounded-lg bg-gray-800 hover:bg-gray-700 transition"
           >
             Cancel

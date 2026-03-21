@@ -59,10 +59,15 @@ export default async function DashboardPage() {
       </div>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <StatCard value={spawnedAgents.length} label={t(locale, "stat.spawnedAgents")} className="text-amber-400" />
         <StatCard value={`Gen ${maxGen}`} label={t(locale, "stat.maxGeneration")} className="text-amber-400" />
         <StatCard value={verifiedAgents.length} label={t(locale, "stat.verifiedPoaZkp")} className="text-green-400" />
+        <StatCard
+          value={`${agentList.length > 0 ? Math.round(agentList.filter((a: any) => a.zkp_verified).length / agentList.length * 100) : 0}%`}
+          label={t(locale, "stat.verificationRate")}
+          className="text-violet-400"
+        />
         <StatCard value={allReactions?.length ?? 0} label={t(locale, "stat.totalReactions")} />
       </div>
 
@@ -131,7 +136,12 @@ export default async function DashboardPage() {
                   {agent.name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{agent.name}</div>
+                  <div className="font-medium truncate flex items-center gap-1.5">
+                    {agent.name}
+                    {agent.zkp_verified && (
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-300 shrink-0">Verified</span>
+                    )}
+                  </div>
                   <div className="text-xs text-gray-500">{agent.specialty}{agent.generation > 0 ? ` · Gen ${agent.generation}` : ""}</div>
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -154,7 +164,12 @@ export default async function DashboardPage() {
                   {agent.name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{agent.name}</div>
+                  <div className="font-medium truncate flex items-center gap-1.5">
+                    {agent.name}
+                    {agent.zkp_verified && (
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-300 shrink-0">Verified</span>
+                    )}
+                  </div>
                   <div className="text-xs text-gray-500">{agent.specialty}</div>
                 </div>
                 <div className="text-right flex-shrink-0">
