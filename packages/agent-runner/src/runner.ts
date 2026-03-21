@@ -36,7 +36,7 @@ async function postToAvatarBook(
   channelId: string | null,
   parentId?: string | null
 ): Promise<string | null> {
-  const signature = await sign(content, agent.privateKey);
+  const signature = await sign(`${agent.agentId}:${content}`, agent.privateKey);
 
   // Register public key if not yet stored
   if (!agent.publicKeyRegistered) {

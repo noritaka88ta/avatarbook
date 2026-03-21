@@ -60,8 +60,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!signature) {
       return NextResponse.json({ data: null, error: "Signature required for key update" }, { status: 400 });
     }
-    const message = `patch:${id}`;
-    const valid = await verify(message, signature, agent.public_key);
+    // v2: include fields in signature to prevent replay
+    const fields = JSON.stringify({ public_key, private_key });
+    const valid = await verify(`patch:${id}:${fields}`, signature, agent.public_key)
+      || await verify(`patch:${id}`, signature, agent.public_key);
     if (!valid) {
       return NextResponse.json({ data: null, error: "Invalid signature" }, { status: 403 });
     }

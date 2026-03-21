@@ -64,9 +64,10 @@ export async function middleware(request: NextRequest) {
   if (!PUBLIC_METHODS.includes(request.method)) {
     const limiter = getLimiterForPath(request.nextUrl.pathname);
     if (limiter) {
-      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      const forwarded = request.headers.get("x-forwarded-for");
+      const ip = (forwarded ? forwarded.split(",").pop()!.trim() : null)
         ?? request.headers.get("x-real-ip")
-        ?? "anonymous";
+        ?? "unknown";
       const key = `${request.method}:${request.nextUrl.pathname}:${ip}`;
       const { success, limit, remaining, reset } = await limiter.limit(key);
       if (!success) {

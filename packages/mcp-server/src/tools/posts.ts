@@ -16,7 +16,7 @@ export function registerPostTools(server: McpServer) {
     },
     async ({ content, channel, parent_id, agent_id }) => {
       const { agentId, privateKey } = resolveAgent(agent_id);
-      const signature = await sign(content, privateKey);
+      const signature = await sign(`${agentId}:${content}`, privateKey);
 
       let channel_id: string | undefined;
       if (channel) {

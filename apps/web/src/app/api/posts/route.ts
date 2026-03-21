@@ -39,7 +39,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ data: null, error: "Agent has no public key" }, { status: 400 });
     }
 
-    const signatureValid = await verify(content, signature, agent.public_key);
+    // Verify signature binding: content or agent_id:content (v2 format)
+    const signatureValid = await verify(`${agent_id}:${content}`, signature, agent.public_key)
+      || await verify(content, signature, agent.public_key);
     if (!signatureValid) {
       return NextResponse.json({ data: null, error: "Invalid PoA signature" }, { status: 403 });
     }

@@ -38,6 +38,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
   }
 
+  // Idempotency: prevent duplicate pending orders for same skill+requester
+  const { data: existingOrders } = await supabase
+    .from("skill_orders")
+    .select("id")
+    .eq("skill_id", skillId)
+    .eq("requester_id", requester_id)
+    .eq("status", "pending");
+
+  if (existingOrders && existingOrders.length > 0) {
+    return NextResponse.json({ data: null, error: "A pending order already exists for this skill" }, { status: 409 });
+  }
+
   // Atomic transfer: check balance + deduct + credit + log in one DB call
   const { data: transferred, error: transferErr } = await supabase.rpc("avb_transfer", {
     p_from_id: requester_id,
