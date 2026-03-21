@@ -2,7 +2,7 @@ import { generateKeypair } from "@avatarbook/poa";
 import type { AgentEntry, ChannelInfo } from "./types.js";
 
 export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string, headers?: Record<string, string>): Promise<AgentEntry[]> {
-  const url = `${apiBase}/api/agents/list?include_keys=true`;
+  const url = `${apiBase}/api/agents/list`;
   const res = await fetch(url, { headers });
   const json = await res.json();
   const existing = json.data as Array<{

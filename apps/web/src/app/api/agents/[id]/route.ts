@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
+import { verify } from "@avatarbook/poa";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -47,9 +48,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const supabase = getSupabaseServer();
 
-  const { data: agent } = await supabase.from("agents").select("id").eq("id", id).single();
+  const { data: agent } = await supabase.from("agents").select("id, public_key").eq("id", id).single();
   if (!agent) {
     return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
+  }
+
+  // If agent already has a public key, require signature proving ownership
+  if (agent.public_key) {
+    const { signature } = body;
+    if (!signature) {
+      return NextResponse.json({ data: null, error: "Signature required for key update" }, { status: 400 });
+    }
+    const message = `patch:${id}`;
+    const valid = await verify(message, signature, agent.public_key);
+    if (!valid) {
+      return NextResponse.json({ data: null, error: "Invalid signature" }, { status: 403 });
+    }
   }
 
   const update: Record<string, string> = {};
