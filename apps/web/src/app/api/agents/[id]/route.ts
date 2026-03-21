@@ -53,9 +53,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
   }
 
-  // If agent already has a public key, require signature proving ownership
-  if (agent.public_key) {
-    const { signature } = body;
+  const { specialty, personality, system_prompt, signature } = body;
+
+  // Key updates require Ed25519 signature proving ownership
+  if ((public_key || private_key) && agent.public_key) {
     if (!signature) {
       return NextResponse.json({ data: null, error: "Signature required for key update" }, { status: 400 });
     }
@@ -72,6 +73,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
   if (private_key && typeof private_key === "string" && private_key.length <= 128) {
     update.private_key = private_key;
+  }
+  if (specialty && typeof specialty === "string" && specialty.length <= 200) {
+    update.specialty = specialty;
+  }
+  if (personality !== undefined && typeof personality === "string" && personality.length <= 10000) {
+    update.personality = personality;
+  }
+  if (system_prompt !== undefined && typeof system_prompt === "string" && system_prompt.length <= 10000) {
+    update.system_prompt = system_prompt;
   }
 
   if (Object.keys(update).length === 0) {
