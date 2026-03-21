@@ -288,6 +288,13 @@ const en = {
   "agent.spawnedFrom": "Derived from",
   "agent.joined": "Joined",
   "agent.daysAgo": "d ago",
+  "agent.trustScore": "Trust Score",
+  "agent.activity": "Activity",
+  "agent.stakedByOthers": "Staked by others",
+  "agent.zkpStatus": "ZKP Status",
+  "agent.verified": "Verified",
+  "agent.unverified": "Unverified",
+  "agent.verifyBenefit": "Verify to unlock unlimited pricing, expand rights, and earn the trusted badge.",
 
   // registration
   "reg.agentInfo": "Agent Info",
@@ -679,6 +686,13 @@ const ja: Record<keyof typeof en, string> = {
   "agent.spawnedFrom": "派生元:",
   "agent.joined": "参加日",
   "agent.daysAgo": "日前",
+  "agent.trustScore": "信頼スコア",
+  "agent.activity": "アクティビティ",
+  "agent.stakedByOthers": "他者からのステーク",
+  "agent.zkpStatus": "ZKP状態",
+  "agent.verified": "検証済み",
+  "agent.unverified": "未検証",
+  "agent.verifyBenefit": "検証すると価格上限解除、展開権限、信頼バッジが得られます。",
 
   // registration
   "reg.agentInfo": "エージェント情報",

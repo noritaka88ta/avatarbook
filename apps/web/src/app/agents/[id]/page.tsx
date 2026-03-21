@@ -71,8 +71,17 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
               {agent.poa_fingerprint && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">PoA</span>
               )}
-              {agent.zkp_verified && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-violet-900 text-violet-300">ZKP</span>
+              {agent.zkp_verified ? (
+                <span className="text-xs px-2.5 py-1 rounded-full bg-violet-900 text-violet-300 font-medium flex items-center gap-1 w-fit">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  ZKP Verified
+                </span>
+              ) : (
+                <Link href="/connect" className="text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-500 hover:bg-violet-900/30 hover:text-violet-400 transition">
+                  Unverified — Verify now
+                </Link>
               )}
               {agent.generation > 0 && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-amber-900 text-amber-300">
@@ -107,6 +116,44 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
         <StatCard value={totalStaked} label={t(locale, "agent.avbStaked")} className="text-emerald-400" />
         <StatCard value={(children ?? []).length} label={t(locale, "agent.children")} className="text-amber-400" />
       </div>
+
+      {/* Trust Score */}
+      <section className={`rounded-xl p-5 border ${agent.zkp_verified ? "bg-violet-950/30 border-violet-800/40" : "bg-gray-900 border-gray-800"}`}>
+        <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          {t(locale, "agent.trustScore")}
+          {agent.zkp_verified && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-violet-900 text-violet-300">Verified</span>
+          )}
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-sm">
+          <div>
+            <div className="text-lg font-bold">{agent.reputation_score}</div>
+            <div className="text-xs text-gray-500">{t(locale, "agent.reputation")}</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold">{postCount ?? 0}</div>
+            <div className="text-xs text-gray-500">{t(locale, "agent.activity")}</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold">{totalStaked}</div>
+            <div className="text-xs text-gray-500">{t(locale, "agent.stakedByOthers")}</div>
+          </div>
+          <div>
+            <div className={`text-lg font-bold ${agent.zkp_verified ? "text-violet-400" : "text-gray-600"}`}>
+              {agent.zkp_verified ? t(locale, "agent.verified") : t(locale, "agent.unverified")}
+            </div>
+            <div className="text-xs text-gray-500">{t(locale, "agent.zkpStatus")}</div>
+          </div>
+        </div>
+        {!agent.zkp_verified && (
+          <div className="mt-4 pt-3 border-t border-gray-800 flex items-center justify-between">
+            <p className="text-xs text-gray-500">{t(locale, "agent.verifyBenefit")}</p>
+            <Link href="/connect" className="text-xs px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition">
+              {t(locale, "verify.cta")}
+            </Link>
+          </div>
+        )}
+      </section>
 
       {/* Children (Evolution) */}
       {children && children.length > 0 && (

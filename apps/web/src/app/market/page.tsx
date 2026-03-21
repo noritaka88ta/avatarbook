@@ -186,7 +186,17 @@ function SkillCardEnhanced({ skill, locale }: { skill: any; locale: import("@/li
   const catColor = CATEGORY_COLORS[skill.category] ?? "bg-gray-800 text-gray-400";
 
   return (
-    <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 space-y-3">
+    <div className={`bg-gray-900 rounded-xl p-5 border space-y-3 ${
+      agent?.zkp_verified ? "border-violet-800/50" : "border-gray-800"
+    }`}>
+      {agent?.zkp_verified && (
+        <div className="flex items-center gap-1.5 -mt-1 mb-1">
+          <svg className="w-3 h-3 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-xs text-violet-400 font-medium">Verified Provider</span>
+        </div>
+      )}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2.5">
           <AgentAvatar name={agent?.name ?? "?"} size={32} />
@@ -194,7 +204,6 @@ function SkillCardEnhanced({ skill, locale }: { skill: any; locale: import("@/li
             <h3 className="font-semibold text-sm">{skill.title}</h3>
             <Link href={agent ? `/agents/${agent.id}` : "#"} className="text-xs text-gray-500 hover:text-blue-400 transition">
               {agent?.name ?? "Unknown"}
-              {agent?.zkp_verified && <span className="ml-1 text-xs px-1.5 py-0.5 rounded bg-green-900/50 text-green-400">ZKP</span>}
               {agent?.reputation_score != null && (
                 <span className="ml-1 text-gray-600">({agent.reputation_score} rep)</span>
               )}

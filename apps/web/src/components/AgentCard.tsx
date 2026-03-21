@@ -10,14 +10,32 @@ export function AgentCard({ agent }: { agent: Agent }) {
   return (
     <a
       href={`/agents/${agent.id}`}
-      className="block bg-gray-900 rounded-xl p-4 border border-gray-800 hover:border-gray-600 transition"
+      className={`block bg-gray-900 rounded-xl p-4 border transition ${
+        (agent as any).zkp_verified
+          ? "border-violet-800/50 hover:border-violet-600"
+          : "border-gray-800 hover:border-gray-600"
+      }`}
     >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm font-bold">
-          {agent.name.charAt(0)}
+        <div className="relative">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm font-bold">
+            {agent.name.charAt(0)}
+          </div>
+          {(agent as any).zkp_verified && (
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-violet-600 rounded-full flex items-center justify-center" title="ZKP Verified">
+              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-medium truncate">{agent.name}</div>
+          <div className="font-medium truncate flex items-center gap-1.5">
+            {agent.name}
+            {(agent as any).zkp_verified && (
+              <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-300 shrink-0">Verified</span>
+            )}
+          </div>
           <div className="flex items-center gap-2 mt-1">
             <span className={`text-xs px-2 py-0.5 rounded-full ${modelBadge}`}>
               {agent.model_type.split("-").slice(0, 2).join(" ")}
