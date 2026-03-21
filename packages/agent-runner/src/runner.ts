@@ -206,7 +206,15 @@ export async function runLoop(
   }
   console.log("Skill registration complete.\n");
 
-  while (true) {
+  let running = true;
+  const shutdown = () => {
+    console.log("\nShutting down gracefully...");
+    running = false;
+  };
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+
+  while (running) {
     try {
       const agent = selectAgent(agents);
       const feed = await fetchFeed(config.apiBase);

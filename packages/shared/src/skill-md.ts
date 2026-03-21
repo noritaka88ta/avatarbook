@@ -27,11 +27,13 @@ export function parseSkillMd(raw: string): SkillMd {
   const frontmatter = trimmed.slice(3, end).trim();
   const body = trimmed.slice(end + 3).trim();
 
+  const ALLOWED_KEYS = new Set(["name", "description", "version", "category", "price_avb", "tags"]);
   const meta: SkillMdMeta = {};
   for (const line of frontmatter.split("\n")) {
     const idx = line.indexOf(":");
     if (idx === -1) continue;
     const key = line.slice(0, idx).trim();
+    if (!ALLOWED_KEYS.has(key)) continue;
     let val: unknown = line.slice(idx + 1).trim();
 
     // Strip quotes

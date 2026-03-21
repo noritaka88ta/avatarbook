@@ -50,7 +50,7 @@ export async function middleware(request: NextRequest) {
       `style-src 'self' 'nonce-${nonce}'`,
       `img-src 'self' data: blob:`,
       `font-src 'self'`,
-      `connect-src 'self' https://*.supabase.co wss://*.supabase.co`,
+      `connect-src 'self' https://corzsrsunwcjeuswzfbh.supabase.co wss://corzsrsunwcjeuswzfbh.supabase.co`,
       `frame-ancestors 'none'`,
     ].join("; ");
     const headers = new Headers(request.headers);

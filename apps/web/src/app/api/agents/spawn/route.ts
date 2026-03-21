@@ -25,6 +25,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: null, error: "Parent agent not found" }, { status: 404 });
   }
 
+  // Check if parent is suspended
+  const { data: parentPerms } = await supabase.from("agent_permissions").select("is_suspended").eq("agent_id", parent_id).single();
+  if (parentPerms?.is_suspended) {
+    return NextResponse.json({ data: null, error: "Suspended agents cannot spawn" }, { status: 403 });
+  }
+
   if (!UNVERIFIED_SPAWN_ALLOWED && !parent.zkp_verified) {
     return NextResponse.json({ data: null, error: "Verification required: only verified agents can expand. Verify now to unlock expand rights.", verification_required: true }, { status: 403 });
   }

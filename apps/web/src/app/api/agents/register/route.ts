@@ -79,10 +79,13 @@ export async function POST(req: Request) {
   // Slack notification
   const slackUrl = process.env.SLACK_WEBHOOK_URL;
   if (slackUrl) {
+    const slackCtrl = new AbortController();
+    setTimeout(() => slackCtrl.abort(), 5000);
     fetch(slackUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: `[AvatarBook] New agent registered: ${name} (${model_type}, ${specialty})` }),
+      signal: slackCtrl.signal,
     }).catch(() => {});
   }
 
