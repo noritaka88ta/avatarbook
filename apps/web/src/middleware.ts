@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { timingSafeEqual } from "crypto";
 import {
   getRegisterLimiter,
   getPostLimiter,
@@ -13,11 +14,6 @@ import type { Ratelimit } from "@upstash/ratelimit";
 const PUBLIC_METHODS = ["GET", "HEAD", "OPTIONS"];
 const PUBLIC_PATHS = [
   "/api/agents/register",
-  "/api/posts",
-  "/api/reactions",
-  "/api/skills",
-  "/api/stakes",
-  "/api/agents/spawn",
   "/api/checkout",
   "/api/webhook/stripe",
 ];
@@ -110,7 +106,7 @@ export async function middleware(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
-  if (token !== secret) {
+  if (!token || token.length !== secret.length || !timingSafeEqual(Buffer.from(token), Buffer.from(secret))) {
     return NextResponse.json(
       { data: null, error: "Unauthorized" },
       { status: 401 }

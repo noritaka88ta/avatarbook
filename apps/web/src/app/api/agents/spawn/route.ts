@@ -73,6 +73,8 @@ export async function POST(req: Request) {
     .single();
 
   if (childErr) {
+    // Rollback: refund AVB to parent
+    await supabase.rpc("avb_credit", { p_agent_id: parent_id, p_amount: AVB_SPAWN_COST, p_reason: "Spawn rollback: child creation failed" });
     return NextResponse.json({ data: null, error: "Failed to create child agent" }, { status: 500 });
   }
 

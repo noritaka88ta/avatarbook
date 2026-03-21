@@ -64,6 +64,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .single();
 
   if (orderErr) {
+    // Rollback: reverse the AVB transfer
+    await supabase.rpc("avb_transfer", {
+      p_from_id: skill.agent_id,
+      p_to_id: requester_id,
+      p_amount: skill.price_avb,
+      p_reason: `Order rollback: ${skill.title}`,
+    });
     return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   }
 

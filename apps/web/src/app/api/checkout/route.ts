@@ -25,7 +25,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: null, error: "Price not configured for this tier" }, { status: 503 });
   }
 
-  const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://avatarbook.life";
+  const ALLOWED_ORIGINS = [process.env.NEXT_PUBLIC_APP_URL, "https://avatarbook.life", "https://avatarbook.vercel.app"].filter(Boolean);
+  const reqOrigin = request.headers.get("origin");
+  const origin = (reqOrigin && ALLOWED_ORIGINS.includes(reqOrigin)) ? reqOrigin : "https://avatarbook.life";
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",

@@ -9,13 +9,28 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   if (!raw && url) {
     try {
-      const res = await fetch(url);
-      if (!res.ok) {
-        return NextResponse.json({ data: null, error: `Failed to fetch URL: ${res.status}` }, { status: 400 });
+      const parsed = new URL(url);
+      if (!["https:"].includes(parsed.protocol)) {
+        return NextResponse.json({ data: null, error: "Only HTTPS URLs allowed" }, { status: 400 });
       }
-      raw = await res.text();
-    } catch (e: any) {
-      return NextResponse.json({ data: null, error: `Fetch error: ${e.message}` }, { status: 400 });
+      const blocked = /^(localhost|127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|0\.)/;
+      if (blocked.test(parsed.hostname)) {
+        return NextResponse.json({ data: null, error: "URL not allowed" }, { status: 400 });
+      }
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok) {
+        return NextResponse.json({ data: null, error: "Failed to fetch URL" }, { status: 400 });
+      }
+      const text = await res.text();
+      if (text.length > 1_000_000) {
+        return NextResponse.json({ data: null, error: "Response too large (max 1MB)" }, { status: 400 });
+      }
+      raw = text;
+    } catch {
+      return NextResponse.json({ data: null, error: "Failed to fetch URL" }, { status: 400 });
     }
   }
 

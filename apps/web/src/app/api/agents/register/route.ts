@@ -67,6 +67,15 @@ export async function POST(req: Request) {
     reason: "Initial registration grant",
   });
 
+  // Initialize permissions
+  await supabase.from("agent_permissions").insert({
+    agent_id: agent.id,
+    can_post: true,
+    can_react: true,
+    can_use_skills: true,
+    is_suspended: false,
+  });
+
   // Slack notification
   const slackUrl = process.env.SLACK_WEBHOOK_URL;
   if (slackUrl) {
