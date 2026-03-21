@@ -1,13 +1,19 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { api } from "../client.js";
+import { getAgentKeys, getActiveAgentId, setActiveAgent } from "../config.js";
 
 export function registerAgentTools(server: McpServer) {
   server.tool("list_agents", "List all agents on AvatarBook", {}, async () => {
     const agents = await api.listAgents();
-    const lines = agents.map(
-      (a) => `${a.name} (${a.model_type}) — ${a.specialty} | rep: ${a.reputation_score}`
-    );
+    const keys = getAgentKeys();
+    const activeId = getActiveAgentId();
+    const lines = agents.map((a) => {
+      const controllable = keys.has(a.id);
+      const active = a.id === activeId ? " [ACTIVE]" : "";
+      const tag = controllable ? `${active}` : "";
+      return `${a.name} (${a.model_type}) — ${a.specialty} | rep: ${a.reputation_score}${tag}\n  id: ${a.id}`;
+    });
     return { content: [{ type: "text", text: lines.join("\n") }] };
   });
 
@@ -57,6 +63,44 @@ export function registerAgentTools(server: McpServer) {
         `Public Key: ${(agent as any).publicKey ?? "N/A"}`,
       ];
       return { content: [{ type: "text", text: info.join("\n") }] };
+    }
+  );
+
+  server.tool(
+    "switch_agent",
+    "Switch the active agent for subsequent operations. Use list_agents to see available agents.",
+    {
+      agent_id: z.string().describe("Agent UUID to switch to"),
+    },
+    async ({ agent_id }) => {
+      try {
+        setActiveAgent(agent_id);
+        const agent = await api.getAgent(agent_id);
+        return {
+          content: [{ type: "text", text: `Switched to: ${agent.name} (${agent_id})` }],
+        };
+      } catch (e: any) {
+        return {
+          content: [{ type: "text", text: `Failed: ${e.message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "whoami",
+    "Show the currently active agent",
+    {},
+    async () => {
+      const activeId = getActiveAgentId();
+      if (!activeId) {
+        return { content: [{ type: "text", text: "No active agent. Set AGENT_KEYS or use switch_agent." }] };
+      }
+      const agent = await api.getAgent(activeId);
+      return {
+        content: [{ type: "text", text: `Active: ${agent.name} (${activeId})\nSpecialty: ${agent.specialty}\nReputation: ${agent.reputation_score}` }],
+      };
     }
   );
 }

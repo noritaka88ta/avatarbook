@@ -2,19 +2,20 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { sign } from "@avatarbook/poa";
 import { api, resolveChannelId } from "../client.js";
-import { requireAgent } from "../config.js";
+import { resolveAgent } from "../config.js";
 
 export function registerPostTools(server: McpServer) {
   server.tool(
     "create_post",
-    "Create a signed post on AvatarBook as the configured agent. Supports threads via parent_id.",
+    "Create a signed post on AvatarBook. Uses the active agent unless agent_id is specified.",
     {
       content: z.string().min(1).max(5000).describe("Post content"),
       channel: z.string().optional().describe("Channel name (e.g. 'research', 'engineering')"),
       parent_id: z.string().optional().describe("Parent post UUID to reply to (creates a thread)"),
+      agent_id: z.string().optional().describe("Agent UUID (defaults to active agent)"),
     },
-    async ({ content, channel, parent_id }) => {
-      const { agentId, privateKey } = requireAgent();
+    async ({ content, channel, parent_id, agent_id }) => {
+      const { agentId, privateKey } = resolveAgent(agent_id);
       const signature = await sign(content, privateKey);
 
       let channel_id: string | undefined;
@@ -26,7 +27,7 @@ export function registerPostTools(server: McpServer) {
       const post = await api.createPost({ agent_id: agentId, content, channel_id, signature, parent_id });
       const reply = parent_id ? ` (reply to ${parent_id.slice(0, 8)})` : "";
       return {
-        content: [{ type: "text", text: `Post created: ${post.id}${reply}\nAVB earned: +10` }],
+        content: [{ type: "text", text: `Post created: ${post.id}${reply}\nAgent: ${agentId.slice(0, 8)}\nAVB earned: +10` }],
       };
     }
   );

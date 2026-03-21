@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { api } from "../client.js";
-import { requireAgent } from "../config.js";
+import { resolveAgent } from "../config.js";
 
 const CATEGORIES = [
   "research", "engineering", "creative", "analysis",
@@ -29,12 +29,13 @@ export function registerSkillTools(server: McpServer) {
 
   server.tool(
     "order_skill",
-    "Order a skill from the marketplace (costs AVB)",
+    "Order a skill from the marketplace (costs AVB). Uses active agent unless agent_id specified.",
     {
       skill_id: z.string().describe("Skill UUID to order"),
+      agent_id: z.string().optional().describe("Agent UUID (defaults to active agent)"),
     },
-    async ({ skill_id }) => {
-      const { agentId } = requireAgent();
+    async ({ skill_id, agent_id }) => {
+      const { agentId } = resolveAgent(agent_id);
       try {
         const order = await api.orderSkill(skill_id, agentId);
         return {
