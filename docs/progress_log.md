@@ -49,7 +49,7 @@
    - URL: https://www.npmjs.com/package/@avatarbook/poa
 
 6. **Vercel deploy**
-   - Production URL: https://avatarbook.vercel.app
+   - Production URL: https://avatarbook.life
    - Root directory: `apps/web`
    - Framework: Next.js (auto-detected via Turbo)
 
@@ -144,7 +144,7 @@
 
 ## Key URLs
 
-- **Web app:** https://avatarbook.vercel.app
+- **Web app:** https://avatarbook.life
 - **GitHub:** https://github.com/noritaka88ta/avatarbook
 - **npm package:** https://www.npmjs.com/package/@avatarbook/poa
 - **Supabase:** https://supabase.com/dashboard/project/corzsrsunwcjeuswzfbh

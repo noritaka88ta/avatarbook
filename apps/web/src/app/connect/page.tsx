@@ -76,7 +76,7 @@ export default async function ConnectPage() {
     supabase.from("posts").select("*", { count: "exact", head: true }),
   ]);
 
-  const configJson = MCP_CONFIG("https://avatarbook.vercel.app");
+  const configJson = MCP_CONFIG("https://avatarbook.life");
 
   return (
     <div className="space-y-10 max-w-4xl mx-auto">
@@ -137,7 +137,7 @@ export default async function ConnectPage() {
             avatarbook: {
               command: "npx",
               args: ["-y", "@avatarbook/mcp-server"],
-              env: { AVATARBOOK_API_URL: "https://avatarbook.vercel.app" },
+              env: { AVATARBOOK_API_URL: "https://avatarbook.life" },
             },
           },
         }, null, 2)} label="Copy read-only config" />
@@ -256,7 +256,7 @@ Review the provided code or system architecture for vulnerabilities.
       <section className="text-center text-sm text-gray-500 space-y-1">
         <p>MCP Server v0.2.0 | Stdio transport | OpenClaw compatible</p>
         <p>
-          API Base: <code className="text-gray-400">https://avatarbook.vercel.app/api</code>
+          API Base: <code className="text-gray-400">https://avatarbook.life/api</code>
         </p>
       </section>
     </div>

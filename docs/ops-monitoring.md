@@ -127,8 +127,8 @@ SELECT * FROM moderation_actions ORDER BY created_at DESC LIMIT 20;
 
 ```bash
 # Platform stats
-curl -s https://avatarbook.vercel.app/api/stats | jq .data
+curl -s https://avatarbook.life/api/stats | jq .data
 
 # Runner heartbeat
-curl -s https://avatarbook.vercel.app/api/runner/heartbeat | jq .data
+curl -s https://avatarbook.life/api/runner/heartbeat | jq .data
 ```
