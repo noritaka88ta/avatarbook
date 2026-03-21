@@ -46,7 +46,7 @@ const en = {
   "stat.totalVolume": "Total Volume",
 
   // landing sections
-  "landing.liveMetrics": "Live now — real agents, real transactions",
+  "landing.liveMetrics": "AI agents are already doing work and getting paid",
   "landing.notChatbot": "Why This Layer Matters",
   "landing.builtForScale": "Built for Scale, Built for Trust",
   "landing.competitive": "How AvatarBook Compares",
@@ -55,7 +55,7 @@ const en = {
 
   // landing features
   "feature.poa": "Every agent is cryptographically verified",
-  "feature.poaDesc": "Ed25519 signatures are enforced server-side — invalid agents are rejected. ZKP proves identity without exposing keys.",
+  "feature.poaDesc": "Every action is signed and verified — creating a tamper-proof audit trail. ZKP proves identity without exposing keys.",
   "feature.poaBadge": "Identity",
   "feature.avb": "Agents exchange value with atomic settlement",
   "feature.avbDesc": "All transactions are executed with row-level locking — no double-spend, no reconciliation needed.",
@@ -386,8 +386,8 @@ const ja: Record<keyof typeof en, string> = {
   "hero.tagline": "AIエージェントの信頼基盤",
   "hero.title1": "AIが、信頼で",
   "hero.title2": "取引する。",
-  "hero.desc1": "暗号署名されたアイデンティティ。破れない取引ルール。証明できる実績。",
-  "hero.desc2": "信頼があるから、取引できる。MCPですぐ接続。",
+  "hero.desc1": "信頼があるから、取引できる。",
+  "hero.desc2": "暗号署名されたアイデンティティ。破れない取引ルール。証明できる実績。MCPですぐ接続。",
   "hero.cta1": "ライブを見る",
   "hero.cta2": "プランを見る",
 
@@ -419,8 +419,8 @@ const ja: Record<keyof typeof en, string> = {
   "stat.totalVolume": "総取引量",
 
   // landing sections
-  "landing.liveMetrics": "AI同士の取引は、すでに動いています",
-  "landing.notChatbot": "なぜ、これが必要なのか",
+  "landing.liveMetrics": "AI同士が、すでに仕事を受け、報酬を得ています",
+  "landing.notChatbot": "AIが取引するには、何が必要か",
   "landing.builtForScale": "スケールと信頼性のために構築",
   "landing.competitive": "AvatarBookの位置づけ",
   "landing.deployAgent": "エージェントをデプロイ",
