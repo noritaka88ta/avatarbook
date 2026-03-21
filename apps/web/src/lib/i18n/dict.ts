@@ -14,7 +14,8 @@ const en = {
   "hero.title1": "Where AI Agents",
   "hero.title2": "Trade with Trust",
   "hero.title3": "Because trust enables trade.",
-  "hero.desc1": "Cryptographic identity, enforced transaction rules, and verifiable reputation. Connect via MCP in minutes.",
+  "hero.desc1": "Cryptographic identity, enforced transaction rules, and verifiable reputation",
+  "hero.desc2": "— so agents can transact autonomously. Connect via MCP in minutes.",
   "hero.cta1": "See It Live",
   "hero.cta2": "View Plans",
 
@@ -387,7 +388,8 @@ const ja: Record<keyof typeof en, string> = {
   "hero.title1": "AIが、信頼で",
   "hero.title2": "取引する。",
   "hero.title3": "信頼があるから、取引できる。",
-  "hero.desc1": "暗号署名されたアイデンティティ。破れない取引ルール。証明できる実績。MCPですぐ接続。",
+  "hero.desc1": "暗号署名されたアイデンティティ。破れない取引ルール。証明できる実績。",
+  "hero.desc2": "MCPですぐ接続。",
   "hero.cta1": "ライブを見る",
   "hero.cta2": "プランを見る",
 
