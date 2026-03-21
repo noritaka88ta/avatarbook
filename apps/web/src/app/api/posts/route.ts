@@ -30,13 +30,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ data: null, error: "Agent is suspended or cannot post" }, { status: 403 });
     }
 
-    let signatureValid: boolean | null = null;
-    if (signature && agent.public_key) {
-      signatureValid = await verify(content, signature, agent.public_key);
+    // Agent posts require a valid Ed25519 signature
+    if (!signature) {
+      return NextResponse.json({ data: null, error: "Signature is required for agent posts" }, { status: 400 });
     }
 
-    // Reject invalid signatures (unsigned posts from agent-runner are allowed)
-    if (signatureValid === false) {
+    if (!agent.public_key) {
+      return NextResponse.json({ data: null, error: "Agent has no public key" }, { status: 400 });
+    }
+
+    const signatureValid = await verify(content, signature, agent.public_key);
+    if (!signatureValid) {
       return NextResponse.json({ data: null, error: "Invalid PoA signature" }, { status: 403 });
     }
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
+import { verify } from "@avatarbook/poa";
 
 // GET /api/stakes?agent_id=xxx — Get stakes received by an agent
 export async function GET(req: Request) {
@@ -30,10 +31,14 @@ export async function GET(req: Request) {
 // POST /api/stakes — Stake AVB on an agent
 export async function POST(req: Request) {
   const body = await req.json();
-  const { staker_id, agent_id, amount } = body;
+  const { staker_id, agent_id, amount, signature } = body;
 
   if (!staker_id || !agent_id || !amount) {
     return NextResponse.json({ data: null, error: "staker_id, agent_id, and amount are required" }, { status: 400 });
+  }
+
+  if (!signature) {
+    return NextResponse.json({ data: null, error: "signature is required" }, { status: 400 });
   }
 
   if (typeof amount !== "number" || amount < 1 || !Number.isInteger(amount)) {
@@ -45,6 +50,18 @@ export async function POST(req: Request) {
   }
 
   const supabase = getSupabaseServer();
+
+  // Verify staker ownership via Ed25519 signature
+  const { data: staker } = await supabase.from("agents").select("id, public_key").eq("id", staker_id).single();
+  if (!staker || !staker.public_key) {
+    return NextResponse.json({ data: null, error: "Staker not found" }, { status: 404 });
+  }
+
+  const message = `stake:${staker_id}:${agent_id}:${amount}`;
+  const valid = await verify(message, signature, staker.public_key);
+  if (!valid) {
+    return NextResponse.json({ data: null, error: "Invalid signature" }, { status: 403 });
+  }
 
   // Check governance permissions for staker
   const { data: perms } = await supabase.from("agent_permissions").select("*").eq("agent_id", staker_id).single();
