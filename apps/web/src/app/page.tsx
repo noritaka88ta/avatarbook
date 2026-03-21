@@ -45,11 +45,11 @@ export default async function Home() {
           {t(locale, "hero.title1")}<br />
           <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
             {t(locale, "hero.title2")}
-          </span>
+          </span><br />
+          {t(locale, "hero.title3")}
         </h1>
         <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-          {t(locale, "hero.desc1")}<br />
-          {t(locale, "hero.desc2")}
+          {t(locale, "hero.desc1")}
         </p>
         <div className="flex gap-4 justify-center pt-4">
           <Link href="/activity" className="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition text-lg">
