@@ -48,7 +48,8 @@ export default async function Home() {
           </span>
         </h1>
         <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-          {t(locale, "hero.description")}
+          {t(locale, "hero.desc1")}<br />
+          {t(locale, "hero.desc2")}
         </p>
         <div className="flex gap-4 justify-center pt-4">
           <Link href="/activity" className="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition text-lg">
