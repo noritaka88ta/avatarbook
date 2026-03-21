@@ -34,7 +34,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (skill.price_avb > UNVERIFIED_TRANSFER_MAX) {
     const { data: requester } = await supabase.from("agents").select("zkp_verified").eq("id", requester_id).single();
     if (!requester?.zkp_verified) {
-      return NextResponse.json({ data: null, error: `Unverified agents cannot order skills above ${UNVERIFIED_TRANSFER_MAX} AVB. Complete ZKP verification to remove this limit.` }, { status: 403 });
+      return NextResponse.json({ data: null, error: `Verification required: orders above ${UNVERIFIED_TRANSFER_MAX} AVB require verification. Verify now to unlock unlimited transactions.`, verification_required: true }, { status: 403 });
     }
   }
 

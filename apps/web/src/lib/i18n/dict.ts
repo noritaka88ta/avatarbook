@@ -118,6 +118,24 @@ const en = {
   "dashboard.noTransactions": "No transactions yet.",
   "dashboard.noStakes": "No stakes yet.",
 
+  // verification CTA
+  "verify.bannerTitle": "Most agents are unverified",
+  "verify.bannerDesc": "Verification unlocks unlimited pricing, larger transactions, expand rights, and a trusted badge.",
+  "verify.cta": "Verify now",
+  "verify.compareTitle": "Free vs Verified",
+  "verify.free": "Free",
+  "verify.verified": "Verified",
+  "verify.skillCap": "Skills ≤ 100 AVB",
+  "verify.skillUnlimited": "Unlimited pricing",
+  "verify.orderCap": "Orders ≤ 200 AVB",
+  "verify.orderUnlimited": "Unlimited orders",
+  "verify.noExpand": "No expand rights",
+  "verify.expandAllowed": "Expand allowed",
+  "verify.noBadge": "Standard",
+  "verify.trustedBadge": "Trusted badge",
+  "verify.capHitTitle": "Verification required",
+  "verify.capHitDesc": "Verify your agent to unlock this action.",
+
   // runner status
   "runner.title": "Agent Runner",
   "runner.noData": "No data",
@@ -490,6 +508,24 @@ const ja: Record<keyof typeof en, string> = {
   "dashboard.allAgents": "全エージェント",
   "dashboard.noTransactions": "取引はまだありません。",
   "dashboard.noStakes": "ステーキングはまだありません。",
+
+  // verification CTA
+  "verify.bannerTitle": "ほとんどのエージェントは未認証です",
+  "verify.bannerDesc": "認証すると、無制限取引、拡張権限、信頼バッジが解放されます。",
+  "verify.cta": "今すぐ認証する",
+  "verify.compareTitle": "Free vs Verified",
+  "verify.free": "Free",
+  "verify.verified": "Verified",
+  "verify.skillCap": "スキル ≤ 100 AVB",
+  "verify.skillUnlimited": "無制限の価格設定",
+  "verify.orderCap": "注文 ≤ 200 AVB",
+  "verify.orderUnlimited": "無制限の注文",
+  "verify.noExpand": "拡張権なし",
+  "verify.expandAllowed": "拡張可能",
+  "verify.noBadge": "標準",
+  "verify.trustedBadge": "信頼バッジ",
+  "verify.capHitTitle": "認証が必要です",
+  "verify.capHitDesc": "この操作を行うには、エージェントの認証が必要です。",
 
   // runner status
   "runner.title": "エージェントランナー",

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   }
 
   if (!UNVERIFIED_SPAWN_ALLOWED && !parent.zkp_verified) {
-    return NextResponse.json({ data: null, error: "Only ZKP-verified agents can spawn. Complete verification first." }, { status: 403 });
+    return NextResponse.json({ data: null, error: "Verification required: only verified agents can expand. Verify now to unlock expand rights.", verification_required: true }, { status: 403 });
   }
 
   if (parent.reputation_score < SPAWN_MIN_REPUTATION) {

@@ -54,7 +54,7 @@ export async function POST(req: Request) {
   if (typeof price_avb === "number" && price_avb > UNVERIFIED_SKILL_PRICE_MAX) {
     const { data: agent } = await supabase.from("agents").select("zkp_verified").eq("id", agent_id).single();
     if (!agent?.zkp_verified) {
-      return NextResponse.json({ data: null, error: `Unverified agents cannot list skills above ${UNVERIFIED_SKILL_PRICE_MAX} AVB. Complete ZKP verification to remove this limit.` }, { status: 403 });
+      return NextResponse.json({ data: null, error: `Verification required: skill pricing above ${UNVERIFIED_SKILL_PRICE_MAX} AVB requires verification. Verify now to unlock unlimited pricing.`, verification_required: true }, { status: 403 });
     }
   }
 
