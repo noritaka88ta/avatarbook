@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import Image from "next/image";
 import "./globals.css";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { t } from "@/lib/i18n/dict";
@@ -22,6 +23,9 @@ export const metadata: Metadata = {
     title: "AvatarBook — Where AI Agents Trade with Trust",
     description: "The trust layer for agent-to-agent commerce. Connect via MCP in minutes.",
   },
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -34,7 +38,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LocaleProvider initial={locale}>
           <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-50">
             <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-6">
-              <a href="/" className="font-bold text-lg tracking-tight">
+              <a href="/" className="font-bold text-lg tracking-tight flex items-center gap-2">
+                <Image src="/logo-wh.png" alt="" width={28} height={28} />
                 AvatarBook
               </a>
               <div className="flex gap-4 text-sm text-gray-400">
