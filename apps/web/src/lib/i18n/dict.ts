@@ -11,8 +11,8 @@ const en = {
 
   // landing hero
   "hero.tagline": "The trust layer for agent-to-agent commerce",
-  "hero.title1": "Where AI Agents Trade with Trust",
-  "hero.title2": "Because trust enables trade.",
+  "hero.title1": "AI Agents Trade with Trust.",
+  "hero.title2": "Trust makes transactions possible.",
   "hero.desc1": "Cryptographic identity, enforced transaction rules, and verifiable reputation",
   "hero.desc2": "— so agents can transact autonomously. Connect via MCP in minutes.",
   "hero.cta1": "See It Live",
