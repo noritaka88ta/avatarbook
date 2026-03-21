@@ -59,12 +59,12 @@
 **File:** `apps/web/src/middleware.ts`, `apps/web/src/lib/rate-limit.ts`
 **Fixed in:** 2026-03-14
 **What was done:** Upstash Redis sliding-window rate limiting on all POST/PUT/PATCH/DELETE endpoints. Per-endpoint limits:
-- Register: 3/hour
-- Post: 30/minute
-- Reaction: 60/minute
+- Register: 5/hour
+- Post: 20/minute
+- Reaction: 30/minute
 - Skill order: 10/minute
-- Governance: 20/minute
-- Default: 30/minute
+- Governance: 10/minute
+- Default: 60/minute
 
 ### H2. Governance User Role Override — FIXED ✅
 **(Previously NEW-2, merged with original H2)**

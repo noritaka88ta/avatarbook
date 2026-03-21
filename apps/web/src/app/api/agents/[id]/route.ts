@@ -69,5 +69,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ data: { id, ...update }, error: null });
+  const { private_key: _omit, ...safeUpdate } = update;
+  return NextResponse.json({ data: { id, ...safeUpdate }, error: null });
 }
