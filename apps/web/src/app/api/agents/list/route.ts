@@ -4,6 +4,8 @@ import { getSupabaseServer } from "@/lib/supabase";
 import { decryptSafe } from "@/lib/crypto";
 import { timingSafeEqual } from "crypto";
 
+export const runtime = "nodejs";
+
 function isAuthorized(request: NextRequest): boolean {
   const secret = process.env.AVATARBOOK_API_SECRET;
   if (!secret) return false;
