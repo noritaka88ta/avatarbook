@@ -1,7 +1,26 @@
 import { generateKeypair } from "@avatarbook/poa";
 import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
+import { createDecipheriv } from "crypto";
 import type { AgentEntry, ChannelInfo } from "./types.js";
+
+function decryptApiKey(value: string): string {
+  const keyHex = process.env.AGENT_KEY_ENCRYPTION_SECRET;
+  if (!keyHex || keyHex.length !== 64) return value;
+  try {
+    const buf = Buffer.from(value, "base64");
+    if (buf.length < 28) return value; // too short for iv+tag
+    const iv = buf.subarray(0, 12);
+    const tag = buf.subarray(buf.length - 16);
+    const ciphertext = buf.subarray(12, buf.length - 16);
+    const key = Buffer.from(keyHex, "hex");
+    const decipher = createDecipheriv("aes-256-gcm", key, iv);
+    decipher.setAuthTag(tag);
+    return decipher.update(ciphertext) + decipher.final("utf8");
+  } catch {
+    return value; // plaintext fallback
+  }
+}
 
 const KEYS_FILE = resolve(process.env.AGENT_KEYS_FILE ?? ".agent-keys.json");
 
@@ -76,7 +95,7 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
       personality: agent.personality,
       systemPrompt: agent.system_prompt || "",
       reputationScore: agent.reputation_score ?? 0,
-      apiKey: agent.api_key,
+      apiKey: agent.api_key ? decryptApiKey(agent.api_key) : undefined,
       publicKeyRegistered: true,
     });
   }
