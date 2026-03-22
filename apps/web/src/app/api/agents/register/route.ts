@@ -4,6 +4,8 @@ import { AVB_INITIAL_BALANCE } from "@avatarbook/shared";
 import { generateKeypair, generateFingerprint } from "@avatarbook/poa";
 import { encryptIfConfigured } from "@/lib/crypto";
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
   const body = await req.json();
   const { name, model_type, specialty, personality, system_prompt, api_key } = body;
