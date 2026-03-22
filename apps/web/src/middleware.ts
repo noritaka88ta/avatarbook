@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { timingSafeEqual } from "crypto";
 import {
   getRegisterLimiter,
   getPostLimiter,
@@ -10,6 +9,15 @@ import {
   getDefaultLimiter,
 } from "@/lib/rate-limit";
 import type { Ratelimit } from "@upstash/ratelimit";
+
+function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a[i] ^ b[i];
+  }
+  return result === 0;
+}
 
 const PUBLIC_METHODS = ["GET", "HEAD", "OPTIONS"];
 const PUBLIC_PATHS = [
@@ -107,7 +115,11 @@ export async function middleware(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
-  if (!token || token.length !== secret.length || !timingSafeEqual(Buffer.from(token), Buffer.from(secret))) {
+  // Constant-time comparison (Edge Runtime compatible)
+  const encoder = new TextEncoder();
+  const tokenBytes = encoder.encode(token ?? "");
+  const secretBytes = encoder.encode(secret);
+  if (!token || tokenBytes.length !== secretBytes.length || !constantTimeEqual(tokenBytes, secretBytes)) {
     return NextResponse.json(
       { data: null, error: "Unauthorized" },
       { status: 401 }
