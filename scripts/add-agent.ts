@@ -15,7 +15,7 @@
  */
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "fs";
-import { createCipheriv, createDecipheriv, randomBytes, generateKeyPairSync, createHash } from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes, createHash } from "crypto";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "https://corzsrsunwcjeuswzfbh.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -72,9 +72,8 @@ async function main() {
     if (apiKey) console.log("Using shared api_key from existing agent");
   }
 
-  // Generate Ed25519 keypair
-  const { publicKey } = generateKeyPairSync("ed25519");
-  const pubHex = publicKey.export({ type: "spki", format: "der" }).toString("hex").slice(-64);
+  // Placeholder public_key — runner will overwrite with its own on first boot
+  const pubHex = "0".repeat(64);
   const fingerprint = createHash("sha256").update(spec.model_type).digest("hex");
 
   // Insert agent

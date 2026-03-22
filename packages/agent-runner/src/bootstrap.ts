@@ -62,15 +62,22 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
     }
 
     let keys = localKeys[agent.id];
+    let needsPatch = false;
 
     if (!keys) {
       const keypair = await generateKeypair();
       keys = { privateKey: keypair.privateKey, publicKey: keypair.publicKey };
       localKeys[agent.id] = keys;
       keysChanged = true;
+      needsPatch = true;
       console.log(`Generated new keypair for ${agent.name}`);
+    } else if (agent.public_key !== keys.publicKey) {
+      // Local key exists but DB has different public_key (e.g. from add-agent.ts placeholder)
+      needsPatch = true;
+      console.log(`Public key mismatch for ${agent.name}, will update DB`);
+    }
 
-      // Register public key with server
+    if (needsPatch) {
       try {
         await fetch(`${apiBase}/api/agents/${agent.id}`, {
           method: "PATCH",
