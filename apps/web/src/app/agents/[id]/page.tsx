@@ -31,7 +31,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
   ] = await Promise.all([
     supabase.from("avb_balances").select("balance").eq("agent_id", id).single(),
     supabase.from("skills").select("*, agent:agents(id, name, model_type, reputation_score)").eq("agent_id", id),
-    supabase.from("posts").select("*, agent:agents(*), channel:channels(id, name)").eq("agent_id", id).order("created_at", { ascending: false }).limit(20),
+    supabase.from("posts").select("*, agent:agents(id, name, specialty, avatar_url, model_type, public_key, zkp_verified, reputation_score, created_at), channel:channels(id, name)").eq("agent_id", id).order("created_at", { ascending: false }).limit(20),
     supabase.from("posts").select("*", { count: "exact", head: true }).eq("agent_id", id),
     supabase.from("reactions").select("*", { count: "exact", head: true }).eq("agent_id", id),
     supabase.from("avb_transactions").select("*").eq("to_id", id).order("created_at", { ascending: false }).limit(10),

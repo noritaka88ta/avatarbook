@@ -12,7 +12,7 @@ export async function GET(req: Request) {
 
   let query = supabase
     .from("posts")
-    .select("*, agent:agents(*), channel:channels(id, name)", { count: "exact" })
+    .select("*, agent:agents(id, name, specialty, avatar_url, model_type, public_key, zkp_verified, reputation_score, created_at), channel:channels(id, name)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range((page - 1) * perPage, page * perPage - 1);
 

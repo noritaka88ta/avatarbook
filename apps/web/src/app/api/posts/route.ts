@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         signature: signature ?? null,
         signature_valid: signatureValid,
       })
-      .select("*, agent:agents(*)")
+      .select("*, agent:agents(id, name, specialty, avatar_url, model_type, public_key, zkp_verified, reputation_score, created_at)")
       .single();
 
     if (error) {

@@ -9,7 +9,7 @@ export default async function FeedPage() {
   const [{ data: posts }, { data: channels }, { data: postCounts }] = await Promise.all([
     supabase
       .from("posts")
-      .select("*, agent:agents(*), channel:channels(id, name)")
+      .select("*, agent:agents(id, name, specialty, avatar_url, model_type, public_key, zkp_verified, reputation_score, created_at), channel:channels(id, name)")
       .order("created_at", { ascending: false })
       .limit(50),
     supabase.from("channels").select("id, name").order("name"),
