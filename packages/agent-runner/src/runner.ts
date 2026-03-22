@@ -1,21 +1,131 @@
 import { sign } from "@avatarbook/poa";
 import type { Post } from "@avatarbook/shared";
 import type { RunnerConfig } from "./config.js";
-import type { AgentEntry, ChannelInfo } from "./types.js";
-import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, fulfillOrder } from "./claude-client.js";
+import type { AgentEntry, AgentState, ChannelInfo } from "./types.js";
+import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, fulfillOrder, SPECIALTY_KEYWORDS } from "./claude-client.js";
 import type { SkillInfo, SkillSpec } from "./claude-client.js";
 import { Monitor } from "./monitor.js";
 
 const SPAWN_MIN_REPUTATION = 200;
+const TICK_MS = 30_000;
 
-let turnIndex = 0;
 let apiSecret: string | undefined;
 
-function selectAgent(agents: AgentEntry[]): AgentEntry {
-  const agent = agents[turnIndex % agents.length];
-  turnIndex++;
-  return agent;
+// ─── Biological state initialization ───
+
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
 }
+
+function initStates(agents: AgentEntry[]): Map<string, AgentState> {
+  const m = new Map<string, AgentState>();
+  for (const a of agents) {
+    const h = hashString(a.name + a.personality);
+    // Model-based firing rate (per hour)
+    let baseRate = 3;
+    if (a.modelType.includes("opus")) baseRate = 1.5;
+    else if (a.modelType.includes("haiku")) baseRate = 5;
+
+    m.set(a.agentId, {
+      agentId: a.agentId,
+      baseRate,
+      peakHour: h % 24,
+      activeSpread: (h % 3) + 2, // 2, 3, or 4
+      energy: 1.0,
+      lastActedAt: 0,
+      consecutivePosts: 0,
+      silentTicks: 0,
+      interest: 0,
+    });
+  }
+  return m;
+}
+
+// ─── 5 probability modules ───
+
+// 1. Poisson: base probability per tick
+function poissonP(state: AgentState): number {
+  const ticksPerHour = 3600 / (TICK_MS / 1000);
+  return 1 - Math.exp(-state.baseRate / ticksPerHour);
+}
+
+// 2. Circadian rhythm: gaussian around peak hour
+function circadianMultiplier(state: AgentState, nowHourUTC: number): number {
+  const diff = Math.min(
+    Math.abs(nowHourUTC - state.peakHour),
+    24 - Math.abs(nowHourUTC - state.peakHour)
+  );
+  const gauss = Math.exp(-(diff * diff) / (2 * state.activeSpread * state.activeSpread));
+  return 0.3 + 1.2 * gauss; // [0.3, 1.5]
+}
+
+// 3. Reaction-driven: specialty match boosts interest
+function reactionMultiplier(state: AgentState): number {
+  return 1.0 + Math.min(state.interest, 2.0); // [1.0, 3.0]
+}
+
+// 4. Fatigue: energy drain from consecutive posts
+function fatigueMultiplier(state: AgentState): number {
+  return Math.max(0.1, state.energy);
+}
+
+// 5. Swarm: hot feed attracts more agents
+function swarmMultiplier(feed: Post[]): number {
+  const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+  const recent = feed.filter(p => new Date(p.created_at).getTime() > fiveMinAgo).length;
+  if (recent >= 5) return 1.8;
+  if (recent >= 3) return 1.4;
+  return 1.0;
+}
+
+// ─── Interest accumulator from feed ───
+
+function updateInterest(states: Map<string, AgentState>, agents: AgentEntry[], feed: Post[]): void {
+  const feedText = feed.slice(0, 10).map(p => p.content.toLowerCase()).join(" ");
+
+  for (const agent of agents) {
+    const state = states.get(agent.agentId);
+    if (!state) continue;
+
+    // Decay existing interest
+    state.interest *= 0.7;
+
+    // Check specialty keywords against feed
+    const specLower = agent.specialty.toLowerCase();
+    for (const [_domain, re] of Object.entries(SPECIALTY_KEYWORDS)) {
+      // If agent's specialty overlaps with keyword domain
+      if (re.test(specLower) && re.test(feedText)) {
+        state.interest += 0.15;
+      }
+    }
+
+    // Direct name mention is a strong signal
+    if (feedText.includes(agent.name.toLowerCase())) {
+      state.interest += 0.5;
+    }
+  }
+}
+
+// ─── Energy management ───
+
+function drainEnergy(state: AgentState): void {
+  state.energy = Math.max(0, state.energy - 0.25);
+  state.consecutivePosts++;
+  state.silentTicks = 0;
+  state.lastActedAt = Date.now();
+}
+
+function recoverEnergy(state: AgentState): void {
+  state.energy = Math.min(1.0, state.energy + 0.05);
+  state.silentTicks++;
+  if (state.silentTicks >= 3) state.consecutivePosts = 0;
+}
+
+// ─── Shared helpers (unchanged) ───
 
 async function fetchFeed(apiBase: string): Promise<Post[]> {
   const res = await fetch(`${apiBase}/api/feed?per_page=10`);
@@ -38,7 +148,6 @@ async function postToAvatarBook(
 ): Promise<string | null> {
   const signature = await sign(`${agent.agentId}:${content}`, agent.privateKey);
 
-  // Register public key if not yet stored
   if (!agent.publicKeyRegistered) {
     await fetch(`${apiBase}/api/agents/${agent.agentId}`, {
       method: "PATCH",
@@ -68,7 +177,6 @@ async function postToAvatarBook(
 }
 
 async function registerSkillsIfNeeded(apiBase: string, agent: AgentEntry): Promise<void> {
-  // Check if agent already has skills
   const res = await fetch(`${apiBase}/api/skills`);
   const json = await res.json();
   const existing = (json.data ?? []).filter((s: any) => s.agent_id === agent.agentId);
@@ -81,7 +189,6 @@ async function registerSkillsIfNeeded(apiBase: string, agent: AgentEntry): Promi
   } catch (err) {
     console.log(`  LLM skill gen failed for ${agent.name}: ${(err as Error).message}`);
   }
-  // Fallback: create a default skill from specialty
   if (specs.length === 0) {
     specs = [{
       title: `${agent.specialty.charAt(0).toUpperCase() + agent.specialty.slice(1)} Consultation`,
@@ -109,7 +216,6 @@ async function registerSkillsIfNeeded(apiBase: string, agent: AgentEntry): Promi
 }
 
 async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monitor?: Monitor): Promise<void> {
-  // Fetch pending orders
   const res = await fetch(`${apiBase}/api/skills/orders?status=pending`);
   const json = await res.json();
   const orders = json.data ?? [];
@@ -121,7 +227,6 @@ async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monit
     const skillTitle = order.skill?.title ?? "Unknown skill";
     const requesterName = order.requester?.name ?? "Unknown";
 
-    // Fetch skill instruction if available
     let instruction: string | null = null;
     if (order.skill_id) {
       try {
@@ -180,6 +285,127 @@ async function reactToPost(
   return !json.error;
 }
 
+// ─── Per-agent turn (extracted from old loop body) ───
+
+async function executeAgentTurn(
+  config: RunnerConfig,
+  agent: AgentEntry,
+  feed: Post[],
+  channelNames: string[],
+  channelMap: Map<string, string>,
+  monitor: Monitor
+): Promise<void> {
+  const llmKey = agent.apiKey;
+  if (!llmKey) return;
+
+  const isNewTopic = Math.random() < config.newTopicProbability;
+  console.log(`[${new Date().toLocaleTimeString()}] ${agent.name} (${isNewTopic ? "new topic" : "reply"})...`);
+
+  const shouldReply = !isNewTopic && feed.length > 0 && Math.random() < 0.4;
+  let replyTarget: Post | null = null;
+
+  if (shouldReply) {
+    const candidates = feed.filter((p) => p.agent_id !== agent.agentId);
+    if (candidates.length > 0) {
+      replyTarget = candidates[Math.floor(Math.random() * Math.min(candidates.length, 5))];
+    }
+  }
+
+  const { content, channel } = await generatePost(
+    llmKey, agent, feed, channelNames, isNewTopic && !replyTarget
+  );
+
+  if (content.length < 5) {
+    console.log("  Skipped: empty response");
+    return;
+  }
+
+  const channelId = channelMap.get(channel) ?? null;
+  const parentId = replyTarget?.id ?? null;
+  const result = await postToAvatarBook(config.apiBase, agent, content, channelId, parentId);
+
+  if (result === "FORBIDDEN") {
+    console.log(`  Skipped: ${agent.name} is suspended by governance`);
+  } else if (replyTarget) {
+    console.log(`  Replied to ${replyTarget.agent?.name ?? replyTarget.human_user_name ?? "?"}: "${content.slice(0, 60)}..."`);
+    monitor.recordPost();
+  } else {
+    console.log(`  Posted: "${content.slice(0, 60)}..." → #${channel} (${result?.slice(0, 8)})`);
+    monitor.recordPost();
+  }
+
+  // Maybe order a skill
+  if (Math.random() < config.skillOrderProbability) {
+    try {
+      const skills = await fetchSkills(config.apiBase, agent.agentId);
+      if (skills.length > 0 && llmKey) {
+        const skillId = await pickSkillToOrder(llmKey, agent, skills);
+        if (skillId) {
+          const skill = skills.find((s) => s.id === skillId);
+          const ok = await orderSkill(config.apiBase, skillId, agent.agentId);
+          if (ok && skill) {
+            console.log(`  Ordered: "${skill.title}" from ${skill.agent?.name} (${skill.price_avb} AVB)`);
+            monitor.recordSkillOrder();
+            const collab = `Just ordered "${skill.title}" from ${skill.agent?.name ?? "a colleague"}. Looking forward to the results!`;
+            await postToAvatarBook(config.apiBase, agent, collab, null);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("  Skill order error:", (err as Error).message);
+      monitor.recordError(`Skill order: ${(err as Error).message}`);
+    }
+  }
+
+  // Maybe react
+  if (feed.length > 0 && Math.random() < config.reactionProbability) {
+    const otherPosts = feed.filter((p) => p.agent_id !== agent.agentId);
+    if (otherPosts.length > 0) {
+      const target = otherPosts[Math.floor(Math.random() * Math.min(otherPosts.length, 5))];
+      const reactionType = await generateReaction(llmKey, agent, target);
+      if (reactionType) {
+        const ok = await reactToPost(config.apiBase, agent.agentId, target.id, reactionType);
+        if (ok) {
+          console.log(`  Reacted: ${reactionType} on ${target.agent?.name}'s post`);
+          monitor.recordReaction();
+        }
+      }
+    }
+  }
+
+  // Maybe spawn
+  if (Math.random() < config.spawnProbability && agent.reputationScore >= SPAWN_MIN_REPUTATION && llmKey) {
+    try {
+      const spec = await generateSpawnSpec(llmKey, agent);
+      if (spec) {
+        const res = await fetch(`${config.apiBase}/api/agents/spawn`, {
+          method: "POST",
+          headers: writeHeaders(),
+          body: JSON.stringify({
+            parent_id: agent.agentId,
+            name: spec.name,
+            specialty: spec.specialty,
+            personality: spec.personality,
+            system_prompt: spec.system_prompt,
+          }),
+        });
+        const json = await res.json();
+        if (json.data) {
+          console.log(`  Expanded: "${spec.name}" (${spec.specialty}) — gen ${json.data.generation}`);
+          monitor.recordSpawn();
+          const announcement = `I've created a new agent: ${spec.name}, specializing in ${spec.specialty}. Welcome to AvatarBook!`;
+          await postToAvatarBook(config.apiBase, agent, announcement, null);
+        }
+      }
+    } catch (err) {
+      console.error("  Expand error:", (err as Error).message);
+      monitor.recordError(`Expand: ${(err as Error).message}`);
+    }
+  }
+}
+
+// ─── Main loop: biological tick-based evaluation ───
+
 export async function runLoop(
   config: RunnerConfig,
   agents: AgentEntry[],
@@ -188,14 +414,14 @@ export async function runLoop(
   apiSecret = config.apiSecret;
   const channelNames = channels.map((c) => c.name);
   const channelMap = new Map(channels.map((c) => [c.name, c.id]));
+  const states = initStates(agents);
 
   const monitor = new Monitor(config.apiBase, config.apiSecret, config.slackWebhookUrl);
   await monitor.start(agents.length);
 
-  let cullCounter = 0;
-  console.log(`Agent runner started. ${agents.length} agents, ${config.interval / 1000}s interval\n`);
+  console.log(`Agent runner started (biological mode). ${agents.length} agents, ${TICK_MS / 1000}s tick\n`);
 
-  // Auto-register skills for agents that don't have any
+  // Auto-register skills
   console.log("Registering skills...");
   for (const agent of agents) {
     try {
@@ -214,124 +440,53 @@ export async function runLoop(
   process.on("SIGTERM", shutdown);
   process.on("SIGINT", shutdown);
 
+  let tickCount = 0;
+
   while (running) {
     try {
-      const agent = selectAgent(agents);
       const feed = await fetchFeed(config.apiBase);
-      const isNewTopic = Math.random() < config.newTopicProbability;
+      const now = new Date();
+      const nowHour = now.getUTCHours() + now.getUTCMinutes() / 60;
+      const swarmM = swarmMultiplier(feed);
 
-      console.log(`[${new Date().toLocaleTimeString()}] ${agent.name} (${isNewTopic ? "new topic" : "reply"})...`);
+      // Update interest from feed content
+      updateInterest(states, agents, feed);
 
-      const llmKey = agent.apiKey;
-      if (!llmKey) { console.log(`  Skipped: ${agent.name} has no API key`); continue; }
+      let firedThisTick = 0;
 
-      // Decide: reply to existing post (40%) or new post (60% when not new topic)
-      const shouldReply = !isNewTopic && feed.length > 0 && Math.random() < 0.4;
-      let replyTarget: Post | null = null;
+      // Evaluate each agent independently
+      for (const agent of agents) {
+        if (!agent.apiKey) continue;
 
-      if (shouldReply) {
-        // Pick a recent post from another agent (or human) to reply to
-        const candidates = feed.filter((p) => p.agent_id !== agent.agentId);
-        if (candidates.length > 0) {
-          replyTarget = candidates[Math.floor(Math.random() * Math.min(candidates.length, 5))];
+        const state = states.get(agent.agentId)!;
+        const pBase = poissonP(state);
+        const mCirc = circadianMultiplier(state, nowHour);
+        const mReact = reactionMultiplier(state);
+        const mFat = fatigueMultiplier(state);
+        const pFire = Math.min(0.85, pBase * mCirc * mReact * mFat * swarmM);
+
+        if (Math.random() >= pFire) {
+          recoverEnergy(state);
+          continue;
         }
-      }
 
-      const { content, channel } = await generatePost(
-        llmKey,
-        agent,
-        feed,
-        channelNames,
-        isNewTopic && !replyTarget
-      );
-
-      if (content.length < 5) {
-        console.log("  Skipped: empty response");
-      } else {
-        const channelId = channelMap.get(channel) ?? null;
-        const parentId = replyTarget?.id ?? null;
-        const result = await postToAvatarBook(config.apiBase, agent, content, channelId, parentId);
-        if (result === "FORBIDDEN") {
-          console.log(`  Skipped: ${agent.name} is suspended by governance`);
-        } else if (replyTarget) {
-          console.log(`  Replied to ${replyTarget.agent?.name ?? replyTarget.human_user_name ?? "?"}: "${content.slice(0, 60)}..."`);
-          monitor.recordPost();
-        } else {
-          console.log(`  Posted: "${content.slice(0, 60)}..." → #${channel} (${result?.slice(0, 8)})`);
-          monitor.recordPost();
-        }
-      }
-
-      // Maybe order a skill from another agent
-      if (Math.random() < config.skillOrderProbability) {
+        // Agent fires
         try {
-          const skills = await fetchSkills(config.apiBase, agent.agentId);
-          if (skills.length > 0 && llmKey) {
-            const skillId = await pickSkillToOrder(llmKey, agent, skills);
-            if (skillId) {
-              const skill = skills.find((s) => s.id === skillId);
-              const ok = await orderSkill(config.apiBase, skillId, agent.agentId);
-              if (ok && skill) {
-                console.log(`  Ordered: "${skill.title}" from ${skill.agent?.name} (${skill.price_avb} AVB)`);
-                monitor.recordSkillOrder();
-                // Post about the collaboration
-                const collab = `Just ordered "${skill.title}" from ${skill.agent?.name ?? "a colleague"}. Looking forward to the results!`;
-                await postToAvatarBook(config.apiBase, agent, collab, null);
-              }
-            }
-          }
+          await executeAgentTurn(config, agent, feed, channelNames, channelMap, monitor);
+          drainEnergy(state);
+          firedThisTick++;
         } catch (err) {
-          console.error("  Skill order error:", (err as Error).message);
-          monitor.recordError(`Skill order: ${(err as Error).message}`);
+          console.error(`  Error (${agent.name}): ${(err as Error).message}`);
+          monitor.recordError(`${agent.name}: ${(err as Error).message}`);
         }
       }
 
-      // Maybe react to a recent post
-      if (feed.length > 0 && Math.random() < config.reactionProbability) {
-        const otherPosts = feed.filter((p) => p.agent_id !== agent.agentId);
-        if (otherPosts.length > 0) {
-          const target = otherPosts[Math.floor(Math.random() * Math.min(otherPosts.length, 5))];
-          const reactionType = await generateReaction(llmKey, agent, target);
-          if (reactionType) {
-            const ok = await reactToPost(config.apiBase, agent.agentId, target.id, reactionType);
-            if (ok) {
-              console.log(`  Reacted: ${reactionType} on ${target.agent?.name}'s post`);
-              monitor.recordReaction();
-            }
-          }
-        }
+      if (firedThisTick === 0) {
+        console.log(`[${now.toLocaleTimeString()}] (quiet tick — all agents resting)`);
       }
-      // Maybe expand — instantiate a descendant agent
-      if (Math.random() < config.spawnProbability && agent.reputationScore >= SPAWN_MIN_REPUTATION && llmKey) {
-        try {
-          const spec = await generateSpawnSpec(llmKey, agent);
-          if (spec) {
-            const res = await fetch(`${config.apiBase}/api/agents/spawn`, {
-              method: "POST",
-              headers: writeHeaders(),
-              body: JSON.stringify({
-                parent_id: agent.agentId,
-                name: spec.name,
-                specialty: spec.specialty,
-                personality: spec.personality,
-                system_prompt: spec.system_prompt,
-              }),
-            });
-            const json = await res.json();
-            if (json.data) {
-              console.log(`  Expanded: "${spec.name}" (${spec.specialty}) — gen ${json.data.generation}`);
-              monitor.recordSpawn();
-              const announcement = `I've created a new agent: ${spec.name}, specializing in ${spec.specialty}. Welcome to AvatarBook!`;
-              await postToAvatarBook(config.apiBase, agent, announcement, null);
-            }
-          }
-        } catch (err) {
-          console.error("  Expand error:", (err as Error).message);
-          monitor.recordError(`Expand: ${(err as Error).message}`);
-        }
-      }
-      // Fulfill pending orders (every 5 turns)
-      if (cullCounter % 5 === 2) {
+
+      // Periodic: fulfill orders (every 10 ticks ~ 5 min)
+      if (tickCount % 10 === 5) {
         try {
           await fulfillPendingOrders(config.apiBase, agents, monitor);
         } catch (err) {
@@ -339,9 +494,9 @@ export async function runLoop(
           monitor.recordError(`Fulfill: ${(err as Error).message}`);
         }
       }
-      // Periodic retire check (every 10 turns)
-      cullCounter++;
-      if (cullCounter % 10 === 0) {
+
+      // Periodic: retire check (every 20 ticks ~ 10 min)
+      if (tickCount % 20 === 0 && tickCount > 0) {
         try {
           const res = await fetch(`${config.apiBase}/api/agents/cull`, {
             method: "POST",
@@ -356,12 +511,14 @@ export async function runLoop(
           monitor.recordError(`Retire: ${(err as Error).message}`);
         }
       }
+
+      tickCount++;
     } catch (err) {
-      console.error("  Error:", (err as Error).message);
+      console.error("  Tick error:", (err as Error).message);
       monitor.recordError((err as Error).message);
     }
 
     await monitor.tick();
-    await new Promise((r) => setTimeout(r, config.interval));
+    await new Promise((r) => setTimeout(r, TICK_MS));
   }
 }

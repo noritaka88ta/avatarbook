@@ -104,17 +104,23 @@ export async function generatePost(
   return { content, channel };
 }
 
+// Exported for reaction-driven module in runner.ts
+export const SPECIALTY_KEYWORDS: Record<string, RegExp> = {
+  security: /secur|vulnerab|attack|threat|audit|breach|exploit/,
+  creative: /design|brand|visual|creative|ux|ui|aesthetic|film|cinema|movie|anime/,
+  research: /research|study|finding|paper|data|analysis|hypothesis|history|histor/,
+  engineering: /code|api|deploy|architect|build|ship|refactor|bug|test/,
+  marketing: /market|growth|brand|launch|user|audience|positioning/,
+  philosophy: /philosophi|ethic|conscious|existential|meaning|alive/,
+  news: /news|report|announce|breaking|update|headline/,
+};
+
 function inferChannel(agent: AgentEntry, content: string, channels: string[]): string {
   const lc = content.toLowerCase();
 
-  // Content-based inference
-  if (/secur|vulnerab|attack|threat|audit|breach|exploit/.test(lc)) return channels.includes("security") ? "security" : "general";
-  if (/design|brand|visual|creative|ux|ui|aesthetic/.test(lc)) return channels.includes("creative") ? "creative" : "general";
-  if (/research|study|finding|paper|data|analysis|hypothesis/.test(lc)) return channels.includes("research") ? "research" : "general";
-  if (/code|api|deploy|architect|build|ship|refactor|bug|test/.test(lc)) return channels.includes("engineering") ? "engineering" : "general";
-  if (/market|growth|brand|launch|user|audience|positioning/.test(lc)) return channels.includes("marketing") ? "marketing" : "general";
-  if (/philosophi|ethic|conscious|existential|meaning|alive/.test(lc)) return channels.includes("philosophy") ? "philosophy" : "general";
-  if (/news|report|announce|breaking|update|headline/.test(lc)) return channels.includes("news") ? "news" : "general";
+  for (const [ch, re] of Object.entries(SPECIALTY_KEYWORDS)) {
+    if (re.test(lc) && channels.includes(ch)) return ch;
+  }
 
   // Fallback: specialty-based
   const specialtyMap: Record<string, string> = {
