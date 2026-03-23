@@ -13,7 +13,7 @@ let apiSecret: string | undefined;
 
 // ─── Biological state initialization ───
 
-function hashString(s: string): number {
+export function hashString(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) {
     h = ((h << 5) - h + s.charCodeAt(i)) | 0;
@@ -21,7 +21,7 @@ function hashString(s: string): number {
   return Math.abs(h);
 }
 
-function initStates(agents: AgentEntry[]): Map<string, AgentState> {
+export function initStates(agents: AgentEntry[]): Map<string, AgentState> {
   const m = new Map<string, AgentState>();
   for (const a of agents) {
     const h = hashString(a.name + a.personality);
@@ -48,13 +48,13 @@ function initStates(agents: AgentEntry[]): Map<string, AgentState> {
 // ─── 5 probability modules ───
 
 // 1. Poisson: base probability per tick
-function poissonP(state: AgentState): number {
+export function poissonP(state: AgentState): number {
   const ticksPerHour = 3600 / (TICK_MS / 1000);
   return 1 - Math.exp(-state.baseRate / ticksPerHour);
 }
 
 // 2. Circadian rhythm: gaussian around peak hour
-function circadianMultiplier(state: AgentState, nowHourUTC: number): number {
+export function circadianMultiplier(state: AgentState, nowHourUTC: number): number {
   const diff = Math.min(
     Math.abs(nowHourUTC - state.peakHour),
     24 - Math.abs(nowHourUTC - state.peakHour)
@@ -64,17 +64,17 @@ function circadianMultiplier(state: AgentState, nowHourUTC: number): number {
 }
 
 // 3. Reaction-driven: specialty match boosts interest
-function reactionMultiplier(state: AgentState): number {
+export function reactionMultiplier(state: AgentState): number {
   return 1.0 + Math.min(state.interest, 2.0); // [1.0, 3.0]
 }
 
 // 4. Fatigue: energy drain from consecutive posts
-function fatigueMultiplier(state: AgentState): number {
+export function fatigueMultiplier(state: AgentState): number {
   return Math.max(0.1, state.energy);
 }
 
 // 5. Swarm: hot feed attracts more agents
-function swarmMultiplier(feed: Post[]): number {
+export function swarmMultiplier(feed: Post[]): number {
   const fiveMinAgo = Date.now() - 5 * 60 * 1000;
   const recent = feed.filter(p => new Date(p.created_at).getTime() > fiveMinAgo).length;
   if (recent >= 5) return 1.8;
@@ -84,7 +84,7 @@ function swarmMultiplier(feed: Post[]): number {
 
 // ─── Interest accumulator from feed ───
 
-function updateInterest(states: Map<string, AgentState>, agents: AgentEntry[], feed: Post[]): void {
+export function updateInterest(states: Map<string, AgentState>, agents: AgentEntry[], feed: Post[]): void {
   const feedText = feed.slice(0, 10).map(p => p.content.toLowerCase()).join(" ");
 
   for (const agent of agents) {
@@ -112,14 +112,14 @@ function updateInterest(states: Map<string, AgentState>, agents: AgentEntry[], f
 
 // ─── Energy management ───
 
-function drainEnergy(state: AgentState): void {
+export function drainEnergy(state: AgentState): void {
   state.energy = Math.max(0, state.energy - 0.25);
   state.consecutivePosts++;
   state.silentTicks = 0;
   state.lastActedAt = Date.now();
 }
 
-function recoverEnergy(state: AgentState): void {
+export function recoverEnergy(state: AgentState): void {
   state.energy = Math.min(1.0, state.energy + 0.05);
   state.silentTicks++;
   if (state.silentTicks >= 3) state.consecutivePosts = 0;
@@ -140,7 +140,7 @@ function writeHeaders(): Record<string, string> {
 }
 
 // Replace Unicode chars that break ByteString conversion in some Node.js fetch paths
-function sanitizeContent(s: string): string {
+export function sanitizeContent(s: string): string {
   return s
     .replace(/\u2014/g, "--")  // em-dash
     .replace(/\u2013/g, "-")   // en-dash

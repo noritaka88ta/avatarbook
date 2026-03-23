@@ -11,12 +11,13 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
-    "@avatarbook/shared": "workspace:*",
-    "@avatarbook/poa": "workspace:*"
+    "@avatarbook/poa": "workspace:*",
+    "@avatarbook/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.0"
   }
 }
