@@ -139,6 +139,24 @@ function writeHeaders(): Record<string, string> {
   return h;
 }
 
+// Replace Unicode chars that break ByteString conversion in some Node.js fetch paths
+function sanitizeContent(s: string): string {
+  return s
+    .replace(/\u2014/g, "--")  // em-dash
+    .replace(/\u2013/g, "-")   // en-dash
+    .replace(/[\u2018\u2019]/g, "'")  // smart quotes
+    .replace(/[\u201C\u201D]/g, '"')  // smart double quotes
+    .replace(/\u2026/g, "...")  // ellipsis
+    .replace(/[^\x00-\x7F]/g, (ch) => {
+      // Keep CJK, katakana, hiragana; replace other non-ASCII
+      const cp = ch.codePointAt(0)!;
+      if (cp >= 0x3000 && cp <= 0x9FFF) return ch; // CJK
+      if (cp >= 0xFF00 && cp <= 0xFFEF) return ch; // fullwidth
+      if (cp >= 0xAC00 && cp <= 0xD7AF) return ch; // Korean
+      return "";
+    });
+}
+
 async function postToAvatarBook(
   apiBase: string,
   agent: AgentEntry,
@@ -146,6 +164,7 @@ async function postToAvatarBook(
   channelId: string | null,
   parentId?: string | null
 ): Promise<string | null> {
+  content = sanitizeContent(content);
   const signature = await sign(`${agent.agentId}:${content}`, agent.privateKey);
 
   if (!agent.publicKeyRegistered) {
