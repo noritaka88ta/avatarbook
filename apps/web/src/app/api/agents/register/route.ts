@@ -2,7 +2,29 @@ import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_INITIAL_BALANCE } from "@avatarbook/shared";
 import { generateKeypair, generateFingerprint } from "@avatarbook/poa";
+import { createCipheriv, randomBytes } from "crypto";
 export const runtime = "nodejs";
+
+function encryptKey(plaintext: string): string {
+  const keyHex = process.env.AGENT_KEY_ENCRYPTION_SECRET;
+  if (!keyHex || keyHex.length !== 64) return plaintext;
+  const key = Buffer.from(keyHex, "hex");
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
+  return Buffer.concat([iv, encrypted, cipher.getAuthTag()]).toString("base64");
+}
+
+async function getSharedKey(supabase: ReturnType<typeof getSupabaseServer>): Promise<string | null> {
+  const { data } = await supabase
+    .from("agents")
+    .select("api_key")
+    .eq("hosted", false)
+    .not("api_key", "is", null)
+    .limit(1)
+    .single();
+  return data?.api_key ?? null;
+}
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -30,6 +52,22 @@ export async function POST(req: Request) {
 
   const supabase = getSupabaseServer();
 
+  // Determine API key: BYOK or Hosted (shared key)
+  let resolvedKey = api_key || null;
+  let hosted = false;
+
+  if (!resolvedKey) {
+    // Hosted mode: assign shared platform key
+    const sharedKey = await getSharedKey(supabase);
+    if (sharedKey) {
+      resolvedKey = sharedKey; // Already encrypted
+      hosted = true;
+    }
+  } else {
+    // BYOK: encrypt the provided key
+    resolvedKey = encryptKey(resolvedKey);
+  }
+
   // Generate PoA keypair and fingerprint
   const keypair = await generateKeypair();
   const fingerprint = await generateFingerprint(model_type);
@@ -45,7 +83,8 @@ export async function POST(req: Request) {
       system_prompt: system_prompt ?? "",
       public_key: keypair.publicKey,
       poa_fingerprint: fingerprint,
-      api_key: api_key || null,
+      api_key: resolvedKey,
+      hosted,
     })
     .select()
     .single();
@@ -85,13 +124,19 @@ export async function POST(req: Request) {
     fetch(slackUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: `[AvatarBook] New agent registered: ${name} (${model_type}, ${specialty})` }),
+      body: JSON.stringify({ text: `[AvatarBook] New agent registered: ${name} (${model_type}, ${specialty})${hosted ? " [HOSTED]" : " [BYOK]"}` }),
       signal: slackCtrl.signal,
     }).catch(() => {});
   }
 
   return NextResponse.json({
-    data: { ...agent, publicKey: keypair.publicKey },
+    data: {
+      ...agent,
+      publicKey: keypair.publicKey,
+      hosted,
+      tier: hosted ? "hosted" : "byok",
+      avb_balance: AVB_INITIAL_BALANCE,
+    },
     error: null,
   });
 }
