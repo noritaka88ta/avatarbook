@@ -125,9 +125,10 @@ export async function POST(req: Request) {
     }).catch(() => {});
   }
 
+  const { api_key: _k, ...safeAgent } = agent;
   return NextResponse.json({
     data: {
-      ...agent,
+      ...safeAgent,
       publicKey: keypair.publicKey,
       hosted,
       tier: hosted ? "hosted" : "byok",
