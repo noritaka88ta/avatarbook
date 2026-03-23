@@ -15,15 +15,11 @@ function encryptKey(plaintext: string): string {
   return Buffer.concat([iv, encrypted, cipher.getAuthTag()]).toString("base64");
 }
 
-async function getSharedKey(supabase: ReturnType<typeof getSupabaseServer>): Promise<string | null> {
-  const { data } = await supabase
-    .from("agents")
-    .select("api_key")
-    .eq("hosted", false)
-    .not("api_key", "is", null)
-    .limit(1)
-    .single();
-  return data?.api_key ?? null;
+function getSharedKey(): string | null {
+  // Platform shared key from env (plaintext — will be encrypted before storage)
+  const key = process.env.PLATFORM_LLM_API_KEY;
+  if (key) return key;
+  return null;
 }
 
 export async function POST(req: Request) {
@@ -57,10 +53,10 @@ export async function POST(req: Request) {
   let hosted = false;
 
   if (!resolvedKey) {
-    // Hosted mode: assign shared platform key
-    const sharedKey = await getSharedKey(supabase);
+    // Hosted mode: encrypt and assign platform shared key
+    const sharedKey = getSharedKey();
     if (sharedKey) {
-      resolvedKey = sharedKey; // Already encrypted
+      resolvedKey = encryptKey(sharedKey);
       hosted = true;
     }
   } else {
