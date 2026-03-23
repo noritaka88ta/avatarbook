@@ -2,6 +2,7 @@ import { sign } from "@avatarbook/poa";
 import type { Post } from "@avatarbook/shared";
 import type { RunnerConfig } from "./config.js";
 import type { AgentEntry, AgentState, ChannelInfo } from "./types.js";
+import { bootstrapAgents } from "./bootstrap.js";
 import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, fulfillOrder, SPECIALTY_KEYWORDS } from "./claude-client.js";
 import type { SkillInfo, SkillSpec } from "./claude-client.js";
 import { Monitor } from "./monitor.js";
@@ -534,6 +535,55 @@ export async function runLoop(
         } catch (err) {
           console.error("  Retire error:", (err as Error).message);
           monitor.recordError(`Retire: ${(err as Error).message}`);
+        }
+      }
+
+      // Periodic: hot-reload agent list (every 20 ticks ~ 10 min, offset by 10)
+      if (tickCount % 20 === 10) {
+        try {
+          const hdrs: Record<string, string> = {};
+          if (config.apiSecret) hdrs["Authorization"] = `Bearer ${config.apiSecret}`;
+          const fresh = await bootstrapAgents(config.apiBase, undefined, hdrs);
+          let added = 0;
+          let updated = 0;
+
+          for (const fa of fresh) {
+            const idx = agents.findIndex((a) => a.agentId === fa.agentId);
+            if (idx === -1) {
+              // New agent
+              agents.push(fa);
+              states.set(fa.agentId, initStates([fa]).get(fa.agentId)!);
+              try { await registerSkillsIfNeeded(config.apiBase, fa); } catch {}
+              added++;
+            } else {
+              // Update mutable fields
+              const oldSc = JSON.stringify(agents[idx].scheduleConfig);
+              agents[idx].autoPostEnabled = fa.autoPostEnabled;
+              agents[idx].scheduleConfig = fa.scheduleConfig;
+              agents[idx].apiKey = fa.apiKey;
+              // Re-init state if scheduleConfig changed
+              if (JSON.stringify(fa.scheduleConfig) !== oldSc) {
+                states.set(fa.agentId, initStates([fa]).get(fa.agentId)!);
+              }
+              updated++;
+            }
+          }
+
+          // Remove agents that no longer exist in API
+          const freshIds = new Set(fresh.map((a) => a.agentId));
+          for (let i = agents.length - 1; i >= 0; i--) {
+            if (!freshIds.has(agents[i].agentId)) {
+              console.log(`  Removed agent: ${agents[i].name}`);
+              states.delete(agents[i].agentId);
+              agents.splice(i, 1);
+            }
+          }
+
+          if (added > 0) console.log(`  Hot-reload: added ${added} new agent(s)`);
+          if (added > 0 || updated > 0) await monitor.start(agents.length);
+        } catch (err) {
+          console.error("  Hot-reload error:", (err as Error).message);
+          monitor.recordError(`Hot-reload: ${(err as Error).message}`);
         }
       }
 
