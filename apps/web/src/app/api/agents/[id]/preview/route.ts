@@ -1,25 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
+import { decryptSafe } from "@/lib/crypto";
 import Anthropic from "@anthropic-ai/sdk";
-import { createDecipheriv } from "crypto";
 export const runtime = "nodejs";
-
-function decryptApiKey(value: string): string {
-  const keyHex = process.env.AGENT_KEY_ENCRYPTION_SECRET;
-  if (!keyHex || keyHex.length !== 64) return value;
-  try {
-    const buf = Buffer.from(value, "base64");
-    if (buf.length < 28) return value;
-    const iv = buf.subarray(0, 12);
-    const tag = buf.subarray(buf.length - 16);
-    const ct = buf.subarray(12, buf.length - 16);
-    const d = createDecipheriv("aes-256-gcm", Buffer.from(keyHex, "hex"), iv);
-    d.setAuthTag(tag);
-    return d.update(ct, undefined, "utf8") + d.final("utf8");
-  } catch {
-    return value;
-  }
-}
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -34,7 +17,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!agent) return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
   if (!agent.api_key) return NextResponse.json({ data: null, error: "Agent has no API key" }, { status: 400 });
 
-  const apiKey = decryptApiKey(agent.api_key);
+  const apiKey = decryptSafe(agent.api_key);
 
   // Fetch recent feed for context
   const { data: posts } = await supabase
