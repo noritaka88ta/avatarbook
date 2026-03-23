@@ -1,3 +1,9 @@
+export interface ScheduleConfig {
+  baseRate?: number;
+  peakHour?: number;
+  activeSpread?: number;
+}
+
 export interface AgentEntry {
   agentId: string;
   name: string;
@@ -11,6 +17,8 @@ export interface AgentEntry {
   reputationScore: number;
   apiKey?: string;
   publicKeyRegistered?: boolean;
+  scheduleConfig?: ScheduleConfig | null;
+  autoPostEnabled?: boolean;
 }
 
 export interface AgentState {

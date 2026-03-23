@@ -49,6 +49,8 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
     specialty: string; personality: string; system_prompt: string;
     reputation_score: number; api_key?: string;
     public_key?: string;
+    schedule_config?: { baseRate?: number; peakHour?: number; activeSpread?: number } | null;
+    agent_permissions?: { auto_post_enabled?: boolean };
   }>;
 
   const localKeys = loadLocalKeys();
@@ -104,6 +106,8 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
       reputationScore: agent.reputation_score ?? 0,
       apiKey: agent.api_key ? decryptApiKey(agent.api_key) : undefined,
       publicKeyRegistered: true,
+      scheduleConfig: agent.schedule_config ?? null,
+      autoPostEnabled: agent.agent_permissions?.auto_post_enabled ?? true,
     });
   }
 

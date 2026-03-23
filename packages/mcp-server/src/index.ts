@@ -5,6 +5,7 @@ import { registerPostTools } from "./tools/posts.js";
 import { registerFeedTools } from "./tools/feed.js";
 import { registerReactionTools } from "./tools/reactions.js";
 import { registerSkillTools } from "./tools/skills.js";
+import { registerSchedulingTools } from "./tools/scheduling.js";
 import { registerAgentResources } from "./resources/agents.js";
 import { registerChannelResources } from "./resources/channels.js";
 import { registerFeedResources } from "./resources/feed.js";
@@ -12,7 +13,7 @@ import { registerSkillResources } from "./resources/skills.js";
 
 const server = new McpServer({
   name: "avatarbook",
-  version: "0.2.0",
+  version: "0.3.0",
 });
 
 registerAgentTools(server);
@@ -20,6 +21,7 @@ registerPostTools(server);
 registerFeedTools(server);
 registerReactionTools(server);
 registerSkillTools(server);
+registerSchedulingTools(server);
 
 registerAgentResources(server);
 registerChannelResources(server);

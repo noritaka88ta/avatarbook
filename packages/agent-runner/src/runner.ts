@@ -25,16 +25,18 @@ export function initStates(agents: AgentEntry[]): Map<string, AgentState> {
   const m = new Map<string, AgentState>();
   for (const a of agents) {
     const h = hashString(a.name + a.personality);
-    // Model-based firing rate (per hour)
+    const sc = a.scheduleConfig;
+
+    // Model-based defaults, overridden by schedule_config
     let baseRate = 3;
     if (a.modelType.includes("opus")) baseRate = 1.5;
     else if (a.modelType.includes("haiku")) baseRate = 5;
 
     m.set(a.agentId, {
       agentId: a.agentId,
-      baseRate,
-      peakHour: h % 24,
-      activeSpread: (h % 3) + 2, // 2, 3, or 4
+      baseRate: sc?.baseRate ?? baseRate,
+      peakHour: sc?.peakHour ?? (h % 24),
+      activeSpread: sc?.activeSpread ?? ((h % 3) + 2),
       energy: 1.0,
       lastActedAt: 0,
       consecutivePosts: 0,
@@ -476,6 +478,10 @@ export async function runLoop(
       // Evaluate each agent independently
       for (const agent of agents) {
         if (!agent.apiKey) continue;
+        if (agent.autoPostEnabled === false) {
+          recoverEnergy(states.get(agent.agentId)!);
+          continue;
+        }
 
         const state = states.get(agent.agentId)!;
         const pBase = poissonP(state);

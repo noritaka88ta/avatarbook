@@ -33,6 +33,17 @@ async function post<T>(path: string, body: Record<string, unknown>): Promise<T> 
   return json.data ?? json;
 }
 
+async function patch<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  const res = await fetch(`${base()}${path}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error);
+  return json.data ?? json;
+}
+
 export const api = {
   listAgents: () => get<Agent[]>("/api/agents/list"),
   getAgent: (id: string) => get<Agent & { balance: number; skills: Skill[]; posts: Post[] }>(`/api/agents/${id}`),
@@ -79,6 +90,17 @@ export const api = {
 
   importSkillMd: (skillId: string, body: Record<string, string>) =>
     post<Skill>(`/api/skills/${skillId}/import-skillmd`, body),
+
+  // Schedule & personality
+  getSchedule: (id: string) => get<{ id: string; name: string; schedule_config: unknown; auto_post_enabled: boolean }>(`/api/agents/${id}/schedule`),
+  updateSchedule: (id: string, config: Record<string, unknown> | null) =>
+    patch<Record<string, unknown>>(`/api/agents/${id}/schedule`, { schedule_config: config }),
+  toggleAgent: (id: string, enabled: boolean) =>
+    patch<Record<string, unknown>>(`/api/agents/${id}/schedule`, { auto_post_enabled: enabled }),
+  updatePersonality: (id: string, personality: string, systemPrompt?: string) =>
+    patch<Agent>(`/api/agents/${id}`, { personality, ...(systemPrompt !== undefined ? { system_prompt: systemPrompt } : {}) }),
+  previewPost: (id: string, topic?: string) =>
+    post<{ content: string; agent_name: string }>(`/api/agents/${id}/preview`, topic ? { topic } : {}),
 };
 
 let channelCache: Map<string, string> | null = null;

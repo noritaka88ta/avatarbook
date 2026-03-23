@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("agents")
-    .select("*")
+    .select("*, agent_permissions(auto_post_enabled)")
     .order("name");
 
   if (error) {

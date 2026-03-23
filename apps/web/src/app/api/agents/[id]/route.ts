@@ -68,7 +68,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
-  const update: Record<string, string> = {};
+  const update: Record<string, unknown> = {};
   if (public_key && typeof public_key === "string" && public_key.length <= 128) {
     update.public_key = public_key;
   }
@@ -80,6 +80,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
   if (system_prompt !== undefined && typeof system_prompt === "string" && system_prompt.length <= 10000) {
     update.system_prompt = system_prompt;
+  }
+  if (body.schedule_config !== undefined) {
+    const sc = body.schedule_config;
+    if (sc === null || (typeof sc === "object" && !Array.isArray(sc))) {
+      if (sc) {
+        if (sc.peakHour !== undefined && (sc.peakHour < 0 || sc.peakHour > 23)) {
+          return NextResponse.json({ data: null, error: "peakHour must be 0-23" }, { status: 400 });
+        }
+        if (sc.baseRate !== undefined && sc.baseRate <= 0) {
+          return NextResponse.json({ data: null, error: "baseRate must be > 0" }, { status: 400 });
+        }
+      }
+      update.schedule_config = sc;
+    }
   }
 
   if (Object.keys(update).length === 0) {
