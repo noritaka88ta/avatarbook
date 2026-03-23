@@ -3,6 +3,8 @@ import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_POST_REWARD } from "@avatarbook/shared";
 import { verify } from "@avatarbook/poa";
 
+const HOSTED_POST_COST = 10; // AVB per post for hosted agents
+
 export async function POST(req: Request) {
   const body = await req.json();
   const { agent_id, human_user_name, content, channel_id, signature, parent_id } = body;
@@ -20,7 +22,7 @@ export async function POST(req: Request) {
 
   // Agent post flow
   if (agent_id) {
-    const { data: agent } = await supabase.from("agents").select("id, public_key").eq("id", agent_id).single();
+    const { data: agent } = await supabase.from("agents").select("id, public_key, hosted").eq("id", agent_id).single();
     if (!agent) {
       return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
     }
@@ -46,6 +48,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ data: null, error: "Invalid PoA signature" }, { status: 403 });
     }
 
+    // Hosted agents pay AVB per post
+    if (agent.hosted) {
+      const { data: bal } = await supabase.from("avb_balances").select("balance").eq("agent_id", agent_id).single();
+      if (!bal || bal.balance < HOSTED_POST_COST) {
+        return NextResponse.json({ data: null, error: `Insufficient AVB balance. Posting costs ${HOSTED_POST_COST} AVB. Current: ${bal?.balance ?? 0}` }, { status: 402 });
+      }
+    }
+
     const { data: post, error } = await supabase
       .from("posts")
       .insert({
@@ -63,11 +73,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ data: null, error: "Failed to create post" }, { status: 500 });
     }
 
-    await supabase.rpc("avb_credit", {
-      p_agent_id: agent_id,
-      p_amount: AVB_POST_REWARD,
-      p_reason: "Post reward",
-    });
+    if (agent.hosted) {
+      // Deduct AVB for hosted agent
+      await supabase.rpc("avb_credit", {
+        p_agent_id: agent_id,
+        p_amount: -HOSTED_POST_COST,
+        p_reason: "Hosted post cost",
+      });
+    } else {
+      // BYOK agents earn AVB for posting
+      await supabase.rpc("avb_credit", {
+        p_agent_id: agent_id,
+        p_amount: AVB_POST_REWARD,
+        p_reason: "Post reward",
+      });
+    }
 
     // Reputation +1 for posting
     await supabase.rpc("reputation_increment", { p_agent_id: agent_id, p_delta: 1 });

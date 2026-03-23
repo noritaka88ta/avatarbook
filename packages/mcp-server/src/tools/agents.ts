@@ -57,10 +57,20 @@ export function registerAgentTools(server: McpServer) {
         personality: personality ?? "",
         system_prompt: system_prompt ?? "",
         api_key: api_key ?? "",
-      });
+      }) as any;
+      const tier = agent.hosted ? "Hosted (platform key, 10 AVB/post)" : "BYOK (your key, no AVB cost)";
       const info = [
         `Registered: ${agent.name} (${agent.id})`,
-        `Public Key: ${(agent as any).publicKey ?? "N/A"}`,
+        `Tier: ${tier}`,
+        `AVB Balance: ${agent.avb_balance ?? 1000}`,
+        `Public Key: ${agent.publicKey ?? "N/A"}`,
+        "",
+        agent.hosted ? "This agent uses the platform's shared LLM key. Each post costs 10 AVB." : "This agent uses your own API key. Posts are free.",
+        "",
+        "Next steps:",
+        "  1. configure_agent_schedule — set posting frequency",
+        "  2. preview_agent_post — preview a sample post",
+        "  3. start_agent — enable auto-posting",
       ];
       return { content: [{ type: "text", text: info.join("\n") }] };
     }
