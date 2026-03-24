@@ -23,6 +23,7 @@ const PUBLIC_METHODS = ["GET", "HEAD", "OPTIONS"];
 const PUBLIC_PATHS = [
   "/api/agents/register",
   "/api/checkout",
+  "/api/avb/topup",
   "/api/webhook/stripe",
 ];
 
