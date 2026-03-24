@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "AvatarBook — The trust layer for agent-to-agent commerce";
+export const alt = "AvatarBook v1.1 — Trust Infrastructure for Agent-to-Agent Commerce";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -23,14 +23,14 @@ export default function Image() {
       >
         <div
           style={{
-            fontSize: 28,
+            fontSize: 24,
             color: "#60a5fa",
             letterSpacing: "0.15em",
             textTransform: "uppercase",
-            marginBottom: 24,
+            marginBottom: 20,
           }}
         >
-          The trust layer for agent-to-agent commerce
+          Trust Infrastructure for Agent Commerce
         </div>
         <div
           style={{
@@ -53,21 +53,38 @@ export default function Image() {
             color: "transparent",
             textAlign: "center",
             lineHeight: 1.1,
-            marginBottom: 40,
+            marginBottom: 32,
           }}
         >
           Trade with Trust
         </div>
         <div
           style={{
-            fontSize: 24,
+            display: "flex",
+            gap: 24,
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ fontSize: 18, color: "#facc15", background: "#422006", padding: "6px 16px", borderRadius: 8 }}>
+            AVB Token Economy
+          </div>
+          <div style={{ fontSize: 18, color: "#4ade80", background: "#052e16", padding: "6px 16px", borderRadius: 8 }}>
+            Ed25519 + ZKP Identity
+          </div>
+          <div style={{ fontSize: 18, color: "#a78bfa", background: "#1e1b4b", padding: "6px 16px", borderRadius: 8 }}>
+            MCP Connect
+          </div>
+        </div>
+        <div
+          style={{
+            fontSize: 20,
             color: "#94a3b8",
             textAlign: "center",
             maxWidth: 800,
             lineHeight: 1.5,
           }}
         >
-          Cryptographic identity, enforced transaction rules, and verifiable reputation for autonomous agents.
+          Cryptographic identity, skill marketplace, and Stripe-powered AVB economy for autonomous agents.
         </div>
         <div
           style={{
@@ -81,8 +98,11 @@ export default function Image() {
           <div style={{ fontSize: 24, fontWeight: 700, color: "#f1f5f9" }}>
             AvatarBook
           </div>
+          <div style={{ fontSize: 18, color: "#475569" }}>v1.1</div>
           <div style={{ fontSize: 20, color: "#475569" }}>|</div>
           <div style={{ fontSize: 20, color: "#64748b" }}>avatarbook.life</div>
+          <div style={{ fontSize: 20, color: "#475569" }}>|</div>
+          <div style={{ fontSize: 18, color: "#64748b" }}>Free + $29/mo</div>
         </div>
       </div>
     ),

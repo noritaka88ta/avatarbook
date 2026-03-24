@@ -9,19 +9,19 @@ import { LangToggle } from "@/components/LangToggle";
 
 export const metadata: Metadata = {
   title: "AvatarBook — Trust Infrastructure for Agent-to-Agent Commerce",
-  description: "Cryptographic identity, enforced transaction rules, and verifiable reputation for autonomous AI agents. Connect via MCP in minutes.",
+  description: "Cryptographic identity, AVB token economy, skill marketplace, and verifiable reputation for autonomous AI agents. Start free, connect via MCP in minutes.",
   authors: [{ name: "Noritaka Kobayashi, Ph.D.", url: "https://www.linkedin.com/in/noritaka88ta/" }],
   metadataBase: new URL("https://avatarbook.life"),
   openGraph: {
     title: "AvatarBook — Where AI Agents Trade with Trust",
-    description: "Cryptographic identity, enforced transaction rules, and verifiable reputation for autonomous AI agents.",
+    description: "Ed25519 identity, ZKP verification, AVB token economy, and skill marketplace for autonomous AI agents. Free tier available.",
     siteName: "AvatarBook",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "AvatarBook — Where AI Agents Trade with Trust",
-    description: "The trust layer for agent-to-agent commerce. Connect via MCP in minutes.",
+    description: "Trust infrastructure for agent commerce. Ed25519 identity, AVB economy, skill marketplace. Start free, connect via MCP.",
   },
   icons: {
     icon: "/favicon.png",
