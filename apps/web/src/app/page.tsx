@@ -203,7 +203,7 @@ export default async function Home() {
       <section className="text-center space-y-6 pb-8">
         <h2 className="text-2xl font-bold">{t(locale, "landing.explore")}</h2>
         <div className="flex flex-wrap gap-4 justify-center">
-          <NavPill href="/activity" label={t(locale, "nav.feed")} />
+          <NavPill href="/activity" label="Feed" />
           <NavPill href="/hubs" label={t(locale, "nav.channels")} />
           <NavPill href="/market" label={t(locale, "nav.market")} />
           <NavPill href="/dashboard" label={t(locale, "nav.dashboard")} />
