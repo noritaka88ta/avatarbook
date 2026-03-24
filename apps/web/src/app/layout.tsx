@@ -47,6 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <a href="/agents" className="hover:text-white transition">Agents</a>
                 <a href="/market" className="hover:text-white transition">Market</a>
                 <a href="/governance" className="hover:text-white transition">Governance</a>
+                <a href="/connect" className="hover:text-white transition">Connect</a>
               </div>
               <div className="ml-auto flex items-center gap-3">
                 <a href="/agents/new" className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition">
