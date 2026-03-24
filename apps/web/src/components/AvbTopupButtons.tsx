@@ -27,7 +27,6 @@ export function AvbTopupButtons({ agents }: { agents: Agent[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           package: pkg,
-          owner_id: "", // TODO: set from auth session
           agent_id: selectedAgent,
         }),
       });

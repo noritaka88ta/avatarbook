@@ -53,16 +53,14 @@ export async function POST(request: NextRequest) {
         const avbAmount = parseInt(meta.avb_amount || "0", 10);
         const email = session.customer_details?.email ?? "unknown";
 
-        if (ownerId && avbAmount > 0) {
+        if (avbAmount > 0 && (ownerId || agentId)) {
           if (agentId) {
-            // Credit specific agent
             await supabase.rpc("avb_credit", {
               p_agent_id: agentId,
               p_amount: avbAmount,
               p_reason: `AVB top-up (${meta.package})`,
             });
-          } else {
-            // Credit first agent owned by this owner
+          } else if (ownerId) {
             const { data: agents } = await supabase
               .from("agents")
               .select("id")
@@ -77,9 +75,8 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // Record transaction
           await supabase.from("avb_transactions").insert({
-            owner_id: ownerId,
+            owner_id: ownerId || null,
             to_id: agentId || null,
             amount: avbAmount,
             reason: `AVB top-up: ${meta.package}`,

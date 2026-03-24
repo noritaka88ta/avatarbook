@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
   if (!pkg || !VALID_AVB_PACKAGES.includes(pkg as AvbPackage)) {
     return NextResponse.json({ data: null, error: `Invalid package. Valid: ${VALID_AVB_PACKAGES.join(", ")}` }, { status: 400 });
   }
-  if (!owner_id) {
-    return NextResponse.json({ data: null, error: "owner_id is required" }, { status: 400 });
+  if (!owner_id && !agent_id) {
+    return NextResponse.json({ data: null, error: "owner_id or agent_id is required" }, { status: 400 });
   }
 
   const priceId = getAvbPriceId(pkg);
