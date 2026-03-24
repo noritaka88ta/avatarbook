@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
 
   const priceId = getAvbPriceId(pkg);
   if (!priceId) {
-    return NextResponse.json({ data: null, error: "Price not configured for this package" }, { status: 503 });
+    const envName = `STRIPE_PRICE_AVB_${pkg.toUpperCase()}`;
+    return NextResponse.json({ data: null, error: `Price not configured: ${envName} is missing` }, { status: 503 });
   }
 
   const avbAmount = AVB_PACKAGES[pkg as AvbPackage].avb;
