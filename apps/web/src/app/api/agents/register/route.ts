@@ -82,25 +82,28 @@ export async function POST(req: Request) {
     resolvedKey = encryptKey(resolvedKey);
   }
 
-  // Generate PoA keypair and fingerprint
-  const keypair = await generateKeypair();
+  // PoA keypair: client-side keygen (preferred) or server-side (legacy)
+  const clientPubKey = typeof body.public_key === "string" && /^[0-9a-f]{64}$/i.test(body.public_key) ? body.public_key : null;
+  const keypair = clientPubKey ? { publicKey: clientPubKey, privateKey: null } : await generateKeypair();
   const fingerprint = await generateFingerprint(model_type);
 
   // Create agent
+  const insertData: Record<string, unknown> = {
+    name,
+    model_type,
+    specialty,
+    personality: personality ?? "",
+    system_prompt: system_prompt ?? "",
+    public_key: keypair.publicKey,
+    poa_fingerprint: fingerprint,
+    api_key: resolvedKey,
+    hosted,
+    owner_id: resolvedOwnerId,
+  };
+
   const { data: agent, error: agentErr } = await supabase
     .from("agents")
-    .insert({
-      name,
-      model_type,
-      specialty,
-      personality: personality ?? "",
-      system_prompt: system_prompt ?? "",
-      public_key: keypair.publicKey,
-      poa_fingerprint: fingerprint,
-      api_key: resolvedKey,
-      hosted,
-      owner_id: resolvedOwnerId,
-    })
+    .insert(insertData)
     .select()
     .single();
 
@@ -145,14 +148,17 @@ export async function POST(req: Request) {
   }
 
   const { api_key: _k, ...safeAgent } = agent;
-  return NextResponse.json({
-    data: {
-      ...safeAgent,
-      publicKey: keypair.publicKey,
-      hosted,
-      tier: hosted ? "hosted" : "byok",
-      avb_balance: AVB_INITIAL_BALANCE,
-    },
-    error: null,
-  });
+  const responseData: Record<string, unknown> = {
+    ...safeAgent,
+    publicKey: keypair.publicKey,
+    hosted,
+    tier: hosted ? "hosted" : "byok",
+    avb_balance: AVB_INITIAL_BALANCE,
+    keygen: clientPubKey ? "client" : "server",
+  };
+  // Only include privateKey for legacy server-side keygen
+  if (!clientPubKey && keypair.privateKey) {
+    responseData.privateKey = keypair.privateKey;
+  }
+  return NextResponse.json({ data: responseData, error: null });
 }

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_POST_REWARD } from "@avatarbook/shared";
-import { verify } from "@avatarbook/poa";
+import { verifyTimestampedSignature } from "@/lib/signature";
 
 const HOSTED_POST_COST = 10; // AVB per post for hosted agents
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { agent_id, human_user_name, content, channel_id, signature, parent_id } = body;
+  const { agent_id, human_user_name, content, channel_id, signature, timestamp, parent_id } = body;
 
   // Must have either agent_id or human_user_name
   if (!agent_id && !human_user_name) {
@@ -41,12 +41,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ data: null, error: "Agent has no public key" }, { status: 400 });
     }
 
-    // Verify signature binding: content or agent_id:content (v2 format)
-    const signatureValid = await verify(`${agent_id}:${content}`, signature, agent.public_key)
-      || await verify(content, signature, agent.public_key);
-    if (!signatureValid) {
-      return NextResponse.json({ data: null, error: "Invalid PoA signature" }, { status: 403 });
+    // Verify timestamped signature with replay protection
+    const sigResult = await verifyTimestampedSignature(`${agent_id}:${content}`, signature, agent.public_key, timestamp);
+    if (!sigResult.valid) {
+      return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid PoA signature" }, { status: 403 });
     }
+    const signatureValid = true;
 
     // Hosted agents pay AVB per post
     if (agent.hosted) {

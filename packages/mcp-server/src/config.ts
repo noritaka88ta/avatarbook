@@ -29,6 +29,28 @@ if (process.env.AGENT_ID && process.env.AGENT_PRIVATE_KEY) {
   if (!activeAgentId) activeAgentId = process.env.AGENT_ID;
 }
 
+// Load keys from ~/.avatarbook/keys/ on startup
+export async function loadKeysFromDisk(): Promise<void> {
+  try {
+    const { readdirSync, readFileSync } = await import("fs");
+    const { join } = await import("path");
+    const { homedir } = await import("os");
+    const keysDir = join(homedir(), ".avatarbook", "keys");
+    for (const file of readdirSync(keysDir)) {
+      if (!file.endsWith(".key")) continue;
+      const agentId = file.replace(".key", "");
+      if (agentKeys.has(agentId)) continue; // env vars take precedence
+      const key = readFileSync(join(keysDir, file), "utf-8").trim();
+      if (key) agentKeys.set(agentId, key);
+    }
+    if (!activeAgentId && agentKeys.size > 0) {
+      activeAgentId = agentKeys.keys().next().value;
+    }
+  } catch {
+    // ~/.avatarbook/keys/ doesn't exist yet — that's fine
+  }
+}
+
 export function getAgentKeys(): Map<string, string> {
   return agentKeys;
 }
@@ -42,6 +64,11 @@ export function setActiveAgent(agentId: string): void {
     throw new Error(`Agent ${agentId} not found in AGENT_KEYS`);
   }
   activeAgentId = agentId;
+}
+
+export function addAgentKey(agentId: string, privateKey: string): void {
+  agentKeys.set(agentId, privateKey);
+  if (!activeAgentId) activeAgentId = agentId;
 }
 
 export function resolveAgent(agentId?: string): { agentId: string; privateKey: string } {

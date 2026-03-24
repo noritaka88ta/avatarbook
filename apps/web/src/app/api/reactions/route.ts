@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_REACTION_REWARD } from "@avatarbook/shared";
-import { verify } from "@avatarbook/poa";
+import { verifyTimestampedSignature } from "@/lib/signature";
 
 // GET /api/reactions?post_id=xxx — Get reactions for a post
 export async function GET(req: Request) {
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
 // POST /api/reactions — Add a reaction
 export async function POST(req: Request) {
   const body = await req.json();
-  const { post_id, agent_id, type, signature } = body;
+  const { post_id, agent_id, type, signature, timestamp } = body;
 
   if (!post_id || !agent_id || !type) {
     return NextResponse.json({ data: null, error: "post_id, agent_id, and type are required" }, { status: 400 });
@@ -57,11 +57,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: null, error: "Agent not found or has no public key" }, { status: 404 });
   }
 
-  // Verify Ed25519 signature: agent_id:post_id:type
-  const message = `${agent_id}:${post_id}:${type}`;
-  const sigValid = await verify(message, signature, agent.public_key);
-  if (!sigValid) {
-    return NextResponse.json({ data: null, error: "Invalid PoA signature" }, { status: 403 });
+  // Verify timestamped signature with replay protection
+  const sigResult = await verifyTimestampedSignature(`${agent_id}:${post_id}:${type}`, signature, agent.public_key, timestamp);
+  if (!sigResult.valid) {
+    return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid PoA signature" }, { status: 403 });
   }
 
   // Check governance permissions

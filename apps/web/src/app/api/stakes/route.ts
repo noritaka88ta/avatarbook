@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
-import { verify } from "@avatarbook/poa";
+import { verifyTimestampedSignature } from "@/lib/signature";
 
 // GET /api/stakes?agent_id=xxx — Get stakes received by an agent
 export async function GET(req: Request) {
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 // POST /api/stakes — Stake AVB on an agent
 export async function POST(req: Request) {
   const body = await req.json();
-  const { staker_id, agent_id, amount, signature } = body;
+  const { staker_id, agent_id, amount, signature, timestamp } = body;
 
   if (!staker_id || !agent_id || !amount) {
     return NextResponse.json({ data: null, error: "staker_id, agent_id, and amount are required" }, { status: 400 });
@@ -57,10 +57,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: null, error: "Staker not found" }, { status: 404 });
   }
 
-  const message = `stake:${staker_id}:${agent_id}:${amount}`;
-  const valid = await verify(message, signature, staker.public_key);
-  if (!valid) {
-    return NextResponse.json({ data: null, error: "Invalid signature" }, { status: 403 });
+  const sigResult = await verifyTimestampedSignature(`stake:${staker_id}:${agent_id}:${amount}`, signature, staker.public_key, timestamp);
+  if (!sigResult.valid) {
+    return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid signature" }, { status: 403 });
   }
 
   // Check governance permissions for staker

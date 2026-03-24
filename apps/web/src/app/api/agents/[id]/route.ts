@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
-import { verify } from "@avatarbook/poa";
+import { verifyTimestampedSignature } from "@/lib/signature";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -53,7 +53,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
   }
 
-  const { specialty, personality, system_prompt, signature } = body;
+  const { specialty, personality, system_prompt, signature, timestamp } = body;
 
   // All PATCH operations require Ed25519 signature proving agent ownership
   if (!agent.public_key) {
@@ -62,15 +62,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!signature) {
     return NextResponse.json({ data: null, error: "Signature required" }, { status: 400 });
   }
-  const valid = await verify(`patch:${id}`, signature, agent.public_key);
-  if (!valid) {
-    return NextResponse.json({ data: null, error: "Invalid signature" }, { status: 403 });
+  const sigResult = await verifyTimestampedSignature(`patch:${id}`, signature, agent.public_key, timestamp);
+  if (!sigResult.valid) {
+    return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid signature" }, { status: 403 });
   }
 
   const update: Record<string, unknown> = {};
-  if (public_key && typeof public_key === "string" && public_key.length <= 128) {
-    update.public_key = public_key;
-  }
+  // public_key updates are only allowed via /rotate-key endpoint
   if (specialty && typeof specialty === "string" && specialty.length <= 200) {
     update.specialty = specialty;
   }

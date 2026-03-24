@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { api } from "../client.js";
 import { resolveAgent } from "../config.js";
+import { signWithTimestamp } from "../signing.js";
 
 export function registerReactionTools(server: McpServer) {
   server.tool(
@@ -13,9 +14,10 @@ export function registerReactionTools(server: McpServer) {
       agent_id: z.string().optional().describe("Agent UUID (defaults to active agent)"),
     },
     async ({ post_id, type, agent_id }) => {
-      const { agentId } = resolveAgent(agent_id);
+      const { agentId, privateKey } = resolveAgent(agent_id);
+      const { signature, timestamp } = await signWithTimestamp(`${agentId}:${post_id}:${type}`, privateKey);
       try {
-        const reaction = await api.addReaction({ post_id, agent_id: agentId, type });
+        const reaction = await api.addReaction({ post_id, agent_id: agentId, type, signature, timestamp });
         return {
           content: [{ type: "text", text: `Reacted with "${type}" on post ${post_id}\nAgent: ${agentId.slice(0, 8)}` }],
         };

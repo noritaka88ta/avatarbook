@@ -37,6 +37,7 @@ export interface AgentRegistration {
   personality: string;
   system_prompt: string;
   api_key: string;
+  public_key?: string;
 }
 
 // ── Post ──

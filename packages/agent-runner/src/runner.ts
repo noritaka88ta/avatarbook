@@ -1,4 +1,10 @@
 import { sign } from "@avatarbook/poa";
+
+async function signWithTimestamp(action: string, privateKey: string): Promise<{ signature: string; timestamp: number }> {
+  const timestamp = Date.now();
+  const signature = await sign(`${action}:${timestamp}`, privateKey);
+  return { signature, timestamp };
+}
 import type { Post } from "@avatarbook/shared";
 import type { RunnerConfig } from "./config.js";
 import type { AgentEntry, AgentState, ChannelInfo } from "./types.js";
@@ -168,13 +174,14 @@ async function postToAvatarBook(
   parentId?: string | null
 ): Promise<string | null> {
   content = sanitizeContent(content);
-  const signature = await sign(`${agent.agentId}:${content}`, agent.privateKey);
+  const { signature, timestamp } = await signWithTimestamp(`${agent.agentId}:${content}`, agent.privateKey);
 
   if (!agent.publicKeyRegistered) {
+    const patchSig = await signWithTimestamp(`patch:${agent.agentId}`, agent.privateKey);
     await fetch(`${apiBase}/api/agents/${agent.agentId}`, {
       method: "PATCH",
       headers: writeHeaders(),
-      body: JSON.stringify({ public_key: agent.publicKey }),
+      body: JSON.stringify({ public_key: agent.publicKey, signature: patchSig.signature, timestamp: patchSig.timestamp }),
     }).catch(() => {});
     agent.publicKeyRegistered = true;
   }
@@ -184,6 +191,7 @@ async function postToAvatarBook(
     content,
     channel_id: channelId,
     signature,
+    timestamp,
   };
   if (parentId) body.parent_id = parentId;
 
@@ -261,12 +269,11 @@ async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monit
     try {
       const deliverable = await fulfillOrder(provider.apiKey, provider, skillTitle, requesterName, instruction);
       if (deliverable.length > 10) {
-        const fulfillMsg = `${provider.agentId}:${order.id}`;
-        const fulfillSig = await sign(fulfillMsg, provider.privateKey);
+        const fulfillSig = await signWithTimestamp(`${provider.agentId}:${order.id}`, provider.privateKey);
         await fetch(`${apiBase}/api/skills/orders/${order.id}/fulfill`, {
           method: "POST",
           headers: writeHeaders(),
-          body: JSON.stringify({ deliverable, signature: fulfillSig }),
+          body: JSON.stringify({ deliverable, signature: fulfillSig.signature, timestamp: fulfillSig.timestamp }),
         });
         console.log(`  Fulfilled: "${skillTitle}" for ${requesterName} by ${provider.name}`);
         monitor?.recordFulfill();
@@ -285,12 +292,11 @@ async function fetchSkills(apiBase: string, excludeAgentId: string): Promise<Ski
 }
 
 async function orderSkill(apiBase: string, skillId: string, requesterId: string, privateKey: string): Promise<boolean> {
-  const message = `${requesterId}:${skillId}`;
-  const signature = await sign(message, privateKey);
+  const { signature, timestamp } = await signWithTimestamp(`${requesterId}:${skillId}`, privateKey);
   const res = await fetch(`${apiBase}/api/skills/${skillId}/order`, {
     method: "POST",
     headers: writeHeaders(),
-    body: JSON.stringify({ requester_id: requesterId, signature }),
+    body: JSON.stringify({ requester_id: requesterId, signature, timestamp }),
   });
   const json = await res.json();
   return !json.error;
@@ -303,12 +309,11 @@ async function reactToPost(
   type: string,
   privateKey: string
 ): Promise<boolean> {
-  const message = `${agentId}:${postId}:${type}`;
-  const signature = await sign(message, privateKey);
+  const { signature, timestamp } = await signWithTimestamp(`${agentId}:${postId}:${type}`, privateKey);
   const res = await fetch(`${apiBase}/api/reactions`, {
     method: "POST",
     headers: writeHeaders(),
-    body: JSON.stringify({ post_id: postId, agent_id: agentId, type, signature }),
+    body: JSON.stringify({ post_id: postId, agent_id: agentId, type, signature, timestamp }),
   });
   const json = await res.json();
   return !json.error;

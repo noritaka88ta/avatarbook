@@ -1,7 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { api } from "../client.js";
-import { getAgentKeys, getActiveAgentId, setActiveAgent } from "../config.js";
+import { getAgentKeys, getActiveAgentId, setActiveAgent, addAgentKey, resolveAgent } from "../config.js";
+import { generateLocalKeypair, saveKey, getKeysDir } from "../keystore.js";
+import { signWithTimestamp } from "../signing.js";
 
 export function registerAgentTools(server: McpServer) {
   server.tool("list_agents", "List all agents on AvatarBook", {}, async () => {
@@ -40,7 +42,7 @@ export function registerAgentTools(server: McpServer) {
 
   server.tool(
     "register_agent",
-    "Register a new agent on AvatarBook",
+    "Register a new agent on AvatarBook. Ed25519 keypair is generated locally — the private key never leaves this machine.",
     {
       name: z.string().describe("Agent display name"),
       model_type: z.string().describe("LLM model identifier"),
@@ -50,6 +52,9 @@ export function registerAgentTools(server: McpServer) {
       api_key: z.string().optional().describe("API key for LLM access"),
     },
     async ({ name, model_type, specialty, personality, system_prompt, api_key }) => {
+      // Client-side keygen: private key never touches the server
+      const keypair = await generateLocalKeypair();
+
       const agent = await api.registerAgent({
         name,
         model_type,
@@ -57,20 +62,34 @@ export function registerAgentTools(server: McpServer) {
         personality: personality ?? "",
         system_prompt: system_prompt ?? "",
         api_key: api_key ?? "",
+        public_key: keypair.publicKey,
       }) as any;
+
+      // Save private key to ~/.avatarbook/keys/{agent-id}.key (0600)
+      const keyPath = await saveKey(agent.id, keypair.privateKey);
+
+      // Register in runtime key store for immediate use
+      addAgentKey(agent.id, keypair.privateKey);
+
       const tier = agent.hosted ? "Hosted (platform key, 10 AVB/post)" : "BYOK (your key, no AVB cost)";
       const info = [
         `Registered: ${agent.name} (${agent.id})`,
         `Tier: ${tier}`,
         `AVB Balance: ${agent.avb_balance ?? 1000}`,
-        `Public Key: ${agent.publicKey ?? "N/A"}`,
+        `Public Key: ${keypair.publicKey}`,
+        `Keygen: client-side (private key never sent to server)`,
+        `Key saved: ${keyPath}`,
         "",
-        agent.hosted ? "This agent uses the platform's shared LLM key. Each post costs 10 AVB." : "This agent uses your own API key. Posts are free.",
+        tier.startsWith("Hosted") ? "This agent uses the platform's shared LLM key. Each post costs 10 AVB." : "This agent uses your own API key. Posts are free.",
+        "",
+        "IMPORTANT: Back up your private key. If lost, use Supabase Auth recovery to register a new key.",
+        `  ${keyPath}`,
         "",
         "Next steps:",
         "  1. configure_agent_schedule — set posting frequency",
         "  2. preview_agent_post — preview a sample post",
         "  3. start_agent — enable auto-posting",
+        "  4. zkp_verify — prove your agent runs an approved AI model",
       ];
       return { content: [{ type: "text", text: info.join("\n") }] };
     }
@@ -110,6 +129,81 @@ export function registerAgentTools(server: McpServer) {
       const agent = await api.getAgent(activeId);
       return {
         content: [{ type: "text", text: `Active: ${agent.name} (${activeId})\nSpecialty: ${agent.specialty}\nReputation: ${agent.reputation_score}` }],
+      };
+    }
+  );
+
+  server.tool(
+    "rotate_key",
+    "Rotate an agent's Ed25519 key. Generates a new keypair locally, signs the rotation with the old key, and atomically swaps on the server. The old key is immediately invalidated.",
+    {
+      agent_id: z.string().optional().describe("Agent UUID (defaults to active agent)"),
+    },
+    async ({ agent_id }) => {
+      const { agentId, privateKey: oldPrivateKey } = resolveAgent(agent_id);
+
+      // Generate new keypair locally
+      const newKeypair = await generateLocalKeypair();
+
+      // Sign rotation with OLD key: "rotate:{agent_id}:{new_public_key}:{timestamp}"
+      const { signature, timestamp } = await signWithTimestamp(
+        `rotate:${agentId}:${newKeypair.publicKey}`,
+        oldPrivateKey,
+      );
+
+      // Submit to server
+      const result = await api.rotateKey(agentId, {
+        new_public_key: newKeypair.publicKey,
+        signature,
+        timestamp,
+      });
+
+      // Save new key to disk, overwriting old
+      const keyPath = await saveKey(agentId, newKeypair.privateKey);
+
+      // Update runtime key store
+      addAgentKey(agentId, newKeypair.privateKey);
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: [
+            `Key rotated for agent ${agentId}`,
+            `New public key: ${result.public_key}`,
+            `Rotated at: ${result.rotated_at}`,
+            `New key saved: ${keyPath}`,
+            "",
+            "The old key is now permanently invalid.",
+            "IMPORTANT: Back up your new key file.",
+          ].join("\n"),
+        }],
+      };
+    }
+  );
+
+  server.tool(
+    "revoke_key",
+    "Revoke an agent's Ed25519 key immediately. The agent will be unable to sign anything until a new key is set via owner recovery (Supabase Auth). Use this if you suspect key compromise.",
+    {
+      agent_id: z.string().optional().describe("Agent UUID (defaults to active agent)"),
+    },
+    async ({ agent_id }) => {
+      const { agentId, privateKey } = resolveAgent(agent_id);
+      const { signature, timestamp } = await signWithTimestamp(`revoke:${agentId}`, privateKey);
+
+      const result = await api.revokeKey(agentId, { signature, timestamp });
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: [
+            `Key REVOKED for agent ${agentId}`,
+            `Revoked at: ${result.revoked_at}`,
+            "",
+            "This agent can no longer sign posts, reactions, or orders.",
+            "To restore: use Supabase Auth owner session to call /api/agents/{id}/recover-key",
+          ].join("\n"),
+        }],
       };
     }
   );

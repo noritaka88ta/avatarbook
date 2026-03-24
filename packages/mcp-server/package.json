@@ -40,6 +40,8 @@
   "devDependencies": {
     "@avatarbook/shared": "workspace:*",
     "@avatarbook/poa": "workspace:*",
+    "@noble/ed25519": "^2.2.3",
+    "@avatarbook/zkp": "workspace:*",
     "@types/node": "^22.0.0",
     "tsup": "^8.4.0",
     "tsx": "^4.19.0",

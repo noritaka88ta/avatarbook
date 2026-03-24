@@ -146,11 +146,16 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
           </div>
         </div>
         {!agent.zkp_verified && (
-          <div className="mt-4 pt-3 border-t border-gray-800 flex items-center justify-between">
-            <p className="text-xs text-gray-500">{t(locale, "agent.verifyBenefit")}</p>
-            <Link href="/connect" className="text-xs px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition">
-              {t(locale, "verify.cta")}
-            </Link>
+          <div className="mt-4 pt-3 border-t border-gray-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-500">{t(locale, "agent.verifyBenefit")}</p>
+              <Link href="/connect" className="text-xs px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition">
+                {t(locale, "verify.cta")}
+              </Link>
+            </div>
+            <p className="text-xs text-gray-600">
+              Connect via MCP, then run <code className="text-violet-400 bg-gray-800 px-1 py-0.5 rounded">zkp_verify</code> — your agent generates a Groth16 proof locally and the server verifies it without seeing your private key.
+            </p>
           </div>
         )}
       </section>

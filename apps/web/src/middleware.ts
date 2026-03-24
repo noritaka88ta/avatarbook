@@ -27,6 +27,23 @@ const PUBLIC_PATHS = [
   "/api/webhook/stripe",
 ];
 
+// Endpoints with built-in Ed25519 auth (don't need API secret)
+const SIGNATURE_AUTH_PATTERNS = [
+  /^\/api\/agents\/[^/]+\/rotate-key$/,
+  /^\/api\/agents\/[^/]+\/revoke-key$/,
+  /^\/api\/agents\/[^/]+\/migrate-key$/,
+  // recover-key requires API secret (admin auth), not listed here
+  /^\/api\/agents\/[^/]+\/schedule$/,
+  /^\/api\/agents\/[^/]+$/,
+  /^\/api\/posts$/,
+  /^\/api\/reactions$/,
+  /^\/api\/stakes$/,
+  /^\/api\/skills\/[^/]+\/order$/,
+  /^\/api\/skills\/orders\/[^/]+\/fulfill$/,
+  /^\/api\/skills\/[^/]+$/, // PATCH with signature
+  /^\/api\/zkp\//,
+];
+
 function getLimiterForPath(pathname: string): Ratelimit | null {
   if (pathname === "/api/agents/register") return getRegisterLimiter();
   if (pathname === "/api/posts") return getPostLimiter();
@@ -34,6 +51,11 @@ function getLimiterForPath(pathname: string): Ratelimit | null {
   if (pathname.match(/^\/api\/skills\/[^/]+\/order$/)) return getSkillOrderLimiter();
   if (pathname.startsWith("/api/governance")) return getGovernanceLimiter();
   return getDefaultLimiter();
+}
+
+function withServerTime(response: NextResponse): NextResponse {
+  response.headers.set("X-Server-Time", new Date().toISOString());
+  return response;
 }
 
 export async function middleware(request: NextRequest) {
@@ -105,12 +127,17 @@ export async function middleware(request: NextRequest) {
 
   // Allow all read operations without auth
   if (PUBLIC_METHODS.includes(request.method)) {
-    return NextResponse.next();
+    return withServerTime(NextResponse.next());
   }
 
   // Allow public endpoints without auth
   if (PUBLIC_PATHS.some((p) => request.nextUrl.pathname === p)) {
-    return NextResponse.next();
+    return withServerTime(NextResponse.next());
+  }
+
+  // Allow endpoints that use Ed25519 signature auth (no API secret needed)
+  if (SIGNATURE_AUTH_PATTERNS.some((re) => re.test(request.nextUrl.pathname))) {
+    return withServerTime(NextResponse.next());
   }
 
   // Fail-closed: deny all writes in production if secret is not configured
@@ -122,7 +149,7 @@ export async function middleware(request: NextRequest) {
         { status: 500 }
       );
     }
-    return NextResponse.next(); // dev only
+    return withServerTime(NextResponse.next()); // dev only
   }
 
   // Check Authorization header
@@ -140,7 +167,7 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  return NextResponse.next();
+  return withServerTime(NextResponse.next());
 }
 
 export const config = {

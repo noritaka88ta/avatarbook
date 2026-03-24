@@ -1,6 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { api } from "../client.js";
+import { resolveAgent } from "../config.js";
+import { signWithTimestamp } from "../signing.js";
 
 export function registerSchedulingTools(server: McpServer) {
   server.tool(
@@ -13,18 +15,20 @@ export function registerSchedulingTools(server: McpServer) {
       active_spread: z.number().min(1).max(8).optional().describe("Activity spread in hours (1=sharp peak, 8=always active)"),
     },
     async ({ agent_id, base_rate, peak_hour, active_spread }) => {
+      const { privateKey } = resolveAgent(agent_id);
+      const { signature, timestamp } = await signWithTimestamp(`patch:${agent_id}:schedule`, privateKey);
+
       const config: Record<string, unknown> = {};
       if (base_rate !== undefined) config.baseRate = base_rate;
       if (peak_hour !== undefined) config.peakHour = peak_hour;
       if (active_spread !== undefined) config.activeSpread = active_spread;
 
       if (Object.keys(config).length === 0) {
-        // Clear schedule (use defaults)
-        await api.updateSchedule(agent_id, null);
+        await api.updateSchedule(agent_id, null, signature, timestamp);
         return { content: [{ type: "text", text: "Schedule cleared. Agent will use biological defaults." }] };
       }
 
-      await api.updateSchedule(agent_id, config);
+      await api.updateSchedule(agent_id, config, signature, timestamp);
       const lines = [
         "Schedule configured:",
         base_rate !== undefined ? `  Posts/hour: ${base_rate}` : null,
@@ -44,7 +48,9 @@ export function registerSchedulingTools(server: McpServer) {
       system_prompt: z.string().optional().describe("Full system prompt (detailed instructions for the agent)"),
     },
     async ({ agent_id, personality, system_prompt }) => {
-      await api.updatePersonality(agent_id, personality, system_prompt);
+      const { privateKey } = resolveAgent(agent_id);
+      const { signature, timestamp } = await signWithTimestamp(`patch:${agent_id}`, privateKey);
+      await api.updatePersonality(agent_id, personality, system_prompt, signature, timestamp);
       return { content: [{ type: "text", text: `Personality updated for agent ${agent_id}.\n\nPersonality: ${personality.slice(0, 200)}${personality.length > 200 ? "..." : ""}` }] };
     }
   );
@@ -74,7 +80,9 @@ export function registerSchedulingTools(server: McpServer) {
       agent_id: z.string().describe("Agent UUID"),
     },
     async ({ agent_id }) => {
-      await api.toggleAgent(agent_id, true);
+      const { privateKey } = resolveAgent(agent_id);
+      const { signature, timestamp } = await signWithTimestamp(`patch:${agent_id}:schedule`, privateKey);
+      await api.toggleAgent(agent_id, true, signature, timestamp);
       const sched = await api.getSchedule(agent_id);
       const config = sched.schedule_config as Record<string, unknown> | null;
       const info = config
@@ -91,7 +99,9 @@ export function registerSchedulingTools(server: McpServer) {
       agent_id: z.string().describe("Agent UUID"),
     },
     async ({ agent_id }) => {
-      await api.toggleAgent(agent_id, false);
+      const { privateKey } = resolveAgent(agent_id);
+      const { signature, timestamp } = await signWithTimestamp(`patch:${agent_id}:schedule`, privateKey);
+      await api.toggleAgent(agent_id, false, signature, timestamp);
       return { content: [{ type: "text", text: `Auto-posting DISABLED for agent ${agent_id}.\nThe agent is still registered and can be restarted with start_agent.` }] };
     }
   );

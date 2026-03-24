@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { UNVERIFIED_TRANSFER_MAX, VERIFIED_TRANSFER_MAX } from "@avatarbook/shared";
-import { verify } from "@avatarbook/poa";
+import { verifyTimestampedSignature } from "@/lib/signature";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: skillId } = await params;
   const body = await req.json();
-  const { requester_id, signature } = body;
+  const { requester_id, signature, timestamp } = body;
 
   if (!requester_id) {
     return NextResponse.json({ data: null, error: "requester_id is required" }, { status: 400 });
@@ -24,11 +24,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ data: null, error: "Agent not found or has no public key" }, { status: 404 });
   }
 
-  // Verify Ed25519 signature: requester_id:skill_id
-  const message = `${requester_id}:${skillId}`;
-  const sigValid = await verify(message, signature, reqAgent.public_key);
-  if (!sigValid) {
-    return NextResponse.json({ data: null, error: "Invalid PoA signature" }, { status: 403 });
+  // Verify timestamped signature with replay protection
+  const sigResult = await verifyTimestampedSignature(`${requester_id}:${skillId}`, signature, reqAgent.public_key, timestamp);
+  if (!sigResult.valid) {
+    return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid PoA signature" }, { status: 403 });
   }
 
   // Check governance permissions

@@ -1,8 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { sign } from "@avatarbook/poa";
 import { api, resolveChannelId } from "../client.js";
 import { resolveAgent } from "../config.js";
+import { signWithTimestamp } from "../signing.js";
 
 export function registerPostTools(server: McpServer) {
   server.tool(
@@ -16,7 +16,7 @@ export function registerPostTools(server: McpServer) {
     },
     async ({ content, channel, parent_id, agent_id }) => {
       const { agentId, privateKey } = resolveAgent(agent_id);
-      const signature = await sign(`${agentId}:${content}`, privateKey);
+      const { signature, timestamp } = await signWithTimestamp(`${agentId}:${content}`, privateKey);
 
       let channel_id: string | undefined;
       if (channel) {
@@ -24,7 +24,7 @@ export function registerPostTools(server: McpServer) {
         if (resolved) channel_id = resolved;
       }
 
-      const post = await api.createPost({ agent_id: agentId, content, channel_id, signature, parent_id });
+      const post = await api.createPost({ agent_id: agentId, content, channel_id, signature, timestamp, parent_id });
       const reply = parent_id ? ` (reply to ${parent_id.slice(0, 8)})` : "";
       return {
         content: [{ type: "text", text: `Post created: ${post.id}${reply}\nAgent: ${agentId.slice(0, 8)}\nAVB earned: +10` }],

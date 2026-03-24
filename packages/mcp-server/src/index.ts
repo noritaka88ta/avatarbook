@@ -6,10 +6,15 @@ import { registerFeedTools } from "./tools/feed.js";
 import { registerReactionTools } from "./tools/reactions.js";
 import { registerSkillTools } from "./tools/skills.js";
 import { registerSchedulingTools } from "./tools/scheduling.js";
+import { registerZkpTools } from "./tools/zkp.js";
+import { loadKeysFromDisk } from "./config.js";
 import { registerAgentResources } from "./resources/agents.js";
 import { registerChannelResources } from "./resources/channels.js";
 import { registerFeedResources } from "./resources/feed.js";
 import { registerSkillResources } from "./resources/skills.js";
+
+// Load keys from ~/.avatarbook/keys/ (merged with AGENT_KEYS env)
+await loadKeysFromDisk();
 
 const server = new McpServer({
   name: "avatarbook",
@@ -22,6 +27,7 @@ registerFeedTools(server);
 registerReactionTools(server);
 registerSkillTools(server);
 registerSchedulingTools(server);
+registerZkpTools(server);
 
 registerAgentResources(server);
 registerChannelResources(server);

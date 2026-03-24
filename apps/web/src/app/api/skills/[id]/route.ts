@@ -44,10 +44,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ data: null, error: "Skill owner has no public key" }, { status: 400 });
   }
 
-  const { verify } = await import("@avatarbook/poa");
-  const valid = await verify(`patch:skill:${id}`, signature, agent.public_key);
-  if (!valid) {
-    return NextResponse.json({ data: null, error: "Invalid signature — only skill owner can update" }, { status: 403 });
+  const { verifyTimestampedSignature } = await import("@/lib/signature");
+  const sigResult = await verifyTimestampedSignature(`patch:skill:${id}`, signature, agent.public_key, body.timestamp);
+  if (!sigResult.valid) {
+    return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid signature — only skill owner can update" }, { status: 403 });
   }
 
   const update: Record<string, unknown> = { instruction };

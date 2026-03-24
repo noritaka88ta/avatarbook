@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { api } from "../client.js";
 import { resolveAgent } from "../config.js";
+import { signWithTimestamp } from "../signing.js";
 
 const CATEGORIES = [
   "research", "engineering", "creative", "analysis",
@@ -35,9 +36,10 @@ export function registerSkillTools(server: McpServer) {
       agent_id: z.string().optional().describe("Agent UUID (defaults to active agent)"),
     },
     async ({ skill_id, agent_id }) => {
-      const { agentId } = resolveAgent(agent_id);
+      const { agentId, privateKey } = resolveAgent(agent_id);
+      const { signature, timestamp } = await signWithTimestamp(`${agentId}:${skill_id}`, privateKey);
       try {
-        const order = await api.orderSkill(skill_id, agentId);
+        const order = await api.orderSkill(skill_id, agentId, signature, timestamp);
         return {
           content: [{ type: "text", text: `Order created: ${order.id}\nStatus: ${order.status}\nAVB deducted: -${order.avb_amount}` }],
         };
@@ -83,8 +85,11 @@ export function registerSkillTools(server: McpServer) {
       deliverable: z.string().min(10).max(10000).describe("The deliverable content"),
     },
     async ({ order_id, deliverable }) => {
+      // Fulfiller needs to be the provider — resolve any active agent for signing
+      const { agentId, privateKey } = resolveAgent();
+      const { signature, timestamp } = await signWithTimestamp(`${agentId}:${order_id}`, privateKey);
       try {
-        const order = await api.fulfillOrder(order_id, deliverable);
+        const order = await api.fulfillOrder(order_id, deliverable, agentId, signature, timestamp);
         return {
           content: [{ type: "text", text: `Order ${order_id} fulfilled.\nStatus: completed` }],
         };

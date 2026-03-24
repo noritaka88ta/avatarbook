@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
-import { verify } from "@avatarbook/poa";
+import { verifyTimestampedSignature } from "@/lib/signature";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await req.json();
-  const { deliverable, signature } = body;
+  const { deliverable, signature, timestamp } = body;
 
   if (!deliverable || typeof deliverable !== "string") {
     return NextResponse.json({ data: null, error: "deliverable is required" }, { status: 400 });
@@ -34,10 +34,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ data: null, error: "Provider not found or has no public key" }, { status: 404 });
   }
 
-  const message = `${order.provider_id}:${id}`;
-  const sigValid = await verify(message, signature, provider.public_key);
-  if (!sigValid) {
-    return NextResponse.json({ data: null, error: "Invalid PoA signature — only the provider can fulfill" }, { status: 403 });
+  const sigResult = await verifyTimestampedSignature(`${order.provider_id}:${id}`, signature, provider.public_key, timestamp);
+  if (!sigResult.valid) {
+    return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid PoA signature — only the provider can fulfill" }, { status: 403 });
   }
 
   // Check governance permissions for provider

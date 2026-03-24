@@ -49,7 +49,7 @@ export const api = {
   getAgent: (id: string) => get<Agent & { balance: number; skills: Skill[]; posts: Post[] }>(`/api/agents/${id}`),
   registerAgent: (data: AgentRegistration) => post<Agent & { publicKey: string }>("/api/agents/register", data as unknown as Record<string, unknown>),
 
-  createPost: (data: { agent_id: string; content: string; channel_id?: string; signature?: string; parent_id?: string }) =>
+  createPost: (data: { agent_id: string; content: string; channel_id?: string; signature?: string; timestamp?: number; parent_id?: string }) =>
     post<Post>("/api/posts", data),
 
   createHumanPost: (data: { human_user_name: string; content: string; channel_id?: string; parent_id?: string }) =>
@@ -67,7 +67,7 @@ export const api = {
 
   listChannels: () => get<Channel[]>("/api/channels"),
 
-  addReaction: (data: { post_id: string; agent_id: string; type: ReactionType }) =>
+  addReaction: (data: { post_id: string; agent_id: string; type: ReactionType; signature?: string; timestamp?: number }) =>
     post<Reaction>("/api/reactions", data),
 
   listSkills: (category?: string) => {
@@ -75,16 +75,16 @@ export const api = {
     return get<Skill[]>(`/api/skills${q}`);
   },
 
-  orderSkill: (skillId: string, requesterId: string) =>
-    post<SkillOrder>(`/api/skills/${skillId}/order`, { requester_id: requesterId }),
+  orderSkill: (skillId: string, requesterId: string, signature?: string, timestamp?: number) =>
+    post<SkillOrder>(`/api/skills/${skillId}/order`, { requester_id: requesterId, signature, timestamp }),
 
   getOrders: (status?: string) => {
     const q = status ? `?status=${status}` : "";
     return get<SkillOrder[]>(`/api/skills/orders${q}`);
   },
 
-  fulfillOrder: (orderId: string, deliverable: string) =>
-    post<SkillOrder>(`/api/skills/orders/${orderId}/fulfill`, { deliverable }),
+  fulfillOrder: (orderId: string, deliverable: string, providerId?: string, signature?: string, timestamp?: number) =>
+    post<SkillOrder>(`/api/skills/orders/${orderId}/fulfill`, { deliverable, provider_id: providerId, signature, timestamp }),
 
   getSkill: (skillId: string) => get<Skill>(`/api/skills/${skillId}`),
 
@@ -93,14 +93,31 @@ export const api = {
 
   // Schedule & personality
   getSchedule: (id: string) => get<{ id: string; name: string; schedule_config: unknown; auto_post_enabled: boolean }>(`/api/agents/${id}/schedule`),
-  updateSchedule: (id: string, config: Record<string, unknown> | null) =>
-    patch<Record<string, unknown>>(`/api/agents/${id}/schedule`, { schedule_config: config }),
-  toggleAgent: (id: string, enabled: boolean) =>
-    patch<Record<string, unknown>>(`/api/agents/${id}/schedule`, { auto_post_enabled: enabled }),
-  updatePersonality: (id: string, personality: string, systemPrompt?: string) =>
-    patch<Agent>(`/api/agents/${id}`, { personality, ...(systemPrompt !== undefined ? { system_prompt: systemPrompt } : {}) }),
+  updateSchedule: (id: string, config: Record<string, unknown> | null, signature?: string, timestamp?: number) =>
+    patch<Record<string, unknown>>(`/api/agents/${id}/schedule`, { schedule_config: config, signature, timestamp }),
+  toggleAgent: (id: string, enabled: boolean, signature?: string, timestamp?: number) =>
+    patch<Record<string, unknown>>(`/api/agents/${id}/schedule`, { auto_post_enabled: enabled, signature, timestamp }),
+  updatePersonality: (id: string, personality: string, systemPrompt?: string, signature?: string, timestamp?: number) =>
+    patch<Agent>(`/api/agents/${id}`, { personality, ...(systemPrompt !== undefined ? { system_prompt: systemPrompt } : {}), signature, timestamp }),
   previewPost: (id: string, topic?: string) =>
     post<{ content: string; agent_name: string }>(`/api/agents/${id}/preview`, topic ? { topic } : {}),
+
+  // Key lifecycle
+  rotateKey: (id: string, data: { new_public_key: string; signature: string; timestamp: number }) =>
+    post<{ id: string; public_key: string; rotated_at: string }>(`/api/agents/${id}/rotate-key`, data),
+
+  revokeKey: (id: string, data: { signature: string; timestamp: number }) =>
+    post<{ id: string; revoked_at: string; recovery: string }>(`/api/agents/${id}/revoke-key`, data),
+
+  migrateKey: (id: string, data: { new_public_key: string; endorsement: string }) =>
+    post<{ id: string; public_key: string; migrated_at: string }>(`/api/agents/${id}/migrate-key`, data),
+
+  // ZKP verification
+  getZkpChallenge: (agentId: string) =>
+    get<{ challenge: string }>(`/api/zkp/challenge?agent_id=${agentId}`),
+
+  submitZkpProof: (data: { agent_id: string; challenge: string; proof: unknown; publicSignals: string[] }) =>
+    post<{ verified: boolean; commitment: string }>("/api/zkp/verify", data),
 };
 
 let channelCache: Map<string, string> | null = null;
