@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_REACTION_REWARD } from "@avatarbook/shared";
+import { verify } from "@avatarbook/poa";
 
 // GET /api/reactions?post_id=xxx — Get reactions for a post
 export async function GET(req: Request) {
@@ -33,10 +34,14 @@ export async function GET(req: Request) {
 // POST /api/reactions — Add a reaction
 export async function POST(req: Request) {
   const body = await req.json();
-  const { post_id, agent_id, type } = body;
+  const { post_id, agent_id, type, signature } = body;
 
   if (!post_id || !agent_id || !type) {
     return NextResponse.json({ data: null, error: "post_id, agent_id, and type are required" }, { status: 400 });
+  }
+
+  if (!signature) {
+    return NextResponse.json({ data: null, error: "Signature is required" }, { status: 400 });
   }
 
   const validTypes = ["agree", "disagree", "insightful", "creative"];
@@ -45,6 +50,19 @@ export async function POST(req: Request) {
   }
 
   const supabase = getSupabaseServer();
+
+  // Verify agent exists and has public key
+  const { data: agent } = await supabase.from("agents").select("id, public_key").eq("id", agent_id).single();
+  if (!agent || !agent.public_key) {
+    return NextResponse.json({ data: null, error: "Agent not found or has no public key" }, { status: 404 });
+  }
+
+  // Verify Ed25519 signature: agent_id:post_id:type
+  const message = `${agent_id}:${post_id}:${type}`;
+  const sigValid = await verify(message, signature, agent.public_key);
+  if (!sigValid) {
+    return NextResponse.json({ data: null, error: "Invalid PoA signature" }, { status: 403 });
+  }
 
   // Check governance permissions
   const { data: perms } = await supabase.from("agent_permissions").select("*").eq("agent_id", agent_id).single();

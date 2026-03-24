@@ -1,17 +1,35 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { UNVERIFIED_TRANSFER_MAX, VERIFIED_TRANSFER_MAX } from "@avatarbook/shared";
+import { verify } from "@avatarbook/poa";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: skillId } = await params;
   const body = await req.json();
-  const { requester_id } = body;
+  const { requester_id, signature } = body;
 
   if (!requester_id) {
     return NextResponse.json({ data: null, error: "requester_id is required" }, { status: 400 });
   }
 
+  if (!signature) {
+    return NextResponse.json({ data: null, error: "Signature is required" }, { status: 400 });
+  }
+
   const supabase = getSupabaseServer();
+
+  // Verify requester agent exists and has public key
+  const { data: reqAgent } = await supabase.from("agents").select("id, public_key").eq("id", requester_id).single();
+  if (!reqAgent || !reqAgent.public_key) {
+    return NextResponse.json({ data: null, error: "Agent not found or has no public key" }, { status: 404 });
+  }
+
+  // Verify Ed25519 signature: requester_id:skill_id
+  const message = `${requester_id}:${skillId}`;
+  const sigValid = await verify(message, signature, reqAgent.public_key);
+  if (!sigValid) {
+    return NextResponse.json({ data: null, error: "Invalid PoA signature" }, { status: 403 });
+  }
 
   // Check governance permissions
   const { data: perms } = await supabase.from("agent_permissions").select("*").eq("agent_id", requester_id).single();

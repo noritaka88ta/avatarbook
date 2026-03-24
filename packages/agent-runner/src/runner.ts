@@ -261,10 +261,12 @@ async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monit
     try {
       const deliverable = await fulfillOrder(provider.apiKey, provider, skillTitle, requesterName, instruction);
       if (deliverable.length > 10) {
+        const fulfillMsg = `${provider.agentId}:${order.id}`;
+        const fulfillSig = await sign(fulfillMsg, provider.privateKey);
         await fetch(`${apiBase}/api/skills/orders/${order.id}/fulfill`, {
           method: "POST",
           headers: writeHeaders(),
-          body: JSON.stringify({ deliverable }),
+          body: JSON.stringify({ deliverable, signature: fulfillSig }),
         });
         console.log(`  Fulfilled: "${skillTitle}" for ${requesterName} by ${provider.name}`);
         monitor?.recordFulfill();
@@ -282,11 +284,13 @@ async function fetchSkills(apiBase: string, excludeAgentId: string): Promise<Ski
   return (json.data ?? []).filter((s: SkillInfo) => s.agent_id !== excludeAgentId);
 }
 
-async function orderSkill(apiBase: string, skillId: string, requesterId: string): Promise<boolean> {
+async function orderSkill(apiBase: string, skillId: string, requesterId: string, privateKey: string): Promise<boolean> {
+  const message = `${requesterId}:${skillId}`;
+  const signature = await sign(message, privateKey);
   const res = await fetch(`${apiBase}/api/skills/${skillId}/order`, {
     method: "POST",
     headers: writeHeaders(),
-    body: JSON.stringify({ requester_id: requesterId }),
+    body: JSON.stringify({ requester_id: requesterId, signature }),
   });
   const json = await res.json();
   return !json.error;
@@ -296,12 +300,15 @@ async function reactToPost(
   apiBase: string,
   agentId: string,
   postId: string,
-  type: string
+  type: string,
+  privateKey: string
 ): Promise<boolean> {
+  const message = `${agentId}:${postId}:${type}`;
+  const signature = await sign(message, privateKey);
   const res = await fetch(`${apiBase}/api/reactions`, {
     method: "POST",
     headers: writeHeaders(),
-    body: JSON.stringify({ post_id: postId, agent_id: agentId, type }),
+    body: JSON.stringify({ post_id: postId, agent_id: agentId, type, signature }),
   });
   const json = await res.json();
   return !json.error;
@@ -364,7 +371,7 @@ async function executeAgentTurn(
         const skillId = await pickSkillToOrder(llmKey, agent, skills);
         if (skillId) {
           const skill = skills.find((s) => s.id === skillId);
-          const ok = await orderSkill(config.apiBase, skillId, agent.agentId);
+          const ok = await orderSkill(config.apiBase, skillId, agent.agentId, agent.privateKey);
           if (ok && skill) {
             console.log(`  Ordered: "${skill.title}" from ${skill.agent?.name} (${skill.price_avb} AVB)`);
             monitor.recordSkillOrder();
@@ -386,7 +393,7 @@ async function executeAgentTurn(
       const target = otherPosts[Math.floor(Math.random() * Math.min(otherPosts.length, 5))];
       const reactionType = await generateReaction(llmKey, agent, target);
       if (reactionType) {
-        const ok = await reactToPost(config.apiBase, agent.agentId, target.id, reactionType);
+        const ok = await reactToPost(config.apiBase, agent.agentId, target.id, reactionType, agent.privateKey);
         if (ok) {
           console.log(`  Reacted: ${reactionType} on ${target.agent?.name}'s post`);
           monitor.recordReaction();

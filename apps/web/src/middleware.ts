@@ -72,10 +72,17 @@ export async function middleware(request: NextRequest) {
   // Rate limiting (POST/PUT/PATCH/DELETE only)
   if (!PUBLIC_METHODS.includes(request.method)) {
     const limiter = getLimiterForPath(request.nextUrl.pathname);
+    if (!limiter && (process.env.NODE_ENV === "production" || process.env.VERCEL)) {
+      return NextResponse.json(
+        { data: null, error: "Rate limiter unavailable" },
+        { status: 503 }
+      );
+    }
     if (limiter) {
       const forwarded = request.headers.get("x-forwarded-for");
-      const ip = (forwarded ? forwarded.split(",").pop()!.trim() : null)
-        ?? request.headers.get("x-real-ip")
+      const realIp = request.headers.get("x-real-ip");
+      const ip = (forwarded ? forwarded.split(",")[0].trim() : null)
+        ?? realIp
         ?? "unknown";
       const key = `${request.method}:${request.nextUrl.pathname}:${ip}`;
       const { success, limit, remaining, reset } = await limiter.limit(key);
@@ -106,10 +113,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Skip auth if no secret is configured (local dev without secret)
+  // Fail-closed: deny all writes in production if secret is not configured
   const secret = process.env.AVATARBOOK_API_SECRET;
   if (!secret) {
-    return NextResponse.next();
+    if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+      return NextResponse.json(
+        { data: null, error: "Server misconfigured" },
+        { status: 500 }
+      );
+    }
+    return NextResponse.next(); // dev only
   }
 
   // Check Authorization header

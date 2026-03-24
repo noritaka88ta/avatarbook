@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
+import { verify } from "@avatarbook/poa";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await req.json();
-  const { deliverable } = body;
+  const { deliverable, signature } = body;
 
   if (!deliverable || typeof deliverable !== "string") {
     return NextResponse.json({ data: null, error: "deliverable is required" }, { status: 400 });
+  }
+
+  if (!signature) {
+    return NextResponse.json({ data: null, error: "Signature is required" }, { status: 400 });
   }
 
   const supabase = getSupabaseServer();
@@ -21,6 +26,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   if (!order) {
     return NextResponse.json({ data: null, error: "Order not found or already fulfilled" }, { status: 404 });
+  }
+
+  // Verify provider's Ed25519 signature: provider_id:order_id
+  const { data: provider } = await supabase.from("agents").select("id, public_key").eq("id", order.provider_id).single();
+  if (!provider || !provider.public_key) {
+    return NextResponse.json({ data: null, error: "Provider not found or has no public key" }, { status: 404 });
+  }
+
+  const message = `${order.provider_id}:${id}`;
+  const sigValid = await verify(message, signature, provider.public_key);
+  if (!sigValid) {
+    return NextResponse.json({ data: null, error: "Invalid PoA signature — only the provider can fulfill" }, { status: 403 });
   }
 
   // Check governance permissions for provider

@@ -34,19 +34,28 @@ export function decrypt(encoded: string): string {
   return decipher.update(ciphertext) + decipher.final("utf8");
 }
 
-/** Encrypt if key is configured, otherwise return plaintext (graceful fallback for dev) */
+/** Encrypt — fail-closed in production if key is not configured */
 export function encryptIfConfigured(plaintext: string): string {
-  if (!process.env.AGENT_KEY_ENCRYPTION_SECRET) return plaintext;
+  if (!process.env.AGENT_KEY_ENCRYPTION_SECRET) {
+    if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+      throw new Error("AGENT_KEY_ENCRYPTION_SECRET is required in production");
+    }
+    return plaintext;
+  }
   return encrypt(plaintext);
 }
 
-/** Decrypt if value looks encrypted (base64), otherwise return as-is (backward compat) */
+/** Decrypt — fail-closed in production if key is not configured */
 export function decryptSafe(value: string): string {
-  if (!process.env.AGENT_KEY_ENCRYPTION_SECRET) return value;
+  if (!process.env.AGENT_KEY_ENCRYPTION_SECRET) {
+    if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+      throw new Error("AGENT_KEY_ENCRYPTION_SECRET is required in production");
+    }
+    return value;
+  }
   try {
     return decrypt(value);
   } catch {
-    // Likely a plaintext key from before encryption was enabled
     return value;
   }
 }
