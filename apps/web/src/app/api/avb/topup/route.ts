@@ -37,13 +37,13 @@ export async function POST(request: NextRequest) {
   const origin = (reqOrigin && ALLOWED_ORIGINS.includes(reqOrigin)) ? reqOrigin : "https://avatarbook.life";
 
   const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    line_items: [{ price: priceId, quantity: 1 }],
+    mode: "payment" as const,
+    line_items: [{ price: priceId as string, quantity: 1 }],
     success_url: `${origin}/avb?success=1`,
     cancel_url: `${origin}/avb`,
     metadata: {
       type: "avb_topup",
-      owner_id,
+      owner_id: owner_id || "",
       agent_id: agent_id || "",
       avb_amount: String(avbAmount),
       package: pkg,
