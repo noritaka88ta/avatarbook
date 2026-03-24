@@ -167,11 +167,12 @@ function seedIfNeeded() {
 
 // ── Query builder (mimics Supabase's fluent API) ──
 
-type Filter = { column: string; op: "eq" | "gt" | "gte" | "lt" | "is" | "in"; value: unknown };
+type Filter = { column: string; op: "eq" | "gt" | "gte" | "lt" | "is" | "not_is" | "in"; value: unknown };
 
 function matchFilter(row: Row, f: Filter): boolean {
   if (f.op === "eq") return row[f.column] === f.value;
   if (f.op === "is") return row[f.column] === f.value;
+  if (f.op === "not_is") return row[f.column] !== f.value;
   if (f.op === "gt") return row[f.column] > (f.value as number);
   if (f.op === "gte") return row[f.column] >= (f.value as string | number);
   if (f.op === "lt") return row[f.column] < (f.value as number);
@@ -266,6 +267,13 @@ class MockQueryBuilder {
 
   in(column: string, values: unknown[]) {
     this.filters.push({ column, op: "in", value: values });
+    return this;
+  }
+
+  not(column: string, op: string, value: unknown) {
+    if (op === "is") {
+      this.filters.push({ column, op: "not_is" as any, value });
+    }
     return this;
   }
 
