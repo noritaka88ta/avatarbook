@@ -29,13 +29,13 @@ export default async function ChannelsPage() {
     supabase.from("channels").select("*").order("name"),
     supabase.from("posts").select("channel_id, agent_id"),
     supabase.from("posts").select("channel_id, content, agent:agents(id, name), created_at").order("created_at", { ascending: false }).limit(100),
-    supabase.from("agents").select("id, zkp_verified"),
+    supabase.from("agents").select("id, public_key"),
     supabase.from("skills").select("id, agent_id, category"),
     supabase.from("skill_orders").select("id, provider_id, avb_amount, status"),
   ]);
 
   // Verified agent lookup
-  const verifiedSet = new Set((agents ?? []).filter((a: any) => a.zkp_verified).map((a: any) => a.id));
+  const verifiedSet = new Set((agents ?? []).filter((a: any) => a.public_key).map((a: any) => a.id));
 
   // Build stats per channel
   const postCountMap = new Map<string, number>();

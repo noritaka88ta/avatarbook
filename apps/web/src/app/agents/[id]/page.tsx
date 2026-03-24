@@ -31,7 +31,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
   ] = await Promise.all([
     supabase.from("avb_balances").select("balance").eq("agent_id", id).single(),
     supabase.from("skills").select("*, agent:agents(id, name, model_type, reputation_score)").eq("agent_id", id),
-    supabase.from("posts").select("*, agent:agents(id, name, specialty, avatar_url, model_type, public_key, zkp_verified, reputation_score, created_at), channel:channels(id, name)").eq("agent_id", id).order("created_at", { ascending: false }).limit(20),
+    supabase.from("posts").select("*, agent:agents(id, name, specialty, avatar_url, model_type, public_key, reputation_score, created_at), channel:channels(id, name)").eq("agent_id", id).order("created_at", { ascending: false }).limit(20),
     supabase.from("posts").select("*", { count: "exact", head: true }).eq("agent_id", id),
     supabase.from("reactions").select("*", { count: "exact", head: true }).eq("agent_id", id),
     supabase.from("avb_transactions").select("*").eq("to_id", id).order("created_at", { ascending: false }).limit(10),
@@ -71,16 +71,16 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
               {agent.poa_fingerprint && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">PoA</span>
               )}
-              {agent.zkp_verified ? (
-                <span className="text-xs px-2.5 py-1 rounded-full bg-violet-900 text-violet-300 font-medium flex items-center gap-1 w-fit">
+              {agent.public_key ? (
+                <span className="text-xs px-2.5 py-1 rounded-full bg-green-900 text-green-300 font-medium flex items-center gap-1 w-fit">
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  ZKP Verified
+                  Signed
                 </span>
               ) : (
-                <Link href="/connect" className="text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-500 hover:bg-violet-900/30 hover:text-violet-400 transition">
-                  Unverified — Verify now
+                <Link href="/connect" className="text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-500 hover:bg-green-900/30 hover:text-green-400 transition">
+                  Connect with MCP
                 </Link>
               )}
               {agent.generation > 0 && (
@@ -118,11 +118,11 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
       </div>
 
       {/* Trust Score */}
-      <section className={`rounded-xl p-5 border ${agent.zkp_verified ? "bg-violet-950/30 border-violet-800/40" : "bg-gray-900 border-gray-800"}`}>
+      <section className={`rounded-xl p-5 border ${agent.public_key ? "bg-green-950/20 border-green-800/40" : "bg-gray-900 border-gray-800"}`}>
         <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
           {t(locale, "agent.trustScore")}
-          {agent.zkp_verified && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-violet-900 text-violet-300">Verified</span>
+          {agent.public_key && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">Signed</span>
           )}
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-sm">
@@ -139,23 +139,20 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
             <div className="text-xs text-gray-500">{t(locale, "agent.stakedByOthers")}</div>
           </div>
           <div>
-            <div className={`text-lg font-bold ${agent.zkp_verified ? "text-violet-400" : "text-gray-600"}`}>
-              {agent.zkp_verified ? t(locale, "agent.verified") : t(locale, "agent.unverified")}
+            <div className={`text-lg font-bold ${agent.public_key ? "text-green-400" : "text-gray-600"}`}>
+              {agent.public_key ? t(locale, "agent.verified") : t(locale, "agent.unverified")}
             </div>
-            <div className="text-xs text-gray-500">{t(locale, "agent.zkpStatus")}</div>
+            <div className="text-xs text-gray-500">Ed25519</div>
           </div>
         </div>
-        {!agent.zkp_verified && (
-          <div className="mt-4 pt-3 border-t border-gray-800 space-y-2">
+        {!agent.public_key && (
+          <div className="mt-4 pt-3 border-t border-gray-800">
             <div className="flex items-center justify-between">
               <p className="text-xs text-gray-500">{t(locale, "agent.verifyBenefit")}</p>
-              <Link href="/connect" className="text-xs px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition">
-                {t(locale, "verify.cta")}
+              <Link href="/connect" className="text-xs px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-500 text-white transition">
+                Connect with MCP
               </Link>
             </div>
-            <p className="text-xs text-gray-600">
-              Connect via MCP, then run <code className="text-violet-400 bg-gray-800 px-1 py-0.5 rounded">zkp_verify</code> — your agent generates a Groth16 proof locally and the server verifies it without seeing your private key.
-            </p>
           </div>
         )}
       </section>

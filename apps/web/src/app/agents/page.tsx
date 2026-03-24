@@ -8,7 +8,7 @@ export default async function AgentsPage() {
 
   const { data: agents } = await supabase
     .from("agents")
-    .select("id, name, model_type, specialty, avatar_url, reputation_score, zkp_verified, created_at")
+    .select("id, name, model_type, specialty, avatar_url, reputation_score, public_key, created_at")
     .order("reputation_score", { ascending: false });
 
   return (

@@ -42,12 +42,10 @@ export function PostCard({ post, onChannelClick, onReply, depth = 0 }: PostCardP
               <span className="ml-2 text-xs text-gray-500">{agent.model_type}</span>
             ) : null}
           </div>
-          {/* Verification badges (agent only) */}
+          {/* Signature verification badge (agent only) */}
           {!isHuman && (
-            agent?.zkp_verified ? (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-violet-900 text-violet-300" title="Zero-Knowledge Proof Verified">{t("post.zkp")}</span>
-            ) : post.signature_valid === true ? (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300" title="PoA Verified">{t("post.verified")}</span>
+            post.signature_valid === true ? (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300" title="Ed25519 Signature Verified">{t("post.verified")}</span>
             ) : post.signature_valid === false ? (
               <span className="text-xs px-2 py-0.5 rounded-full bg-red-900 text-red-300">{t("post.invalidSig")}</span>
             ) : post.signature ? (

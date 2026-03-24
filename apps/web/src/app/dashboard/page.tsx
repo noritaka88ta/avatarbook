@@ -30,7 +30,7 @@ export default async function DashboardPage() {
   const maxGen = agentList.reduce((max: number, a: any) => Math.max(max, a.generation ?? 0), 0);
   const totalStaked = (allStakes ?? []).reduce((sum: number, s: { amount?: number }) => sum + (s.amount ?? 0), 0);
   const totalOrders = (allOrders ?? []).length;
-  const verifiedAgents = agentList.filter((a: any) => a.zkp_verified || a.poa_fingerprint);
+  const verifiedAgents = agentList.filter((a: any) => a.public_key || a.poa_fingerprint);
 
   // Top earners by balance
   const balanceMap = new Map<string, number>((allBalances ?? []).map((b: any) => [b.agent_id, b.balance as number]));
@@ -64,9 +64,9 @@ export default async function DashboardPage() {
         <StatCard value={`Gen ${maxGen}`} label={t(locale, "stat.maxGeneration")} className="text-amber-400" />
         <StatCard value={verifiedAgents.length} label={t(locale, "stat.verifiedPoaZkp")} className="text-green-400" />
         <StatCard
-          value={`${agentList.length > 0 ? Math.round(agentList.filter((a: any) => a.zkp_verified).length / agentList.length * 100) : 0}%`}
+          value={`${agentList.length > 0 ? Math.round(agentList.filter((a: any) => a.public_key).length / agentList.length * 100) : 0}%`}
           label={t(locale, "stat.verificationRate")}
-          className="text-violet-400"
+          className="text-green-400"
         />
         <StatCard value={allReactions?.length ?? 0} label={t(locale, "stat.totalReactions")} />
       </div>
@@ -109,16 +109,16 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-green-950/30 border border-green-900/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">ZKP</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">Signed</span>
             <span className="font-medium text-green-300">{t(locale, "dashboard.verified")}</span>
-            <span className="ml-auto text-lg font-bold text-green-400">{agentList.filter((a: any) => a.zkp_verified).length}</span>
+            <span className="ml-auto text-lg font-bold text-green-400">{agentList.filter((a: any) => a.public_key).length}</span>
           </div>
           <p className="text-xs text-green-300/70">{t(locale, "dashboard.verifiedPerks")}</p>
         </div>
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <span className="font-medium text-gray-400">{t(locale, "dashboard.unverified")}</span>
-            <span className="ml-auto text-lg font-bold text-gray-400">{agentList.filter((a: any) => !a.zkp_verified).length}</span>
+            <span className="ml-auto text-lg font-bold text-gray-400">{agentList.filter((a: any) => !a.public_key).length}</span>
           </div>
           <p className="text-xs text-gray-500">{t(locale, "dashboard.unverifiedCaps")}</p>
         </div>
@@ -138,8 +138,8 @@ export default async function DashboardPage() {
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate flex items-center gap-1.5">
                     {agent.name}
-                    {agent.zkp_verified && (
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-300 shrink-0">Verified</span>
+                    {agent.public_key && (
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-green-900/50 text-green-300 shrink-0">Signed</span>
                     )}
                   </div>
                   <div className="text-xs text-gray-500">{agent.specialty}{agent.generation > 0 ? ` · Gen ${agent.generation}` : ""}</div>
@@ -166,8 +166,8 @@ export default async function DashboardPage() {
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate flex items-center gap-1.5">
                     {agent.name}
-                    {agent.zkp_verified && (
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-300 shrink-0">Verified</span>
+                    {agent.public_key && (
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-green-900/50 text-green-300 shrink-0">Signed</span>
                     )}
                   </div>
                   <div className="text-xs text-gray-500">{agent.specialty}</div>

@@ -30,7 +30,7 @@ export default async function MarketPage({
 
   let skillQuery = supabase
     .from("skills")
-    .select("*, agent:agents(id, name, model_type, reputation_score, zkp_verified)")
+    .select("*, agent:agents(id, name, model_type, reputation_score, public_key)")
     .order("created_at", { ascending: false });
 
   if (category) {
@@ -187,14 +187,14 @@ function SkillCardEnhanced({ skill, locale }: { skill: any; locale: import("@/li
 
   return (
     <div className={`bg-gray-900 rounded-xl p-5 border space-y-3 ${
-      agent?.zkp_verified ? "border-violet-800/50" : "border-gray-800"
+      agent?.public_key ? "border-green-800/50" : "border-gray-800"
     }`}>
-      {agent?.zkp_verified && (
+      {agent?.public_key && (
         <div className="flex items-center gap-1.5 -mt-1 mb-1">
-          <svg className="w-3 h-3 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+          <svg className="w-3 h-3 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
-          <span className="text-xs text-violet-400 font-medium">Verified Provider</span>
+          <span className="text-xs text-green-400 font-medium">Signed Provider</span>
         </div>
       )}
       <div className="flex items-start justify-between">
@@ -213,7 +213,7 @@ function SkillCardEnhanced({ skill, locale }: { skill: any; locale: import("@/li
         <div className="text-right shrink-0">
           <span className="text-lg font-bold text-yellow-400">{skill.price_avb}</span>
           <span className="text-xs text-gray-600 block">AVB</span>
-          {!agent?.zkp_verified && <span className="text-xs text-gray-600 block">max 100</span>}
+          {!agent?.public_key && <span className="text-xs text-gray-600 block">max 100</span>}
         </div>
       </div>
       <p className="text-sm text-gray-400">{skill.description}</p>

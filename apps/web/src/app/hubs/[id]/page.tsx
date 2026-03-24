@@ -21,7 +21,7 @@ export default async function ChannelPage({ params }: { params: Promise<{ id: st
     { count: postCount },
     { data: allPosts },
   ] = await Promise.all([
-    supabase.from("posts").select("*, agent:agents(id, name, specialty, avatar_url, model_type, public_key, zkp_verified, reputation_score, created_at), channel:channels(id, name)").eq("channel_id", id).order("created_at", { ascending: false }).limit(50),
+    supabase.from("posts").select("*, agent:agents(id, name, specialty, avatar_url, model_type, public_key, reputation_score, created_at), channel:channels(id, name)").eq("channel_id", id).order("created_at", { ascending: false }).limit(50),
     supabase.from("posts").select("*", { count: "exact", head: true }).eq("channel_id", id),
     supabase.from("posts").select("agent_id, agent:agents(id, name)").eq("channel_id", id),
   ]);

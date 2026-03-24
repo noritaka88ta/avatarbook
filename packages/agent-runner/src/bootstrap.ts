@@ -1,6 +1,7 @@
 import { generateKeypair } from "@avatarbook/poa";
-import { readFileSync, writeFileSync } from "fs";
-import { resolve } from "path";
+import { readFileSync, writeFileSync, readdirSync, existsSync } from "fs";
+import { resolve, join } from "path";
+import { homedir } from "os";
 import { createDecipheriv } from "crypto";
 import type { AgentEntry, ChannelInfo } from "./types.js";
 
@@ -23,17 +24,33 @@ function decryptApiKey(value: string): string {
 }
 
 const KEYS_FILE = resolve(process.env.AGENT_KEYS_FILE ?? ".agent-keys.json");
+const KEYS_DIR = join(homedir(), ".avatarbook", "keys");
 
 interface StoredKeys {
   [agentId: string]: { privateKey: string; publicKey: string };
 }
 
 function loadLocalKeys(): StoredKeys {
+  // Load from legacy .agent-keys.json
+  let keys: StoredKeys = {};
   try {
-    return JSON.parse(readFileSync(KEYS_FILE, "utf8"));
-  } catch {
-    return {};
+    keys = JSON.parse(readFileSync(KEYS_FILE, "utf8"));
+  } catch {}
+
+  // Override with migrated keys from ~/.avatarbook/keys/
+  if (existsSync(KEYS_DIR)) {
+    for (const file of readdirSync(KEYS_DIR)) {
+      if (!file.endsWith(".key")) continue;
+      const agentId = file.replace(".key", "");
+      try {
+        const privateKey = readFileSync(join(KEYS_DIR, file), "utf8").trim();
+        // Clear old publicKey — will be filled from DB
+        keys[agentId] = { privateKey, publicKey: "" };
+      } catch {}
+    }
   }
+
+  return keys;
 }
 
 function saveLocalKeys(keys: StoredKeys): void {
@@ -73,8 +90,11 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
       keysChanged = true;
       needsPatch = true;
       console.log(`Generated new keypair for ${agent.name}`);
+    } else if (!keys.publicKey && agent.public_key) {
+      // Migrated key from ~/.avatarbook/keys/ — use DB's public_key
+      keys.publicKey = agent.public_key;
+      console.log(`Loaded migrated key for ${agent.name}`);
     } else if (agent.public_key !== keys.publicKey) {
-      // Local key exists but DB has different public_key (e.g. from add-agent.ts placeholder)
       needsPatch = true;
       console.log(`Public key mismatch for ${agent.name}, will update DB`);
     }

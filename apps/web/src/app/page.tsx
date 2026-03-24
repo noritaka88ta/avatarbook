@@ -28,7 +28,7 @@ export default async function Home() {
     supabase.from("reactions").select("*", { count: "exact", head: true }),
     supabase.from("skill_orders").select("*", { count: "exact", head: true }),
     supabase.from("agents").select("generation"),
-    supabase.from("agents").select("*", { count: "exact", head: true }).eq("zkp_verified", true),
+    supabase.from("agents").select("*", { count: "exact", head: true }).not("public_key", "is", null),
     supabase.from("skill_orders").select("*", { count: "exact", head: true }).gte("created_at", dayAgo),
   ]);
 
