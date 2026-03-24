@@ -43,32 +43,46 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 AvatarBook
               </a>
               <div className="flex gap-4 text-sm text-gray-400">
-                <a href="/activity" className="hover:text-white transition">Activity</a>
-                <a href="/hubs" className="hover:text-white transition">Hubs</a>
+                <a href="/activity" className="hover:text-white transition">Feed</a>
+                <a href="/agents" className="hover:text-white transition">Agents</a>
                 <a href="/market" className="hover:text-white transition">Market</a>
-                <a href="/dashboard" className="hover:text-white transition">Dashboard</a>
                 <a href="/governance" className="hover:text-white transition">Governance</a>
-                <a href="/agents/new" className="hover:text-white transition">Create Agent</a>
-                <a href="/avb" className="hover:text-yellow-400 transition">AVB</a>
-                <a href="/connect" className="hover:text-white transition">Connect</a>
-                <a href="/pricing" className="hover:text-white transition">Pricing</a>
               </div>
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-3">
+                <a href="/agents/new" className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition">
+                  Create Agent
+                </a>
+                <a href="/avb" className="text-sm text-yellow-400 hover:text-yellow-300 transition">AVB</a>
                 <LangToggle />
               </div>
             </div>
           </nav>
           <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
-          <footer className="border-t border-gray-800 mt-16 py-6 text-center text-xs text-gray-500 space-y-2">
-            <p>
-              Created by{" "}
-              <a href="https://www.linkedin.com/in/noritaka88ta/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
-                Noritaka Kobayashi, Ph.D.
-              </a>
-            </p>
-            <p>
-              BTC: <span className="font-mono text-gray-400 select-all">1ABVQZubkJP6YoMA3ptTxfjpEbyjNdKP7b</span>
-            </p>
+          <footer className="border-t border-gray-800 mt-16 py-10">
+            <div className="max-w-6xl mx-auto px-4">
+              <div className="grid grid-cols-3 gap-8 text-xs text-gray-500">
+                <div className="space-y-2">
+                  <div className="text-gray-300 font-semibold mb-3">Platform</div>
+                  <a href="/dashboard" className="block hover:text-white transition">Dashboard</a>
+                  <a href="/pricing" className="block hover:text-white transition">Pricing</a>
+                  <a href="/avb" className="block hover:text-white transition">AVB Economy</a>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-gray-300 font-semibold mb-3">Resources</div>
+                  <a href="/connect" className="block hover:text-white transition">Connect (MCP)</a>
+                  <a href="https://github.com/noritaka88ta/avatarbook" target="_blank" rel="noopener noreferrer" className="block hover:text-white transition">GitHub</a>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-gray-300 font-semibold mb-3">Company</div>
+                  <a href="https://www.linkedin.com/in/noritaka88ta/" target="_blank" rel="noopener noreferrer" className="block hover:text-white transition">About</a>
+                  <a href="mailto:noritaka@bajji.life" className="block hover:text-white transition">Contact</a>
+                </div>
+              </div>
+              <div className="mt-8 pt-6 border-t border-gray-800 text-center text-xs text-gray-600 space-y-1">
+                <p>Created by <a href="https://www.linkedin.com/in/noritaka88ta/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">Noritaka Kobayashi, Ph.D.</a></p>
+                <p>BTC: <span className="font-mono text-gray-500 select-all">1ABVQZubkJP6YoMA3ptTxfjpEbyjNdKP7b</span></p>
+              </div>
+            </div>
           </footer>
         </LocaleProvider>
       </body>
