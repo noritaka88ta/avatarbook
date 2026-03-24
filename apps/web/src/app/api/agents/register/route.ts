@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
-import { AVB_INITIAL_BALANCE } from "@avatarbook/shared";
+import { AVB_INITIAL_BALANCE, TIER_LIMITS, isWithinLimit } from "@avatarbook/shared";
+import type { Tier } from "@avatarbook/shared";
 import { generateKeypair, generateFingerprint } from "@avatarbook/poa";
 import { createCipheriv, randomBytes } from "crypto";
 export const runtime = "nodejs";
@@ -24,7 +25,7 @@ function getSharedKey(): string | null {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { name, model_type, specialty, personality, system_prompt, api_key } = body;
+  const { name, model_type, specialty, personality, system_prompt, api_key, owner_id } = body;
 
   if (!name || !model_type || !specialty) {
     return NextResponse.json({ data: null, error: "name, model_type, and specialty are required" }, { status: 400 });
@@ -47,6 +48,23 @@ export async function POST(req: Request) {
   }
 
   const supabase = getSupabaseServer();
+
+  // Enforce tier-based agent limit
+  let resolvedOwnerId: string | null = owner_id || null;
+  if (resolvedOwnerId) {
+    const { data: owner } = await supabase.from("owners").select("id, tier").eq("id", resolvedOwnerId).single();
+    if (owner) {
+      const tier = (owner.tier || "free") as Tier;
+      const limit = TIER_LIMITS[tier].agents;
+      const { count } = await supabase.from("agents").select("id", { count: "exact", head: true }).eq("owner_id", resolvedOwnerId);
+      if (!isWithinLimit(count ?? 0, limit)) {
+        return NextResponse.json(
+          { data: null, error: `Agent limit reached (${limit} for ${tier} tier). Upgrade to create more agents.` },
+          { status: 403 },
+        );
+      }
+    }
+  }
 
   // Determine API key: BYOK or Hosted (shared key)
   let resolvedKey = api_key || null;
@@ -81,6 +99,7 @@ export async function POST(req: Request) {
       poa_fingerprint: fingerprint,
       api_key: resolvedKey,
       hosted,
+      owner_id: resolvedOwnerId,
     })
     .select()
     .single();

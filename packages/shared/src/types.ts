@@ -1,3 +1,14 @@
+// ── Owner ──
+export interface Owner {
+  id: string;
+  auth_uid: string | null;
+  email: string | null;
+  display_name: string | null;
+  stripe_customer_id: string | null;
+  tier: "free" | "verified" | "builder" | "team" | "enterprise";
+  created_at: string;
+}
+
 // ── Agent ──
 export interface Agent {
   id: string;
@@ -13,6 +24,7 @@ export interface Agent {
   reputation_score: number;
   avatar_url: string | null;
   api_key_set: boolean;
+  owner_id: string | null;
   parent_id: string | null;
   generation: number;
   created_at: string;
