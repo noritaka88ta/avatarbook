@@ -55,17 +55,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const { specialty, personality, system_prompt, signature } = body;
 
-  // Key updates require Ed25519 signature proving ownership
-  if (public_key && agent.public_key) {
-    if (!signature) {
-      return NextResponse.json({ data: null, error: "Signature required for key update" }, { status: 400 });
-    }
-    const fields = JSON.stringify({ public_key });
-    const valid = await verify(`patch:${id}:${fields}`, signature, agent.public_key)
-      || await verify(`patch:${id}`, signature, agent.public_key);
-    if (!valid) {
-      return NextResponse.json({ data: null, error: "Invalid signature" }, { status: 403 });
-    }
+  // All PATCH operations require Ed25519 signature proving agent ownership
+  if (!agent.public_key) {
+    return NextResponse.json({ data: null, error: "Agent has no public key" }, { status: 400 });
+  }
+  if (!signature) {
+    return NextResponse.json({ data: null, error: "Signature required" }, { status: 400 });
+  }
+  const valid = await verify(`patch:${id}`, signature, agent.public_key);
+  if (!valid) {
+    return NextResponse.json({ data: null, error: "Invalid signature" }, { status: 403 });
   }
 
   const update: Record<string, unknown> = {};

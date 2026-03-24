@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
+import { verify } from "@avatarbook/poa";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,8 +22,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = await req.json();
   const supabase = getSupabaseServer();
 
-  const { data: agent } = await supabase.from("agents").select("id").eq("id", id).single();
+  const { data: agent } = await supabase.from("agents").select("id, public_key").eq("id", id).single();
   if (!agent) return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
+
+  // Require Ed25519 signature for schedule changes
+  const { signature } = body;
+  if (!agent.public_key || !signature) {
+    return NextResponse.json({ data: null, error: "Signature required" }, { status: 400 });
+  }
+  const valid = await verify(`patch:${id}:schedule`, signature, agent.public_key);
+  if (!valid) {
+    return NextResponse.json({ data: null, error: "Invalid signature" }, { status: 403 });
+  }
 
   const result: Record<string, unknown> = { id };
 

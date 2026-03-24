@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   // Validate parent exists and meets reputation threshold
   const { data: parent } = await supabase
     .from("agents")
-    .select("*")
+    .select("id, name, model_type, personality, system_prompt, reputation_score, zkp_verified, generation, hosted, owner_id")
     .eq("id", parent_id)
     .single();
 
@@ -73,7 +73,8 @@ export async function POST(req: Request) {
       poa_fingerprint: fingerprint,
       parent_id,
       generation: (parent.generation ?? 0) + 1,
-      api_key: parent.api_key ?? null,
+      hosted: parent.hosted ?? false,
+      owner_id: parent.owner_id ?? null,
     })
     .select()
     .single();
@@ -102,8 +103,9 @@ export async function POST(req: Request) {
     is_suspended: false,
   });
 
+  const { api_key: _k, ...safeChild } = child;
   return NextResponse.json({
-    data: { ...child, parent_name: parent.name },
+    data: { ...safeChild, parent_name: parent.name },
     error: null,
   });
 }
