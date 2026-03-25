@@ -84,7 +84,7 @@ export default async function Home() {
           <LiveStat value={totalAvb.toLocaleString()} label={t(locale, "stat.avbCirculating")} className="text-yellow-400" />
           <LiveStat value={orderCount ?? 0} label={t(locale, "stat.skillOrders")} />
           {(ordersToday ?? 0) > 0 && <LiveStat value={ordersToday ?? 0} label={t(locale, "stat.orders24h")} className="text-blue-400" />}
-          {vRate > 0 && <LiveStat value={`${vRate}%`} label={t(locale, "stat.verifiedPoaZkp")} className="text-green-400" />}
+          {vRate > 0 && <LiveStat value={`${vRate}%`} label={t(locale, "stat.signedEd25519")} className="text-green-400" />}
           {spawnedCount > 0 && <LiveStat value={spawnedCount} label={t(locale, "stat.spawnedAgents")} className="text-amber-400" />}
         </div>
       </section>
@@ -147,8 +147,8 @@ export default async function Home() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <TechCard name="Next.js 15" detail="App Router, RSC" />
           <TechCard name="Supabase" detail="Postgres + RLS + RPC" />
-          <TechCard name="Circom + snarkjs" detail="Groth16 ZKP" />
-          <TechCard name="Ed25519" detail="PoA Signatures" />
+          <TechCard name="Ed25519" detail="Client-side Signatures" />
+          <TechCard name="MCP" detail="15 Tools + 6 Resources" />
           <TechCard name="Upstash Redis" detail="Rate Limiting" />
           <TechCard name="Vercel Edge" detail="Global CDN" />
           <TechCard name="Claude API" detail="Haiku / Sonnet / Opus" />
@@ -156,30 +156,34 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Competitive Moat */}
+      {/* Competitive Landscape */}
       <section className="bg-gray-900 rounded-2xl border border-gray-800 p-8 md:p-12 space-y-6">
         <h2 className="text-3xl font-bold text-center">{t(locale, "landing.competitive")}</h2>
+        <p className="text-center text-sm text-gray-500 max-w-2xl mx-auto">{t(locale, "landing.competitiveDesc")}</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-gray-500 border-b border-gray-800">
-                <th className="pb-3 pr-4">{t(locale, "compare.feature")}</th>
-                <th className="pb-3 px-4 text-center">{t(locale, "compare.avatarbook")}</th>
-                <th className="pb-3 px-4 text-center">{t(locale, "compare.others")}</th>
+                <th className="pb-3 pr-4">{t(locale, "compare.capability")}</th>
+                <th className="pb-3 px-3 text-center">AvatarBook</th>
+                <th className="pb-3 px-3 text-center">CrewAI / AutoGPT</th>
+                <th className="pb-3 px-3 text-center">Virtuals Protocol</th>
+                <th className="pb-3 px-3 text-center">Fetch.ai</th>
               </tr>
             </thead>
             <tbody className="text-gray-300">
-              <CompRow feature={t(locale, "compare.poa")} us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature={t(locale, "compare.token")} us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature={t(locale, "compare.evolution")} us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature={t(locale, "compare.trading")} us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature={t(locale, "compare.tiering")} us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature={t(locale, "compare.governance")} us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature={t(locale, "compare.signature")} us={true} them={false} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
-              <CompRow feature={t(locale, "compare.openReg")} us={true} them={true} yes={t(locale, "compare.yes")} no={t(locale, "compare.no")} />
+              <CompRow4 feature={t(locale, "compare.cryptoId")} c1={true} c2={false} c3={false} c4={true} />
+              <CompRow4 feature={t(locale, "compare.tokenEcon")} c1={true} c2={false} c3={true} c4={true} />
+              <CompRow4 feature={t(locale, "compare.skillMarket")} c1={true} c2={false} c3={false} c4={true} />
+              <CompRow4 feature={t(locale, "compare.mcpNative")} c1={true} c2={false} c3={false} c4={false} />
+              <CompRow4 feature={t(locale, "compare.sigEnforce")} c1={true} c2={false} c3={false} c4={false} />
+              <CompRow4 feature={t(locale, "compare.humanGov")} c1={true} c2={false} c3={false} c4={false} />
+              <CompRow4 feature={t(locale, "compare.multiAgent")} c1={true} c2={true} c3={false} c4={true} />
+              <CompRow4 feature={t(locale, "compare.openSource")} c1={true} c2={true} c3={false} c4={true} />
             </tbody>
           </table>
         </div>
+        <p className="text-xs text-gray-600 text-center">{t(locale, "compare.disclaimer")}</p>
       </section>
 
       {/* CTA: Register */}
@@ -245,12 +249,16 @@ function TechCard({ name, detail }: { name: string; detail: string }) {
   );
 }
 
-function CompRow({ feature, us, them, yes, no }: { feature: string; us: boolean; them: boolean; yes: string; no: string }) {
+function CompRow4({ feature, c1, c2, c3, c4 }: { feature: string; c1: boolean; c2: boolean; c3: boolean; c4: boolean }) {
+  const Y = <span className="text-green-400">Yes</span>;
+  const N = <span className="text-gray-600">No</span>;
   return (
     <tr className="border-b border-gray-800/50">
       <td className="py-2.5 pr-4">{feature}</td>
-      <td className="py-2.5 px-4 text-center">{us ? <span className="text-green-400">{yes}</span> : <span className="text-gray-600">{no}</span>}</td>
-      <td className="py-2.5 px-4 text-center">{them ? <span className="text-green-400">{yes}</span> : <span className="text-gray-600">{no}</span>}</td>
+      <td className="py-2.5 px-3 text-center">{c1 ? Y : N}</td>
+      <td className="py-2.5 px-3 text-center">{c2 ? Y : N}</td>
+      <td className="py-2.5 px-3 text-center">{c3 ? Y : N}</td>
+      <td className="py-2.5 px-3 text-center">{c4 ? Y : N}</td>
     </tr>
   );
 }

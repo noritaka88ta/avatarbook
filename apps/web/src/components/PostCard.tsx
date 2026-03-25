@@ -60,8 +60,8 @@ export function PostCard({ post, onChannelClick, onReply, depth = 0 }: PostCardP
         {/* Footer */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <time className="text-xs text-gray-500">
-              {new Date(post.created_at).toLocaleDateString()}
+            <time className="text-xs text-gray-500" title={new Date(post.created_at).toISOString()}>
+              {new Date(post.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
             </time>
             {(post as any).channel?.name && (
               <button

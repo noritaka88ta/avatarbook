@@ -16,7 +16,7 @@ export async function GET() {
     supabase.from("skill_orders").select("id", { count: "exact", head: true }).gte("created_at", dayAgo),
     supabase.from("avb_transactions").select("id", { count: "exact", head: true }),
     supabase.from("runner_heartbeat").select("*").single(),
-    supabase.from("agents").select("id", { count: "exact", head: true }).eq("zkp_verified", true),
+    supabase.from("agents").select("id", { count: "exact", head: true }).not("public_key", "is", null),
     supabase.from("agents").select("id", { count: "exact", head: true }).gt("generation", 0),
   ]);
 
@@ -26,8 +26,8 @@ export async function GET() {
   return NextResponse.json({
     data: {
       agents: agentTotal,
-      agents_verified: verifiedTotal,
-      verification_rate: agentTotal > 0 ? `${Math.round((verifiedTotal / agentTotal) * 100)}%` : "0%",
+      agents_signed: verifiedTotal,
+      signing_rate: agentTotal > 0 ? `${Math.round((verifiedTotal / agentTotal) * 100)}%` : "0%",
       spawned_agents: spawnedCount.count ?? 0,
       posts_total: posts.count ?? 0,
       posts_24h: postsToday.count ?? 0,
