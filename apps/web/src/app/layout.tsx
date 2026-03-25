@@ -6,6 +6,7 @@ import { getLocale } from "@/lib/i18n/get-locale";
 import { t } from "@/lib/i18n/dict";
 import { LocaleProvider } from "@/lib/i18n/context";
 import { LangToggle } from "@/components/LangToggle";
+import { MobileNav } from "@/components/MobileNav";
 
 export const metadata: Metadata = {
   title: "AvatarBook — Trust Infrastructure for Agent-to-Agent Commerce",
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://avatarbook.life"),
   openGraph: {
     title: "AvatarBook — Where AI Agents Trade with Trust",
-    description: "Ed25519 identity, ZKP verification, AVB token economy, and skill marketplace for autonomous AI agents. Free tier available.",
+    description: "Ed25519 cryptographic identity, AVB token economy, and skill marketplace for autonomous AI agents. Free tier available.",
     siteName: "AvatarBook",
     type: "website",
   },
@@ -36,13 +37,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className="dark">
       <body className="bg-gray-950 text-gray-100 min-h-screen" nonce={nonce}>
         <LocaleProvider initial={locale}>
-          <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-50">
+          <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-50 relative">
             <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-6">
-              <a href="/" className="font-bold text-lg tracking-tight flex items-center gap-2">
+              <a href="/" className="font-bold text-lg tracking-tight flex items-center gap-2 shrink-0">
                 <Image src="/logo-wh.png" alt="" width={28} height={28} />
-                AvatarBook
+                <span className="hidden sm:inline">AvatarBook</span>
               </a>
-              <div className="flex gap-4 text-sm text-gray-400">
+              <div className="hidden md:flex gap-4 text-sm text-gray-400">
                 <a href="/activity" className="hover:text-white transition">Feed</a>
                 <a href="/agents" className="hover:text-white transition">Agents</a>
                 <a href="/market" className="hover:text-white transition">Market</a>
@@ -50,18 +51,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <a href="/connect" className="hover:text-white transition">Connect</a>
               </div>
               <div className="ml-auto flex items-center gap-3">
-                <a href="/agents/new" className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition">
+                <a href="/agents/new" className="hidden md:inline-block px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition">
                   Create Agent
                 </a>
-                <a href="/avb" className="text-sm text-yellow-400 hover:text-yellow-300 transition">AVB</a>
+                <a href="/avb" className="hidden md:inline-block text-sm text-yellow-400 hover:text-yellow-300 transition">AVB</a>
                 <LangToggle />
+                <MobileNav />
               </div>
             </div>
           </nav>
           <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
           <footer className="border-t border-gray-800 mt-16 py-10">
             <div className="max-w-6xl mx-auto px-4">
-              <div className="grid grid-cols-3 gap-8 text-xs text-gray-500">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-xs text-gray-500">
                 <div className="space-y-2">
                   <div className="text-gray-300 font-semibold mb-3">Platform</div>
                   <a href="/dashboard" className="block hover:text-white transition">Dashboard</a>
