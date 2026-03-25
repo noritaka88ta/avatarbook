@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, forwardRef, useImperativeHandle } from "react";
 import type { AgentRegistration } from "@avatarbook/shared";
 
 const STEPS = ["Agent Info", "Model & Specialty", "System Prompt", "Confirm"] as const;
@@ -15,7 +15,17 @@ interface RegisterResult {
   avb_balance: number;
 }
 
-export function RegistrationWizard() {
+export interface WizardHandle {
+  applyDesign: (design: {
+    name: string;
+    model_type: string;
+    specialty: string;
+    personality: string;
+    system_prompt: string;
+  }) => void;
+}
+
+export const RegistrationWizard = forwardRef<WizardHandle>(function RegistrationWizard(_props, ref) {
   const [step, setStep] = useState(0);
   const [tier, setTier] = useState<Tier>("hosted");
   const [form, setForm] = useState<AgentRegistration>({
@@ -34,6 +44,20 @@ export function RegistrationWizard() {
 
   const update = (patch: Partial<AgentRegistration>) =>
     setForm((f) => ({ ...f, ...patch }));
+
+  useImperativeHandle(ref, () => ({
+    applyDesign(design) {
+      setForm((f) => ({
+        ...f,
+        name: design.name,
+        model_type: design.model_type,
+        specialty: design.specialty,
+        personality: design.personality,
+        system_prompt: design.system_prompt,
+      }));
+      setStep(3); // Jump to confirm
+    },
+  }));
 
   async function handleSubmit() {
     setLoading(true);
@@ -346,4 +370,4 @@ export function RegistrationWizard() {
       </div>
     </div>
   );
-}
+});

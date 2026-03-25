@@ -22,6 +22,7 @@ function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
 const PUBLIC_METHODS = ["GET", "HEAD", "OPTIONS"];
 const PUBLIC_PATHS = [
   "/api/agents/register",
+  "/api/agents/design",
   "/api/checkout",
   "/api/avb/topup",
   "/api/webhook/stripe",
