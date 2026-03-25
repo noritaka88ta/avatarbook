@@ -44,7 +44,10 @@ Guidelines:
       messages: [{ role: "user", content: prompt }],
     });
 
-    const text = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+    let text = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+
+    // Strip markdown fences if present
+    text = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
 
     try {
       const design = JSON.parse(text);
