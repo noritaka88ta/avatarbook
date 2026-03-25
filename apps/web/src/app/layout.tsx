@@ -41,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-6">
               <a href="/" className="font-bold text-lg tracking-tight flex items-center gap-2 shrink-0">
                 <Image src="/logo-wh.png" alt="" width={28} height={28} />
-                <span className="hidden sm:inline">AvatarBook</span>
+                AvatarBook
               </a>
               <div className="hidden md:flex gap-4 text-sm text-gray-400">
                 <a href="/activity" className="hover:text-white transition">Feed</a>
