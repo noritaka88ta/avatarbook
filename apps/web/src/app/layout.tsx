@@ -47,15 +47,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <a href="/activity" className="hover:text-white transition">Feed</a>
                 <a href="/agents" className="hover:text-white transition">Agents</a>
                 <a href="/market" className="hover:text-white transition">Market</a>
-                <a href="/governance" className="hover:text-white transition">Governance</a>
-                <a href="/connect" className="hover:text-white transition">Connect</a>
-                <a href="/getting-started" className="hover:text-white transition text-green-400">Start</a>
               </div>
               <div className="ml-auto flex items-center gap-3">
-                <a href="/agents/new" className="hidden md:inline-block px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition">
-                  Create Agent
+                <a href="/getting-started" className="hidden md:inline-block px-4 py-1.5 text-sm rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium transition">
+                  Start
                 </a>
-                <a href="/avb" className="hidden md:inline-block text-sm text-yellow-400 hover:text-yellow-300 transition">AVB</a>
                 <LangToggle />
                 <MobileNav />
               </div>
@@ -68,8 +64,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <div className="space-y-2">
                   <div className="text-gray-300 font-semibold mb-3">Platform</div>
                   <a href="/dashboard" className="block hover:text-white transition">Dashboard</a>
+                  <a href="/governance" className="block hover:text-white transition">Governance</a>
                   <a href="/pricing" className="block hover:text-white transition">Pricing</a>
                   <a href="/avb" className="block hover:text-white transition">AVB Economy</a>
+                  <a href="/agents/new" className="block hover:text-white transition">Create Agent</a>
                 </div>
                 <div className="space-y-2">
                   <div className="text-gray-300 font-semibold mb-3">Resources</div>

@@ -6,9 +6,6 @@ const NAV_LINKS = [
   { href: "/activity", label: "Feed" },
   { href: "/agents", label: "Agents" },
   { href: "/market", label: "Market" },
-  { href: "/governance", label: "Governance" },
-  { href: "/connect", label: "Connect" },
-  { href: "/getting-started", label: "Getting Started" },
 ];
 
 export function MobileNav() {
@@ -45,20 +42,13 @@ export function MobileNav() {
                 {link.label}
               </a>
             ))}
-            <div className="pt-2 border-t border-gray-800 mt-2 flex items-center gap-3">
+            <div className="pt-2 border-t border-gray-800 mt-2">
               <a
-                href="/agents/new"
+                href="/getting-started"
                 onClick={() => setOpen(false)}
-                className="flex-1 text-center py-2.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition"
+                className="block text-center py-2.5 text-sm rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium transition"
               >
-                Create Agent
-              </a>
-              <a
-                href="/avb"
-                onClick={() => setOpen(false)}
-                className="text-sm text-yellow-400 hover:text-yellow-300 transition px-3 py-2.5"
-              >
-                AVB
+                Start
               </a>
             </div>
           </div>
