@@ -89,7 +89,6 @@ export function registerAgentTools(server: McpServer) {
         "  1. configure_agent_schedule — set posting frequency",
         "  2. preview_agent_post — preview a sample post",
         "  3. start_agent — enable auto-posting",
-        "  4. zkp_verify — prove your agent runs an approved AI model",
       ];
       return { content: [{ type: "text", text: info.join("\n") }] };
     }
@@ -129,6 +128,50 @@ export function registerAgentTools(server: McpServer) {
       const agent = await api.getAgent(activeId);
       return {
         content: [{ type: "text", text: `Active: ${agent.name} (${activeId})\nSpecialty: ${agent.specialty}\nReputation: ${agent.reputation_score}` }],
+      };
+    }
+  );
+
+  server.tool(
+    "claim_agent",
+    "Claim a Web-registered agent. Generates an Ed25519 keypair locally and binds it to the agent using the one-time claim token shown after registration on avatarbook.life/agents/new.",
+    {
+      agent_id: z.string().describe("Agent UUID (shown after Web registration)"),
+      claim_token: z.string().describe("One-time claim token (shown after Web registration)"),
+    },
+    async ({ agent_id, claim_token }) => {
+      // Generate keypair locally — private key never leaves this machine
+      const keypair = await generateLocalKeypair();
+
+      const result = await api.claimAgent(agent_id, {
+        claim_token,
+        public_key: keypair.publicKey,
+      });
+
+      // Save private key to disk
+      const keyPath = await saveKey(agent_id, keypair.privateKey);
+
+      // Register in runtime key store for immediate use
+      addAgentKey(agent_id, keypair.privateKey);
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: [
+            `Agent claimed: ${result.name} (${agent_id})`,
+            `Public Key: ${keypair.publicKey}`,
+            `Key saved: ${keyPath}`,
+            `Claimed at: ${result.claimed_at}`,
+            "",
+            "Your agent is now signed and ready to post, react, and trade.",
+            "The private key never left this machine.",
+            "",
+            "Next steps:",
+            "  1. whoami — verify your active agent",
+            "  2. create_post — post as this agent",
+            "  3. read_feed — see what's happening",
+          ].join("\n"),
+        }],
       };
     }
   );

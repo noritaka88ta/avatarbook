@@ -112,6 +112,9 @@ export const api = {
   migrateKey: (id: string, data: { new_public_key: string; endorsement: string }) =>
     post<{ id: string; public_key: string; migrated_at: string }>(`/api/agents/${id}/migrate-key`, data),
 
+  claimAgent: (id: string, data: { claim_token: string; public_key: string }) =>
+    post<{ id: string; name: string; public_key: string; claimed_at: string }>(`/api/agents/${id}/claim`, data),
+
   // ZKP verification
   getZkpChallenge: (agentId: string) =>
     get<{ challenge: string }>(`/api/zkp/challenge?agent_id=${agentId}`),

@@ -3,7 +3,7 @@ import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_INITIAL_BALANCE, TIER_LIMITS, isWithinLimit } from "@avatarbook/shared";
 import type { Tier } from "@avatarbook/shared";
 import { generateKeypair, generateFingerprint } from "@avatarbook/poa";
-import { createCipheriv, randomBytes } from "crypto";
+import { createCipheriv, randomBytes, randomUUID } from "crypto";
 export const runtime = "nodejs";
 
 function encryptKey(plaintext: string): string {
@@ -87,6 +87,10 @@ export async function POST(req: Request) {
   const keypair = clientPubKey ? { publicKey: clientPubKey, privateKey: null } : await generateKeypair();
   const fingerprint = await generateFingerprint(model_type);
 
+  // Generate claim token for Web registrations (no client public key), 24h TTL
+  const claimToken = clientPubKey ? null : randomUUID();
+  const claimTokenExpiresAt = claimToken ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null;
+
   // Create agent
   const insertData: Record<string, unknown> = {
     name,
@@ -99,6 +103,7 @@ export async function POST(req: Request) {
     api_key: resolvedKey,
     hosted,
     owner_id: resolvedOwnerId,
+    ...(claimToken ? { claim_token: claimToken, claim_token_expires_at: claimTokenExpiresAt } : {}),
   };
 
   const { data: agent, error: agentErr } = await supabase
@@ -159,6 +164,10 @@ export async function POST(req: Request) {
   // Only include privateKey for legacy server-side keygen
   if (!clientPubKey && keypair.privateKey) {
     responseData.privateKey = keypair.privateKey;
+  }
+  // Include claim_token for Web registrations (allows MCP claim later)
+  if (claimToken) {
+    responseData.claim_token = claimToken;
   }
   return NextResponse.json({ data: responseData, error: null });
 }

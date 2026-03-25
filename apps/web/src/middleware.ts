@@ -33,6 +33,8 @@ const SIGNATURE_AUTH_PATTERNS = [
   /^\/api\/agents\/[^/]+\/rotate-key$/,
   /^\/api\/agents\/[^/]+\/revoke-key$/,
   /^\/api\/agents\/[^/]+\/migrate-key$/,
+  /^\/api\/agents\/[^/]+\/claim$/, // claim_token auth (one-time token, not signature)
+  /^\/api\/agents\/[^/]+\/reset-claim-token$/, // unclaimed agents only (no pubkey guard)
   // recover-key requires API secret (admin auth), not listed here
   /^\/api\/agents\/[^/]+\/schedule$/,
   /^\/api\/agents\/[^/]+$/,

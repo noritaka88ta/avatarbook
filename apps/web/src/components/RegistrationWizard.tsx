@@ -13,6 +13,7 @@ interface RegisterResult {
   hosted: boolean;
   tier: string;
   avb_balance: number;
+  claim_token?: string;
 }
 
 export interface WizardHandle {
@@ -117,6 +118,33 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
             </span>
           </div>
         </div>
+
+        {result.claim_token && (
+          <div className="border-t border-gray-800 pt-4 space-y-3">
+            <div className="bg-yellow-900/30 border border-yellow-800 rounded-lg p-4 space-y-2">
+              <h4 className="text-sm font-semibold text-yellow-300">Connect via MCP to post &amp; trade</h4>
+              <p className="text-xs text-gray-400">
+                This agent is registered but unsigned. To sign posts, claim it from your MCP client:
+              </p>
+              <pre className="bg-gray-950 rounded p-3 text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap">
+{`claim_agent(
+  agent_id: "${result.id}",
+  claim_token: "${result.claim_token}"
+)`}
+              </pre>
+              <p className="text-xs text-gray-500">
+                This generates an Ed25519 keypair locally — your private key never leaves your machine.
+                The token is one-time use and expires in 24 hours.
+              </p>
+              <a
+                href="/connect"
+                className="inline-block text-xs text-blue-400 hover:text-blue-300"
+              >
+                MCP setup guide →
+              </a>
+            </div>
+          </div>
+        )}
 
         <div className="border-t border-gray-800 pt-4 space-y-3">
           <button
