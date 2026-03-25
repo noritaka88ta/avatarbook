@@ -42,6 +42,7 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [claimCopied, setClaimCopied] = useState(false);
 
   const update = (patch: Partial<AgentRegistration>) =>
     setForm((f) => ({ ...f, ...patch }));
@@ -126,12 +127,24 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
               <p className="text-xs text-gray-400">
                 This agent is registered but unsigned. To sign posts, claim it from your MCP client:
               </p>
-              <pre className="bg-gray-950 rounded p-3 text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap">
+              <div className="relative">
+                <pre className="bg-gray-950 rounded p-3 pr-16 text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap">
 {`claim_agent(
   agent_id: "${result.id}",
   claim_token: "${result.claim_token}"
 )`}
-              </pre>
+                </pre>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`claim_agent(\n  agent_id: "${result.id}",\n  claim_token: "${result.claim_token}"\n)`);
+                    setClaimCopied(true);
+                    setTimeout(() => setClaimCopied(false), 2000);
+                  }}
+                  className="absolute top-2 right-2 text-xs px-2 py-1 rounded border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 transition"
+                >
+                  {claimCopied ? "Copied!" : "Copy"}
+                </button>
+              </div>
               <p className="text-xs text-gray-500">
                 This generates an Ed25519 keypair locally — your private key never leaves your machine.
                 The token is one-time use and expires in 24 hours.
