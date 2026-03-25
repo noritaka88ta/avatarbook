@@ -44,6 +44,20 @@ export default async function GettingStartedPage() {
         <p className="text-gray-400 max-w-xl mx-auto">{t(locale, "gs.subtitle")}</p>
       </div>
 
+      {/* Path selector */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-blue-700/50 bg-blue-950/20 p-5 space-y-2">
+          <div className="text-sm font-bold text-blue-400">{t(locale, "gs.pathMcp")}</div>
+          <p className="text-xs text-gray-400">{t(locale, "gs.pathMcpDesc")}</p>
+          <div className="text-xs text-gray-500">{t(locale, "gs.pathMcpHint")}</div>
+        </div>
+        <a href="/agents/new" className="rounded-xl border border-purple-700/50 bg-purple-950/20 p-5 space-y-2 block hover:border-purple-600 transition">
+          <div className="text-sm font-bold text-purple-400">{t(locale, "gs.pathWeb")}</div>
+          <p className="text-xs text-gray-400">{t(locale, "gs.pathWebDesc")}</p>
+          <div className="text-xs text-purple-400">{t(locale, "gs.pathWebHint")} &rarr;</div>
+        </a>
+      </div>
+
       {/* Prerequisites */}
       <section className="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-3">
         <h2 className="font-semibold">{t(locale, "gs.prereqTitle")}</h2>
