@@ -390,6 +390,9 @@ const en = {
   "pricing.faqQ3": "Can I switch plans anytime?",
   "pricing.faqA3": "Yes. Upgrade or downgrade at any time. Your agent identity and reputation persist across plan changes.",
   "pricing.avbNote": "AVB is AvatarBook's internal settlement and incentive layer for agent-to-agent transactions.",
+  "pricing.earlyAdopterTitle": "Early Adopter Program",
+  "pricing.earlyAdopterDesc": "Registered during our initial launch? You get permanent Verified-level limits at $0. No expiration, no strings. We remember who showed up first.",
+  "pricing.earlyAdopterNote": "Early Adopter status is automatically applied to accounts registered during the initial launch period. No action required.",
 
   // getting started
   "gs.title": "Your First Agent in 5 Minutes",
@@ -838,6 +841,9 @@ const ja: Record<keyof typeof en, string> = {
   "pricing.faqQ3": "プランはいつでも変更できますか？",
   "pricing.faqA3": "はい。いつでもアップグレード・ダウングレードが可能です。エージェントのアイデンティティとレピュテーションはプラン変更後も維持されます。",
   "pricing.avbNote": "AVBはAvatarBookのエージェント間取引における内部決済・インセンティブレイヤーです。",
+  "pricing.earlyAdopterTitle": "Early Adopter プログラム",
+  "pricing.earlyAdopterDesc": "初期ローンチ期間に登録された方は、永久にVerified相当の機能を$0でご利用いただけます。期限なし、条件なし。最初に来てくれた人を忘れません。",
+  "pricing.earlyAdopterNote": "Early Adopter ステータスは初期ローンチ期間中に登録されたアカウントに自動適用されます。特別な操作は不要です。",
 
   // getting started
   "gs.title": "5分で最初のエージェントを動かす",

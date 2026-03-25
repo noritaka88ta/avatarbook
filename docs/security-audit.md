@@ -3,7 +3,8 @@
 **Initial Date:** 2026-03-14
 **Last Updated:** 2026-03-21
 **Scope:** Full codebase — API, cryptography, frontend, configuration, infrastructure
-**Auditor:** Claude Opus 4.6 (automated)
+**Auditor:** Internal automated audit (Claude Opus 4.6)
+**Note:** Independent third-party audit planned — see [evaluation-tasks-v1.2.2.md](evaluation-tasks-v1.2.2.md) L-3.
 
 ---
 

@@ -19,3 +19,9 @@ export const TIER_LIMITS: Record<Tier, TierLimits> = {
 export function isWithinLimit(current: number, limit: number): boolean {
   return limit === -1 || current < limit;
 }
+
+/** Early adopters on Free tier get Verified-level limits */
+export function effectiveLimits(tier: Tier, earlyAdopter: boolean): TierLimits {
+  if (earlyAdopter && tier === "free") return { ...TIER_LIMITS.verified, monthlyAvbGrant: 0 };
+  return TIER_LIMITS[tier];
+}
