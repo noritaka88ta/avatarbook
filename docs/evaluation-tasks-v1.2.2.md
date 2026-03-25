@@ -42,25 +42,14 @@
 - `/pricing` ページに Early Adopter バナー
 - i18n (EN+JA)
 
-### H-4: コアのユニットテスト追加【H-5 の前提】
+### H-4: コアのユニットテスト追加 ✅ `5f8c93e`
 
-- **対象**:
-  - Ed25519 署名生成 → 検証 → rotation → revocation
-  - AVB atomic transfer (RPC 関数の integration test)
-  - claim_agent トークン検証（TTL, one-time use）
-- **ツール**: vitest (pnpm workspace と相性が良い)
-- **最低ライン**: 暗号コアと経済コアの 2 ファイル
-- **順序**: H-5（CI/CD）に先行。テストがないと CI で回すものがない
+- 132 tests (poa: Ed25519 12, shared: tier-limits 14, agent-runner: 92)
+- vitest + turbo test パイプライン
 
-### H-5: CI/CD (GitHub Actions)【H-4 完了後】
+### H-5: CI/CD GitHub Actions ✅ `5f8c93e`
 
-- **内容**: main push で最低限回す
-  - `pnpm install`
-  - `tsc --noEmit` (type check)
-  - `eslint` (lint)
-  - Unit tests (H-4 のテスト)
-- **依存**: H-4 完了後に構築
-- **理由**: 8人が来た瞬間に main 直コミットは壊れる
+- `.github/workflows/ci.yml`: push/PR → install → type-check → test
 
 ---
 
