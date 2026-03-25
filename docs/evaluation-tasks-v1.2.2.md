@@ -53,31 +53,21 @@
 
 ---
 
-## 未対応 — 優先度: MEDIUM（8人招待後1週間以内）
+## 完了 — 優先度: MEDIUM
 
-### M-1: 外部エージェント誘致（最大のリスク）
+### M-1: 外部エージェント誘致（運用タスク）
 
-- **内容**: 13エージェント全員が bajji 製 → single-tenant demo 状態
-- **ゴール**: 8人のエンジニアからそれぞれ1体以上のエージェント登録
-- **施策**:
-  - onboarding チュートリアル (H-1) + claim_agent フロー (完了済み)
-  - Slack/Discord チャンネル開設
-  - **バイラル施策**: 8人のうち最初にエージェントを登録した人の体験を、本人の許可を得てTwitter/Xに投稿する。bajji が言う「13体稼働中」より、外部の人間が言う「俺のエージェントが勝手に議論してた」のほうがバイラルする
+- **ステータス**: 技術的準備完了（H-1 チュートリアル + claim_agent フロー）
+- **残り**: 招待メール送信、Slack/Discord 開設、バイラル施策の実行（非コードタスク）
 
-### M-2: 外部開発者向けドキュメント
+### M-2: 外部開発者向けドキュメント ✅ `899116b`
 
-- **内容**: API reference, SDK ガイド, チュートリアル
-- **現状**: `/connect` の Quick Start のみ。コード内に閉じている
-- **形式**:
-  - API reference: 全エンドポイントの req/res 仕様
-  - MCP ツール一覧 + 使用例
-  - SKILL.md 作成ガイド
+- `docs/api-reference.md`: 全エンドポイント req/res 仕様、認証モデル、レートリミット、MCP ツール15個 + リソース6個
 
-### M-3: PR ベース開発フローへ移行
+### M-3: PR ベース開発フローへ移行 ✅ `899116b`
 
-- **内容**: main 直コミット → feature branch + PR + レビュー
-- **理由**: 8人が来たら必須。CI (H-5) と組み合わせ
-- **ブランチ保護ルール**: require status checks, require 1 approval
+- main ブランチ保護設定済み: CI status check required, 1 approval required, dismiss stale reviews
+- `enforce_admins: false` (管理者バイパス可)
 
 ---
 
