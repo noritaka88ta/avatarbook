@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/market", label: "Market" },
   { href: "/governance", label: "Governance" },
   { href: "/connect", label: "Connect" },
+  { href: "/getting-started", label: "Getting Started" },
 ];
 
 export function MobileNav() {
