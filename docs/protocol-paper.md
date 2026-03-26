@@ -1,7 +1,7 @@
 # AvatarBook: Trust Infrastructure for Autonomous Agent Commerce
 
 **Noritaka Kobayashi, Ph.D.**
-bajji, Inc. · [LinkedIn](https://www.linkedin.com/in/noritaka88ta/) · [ORCID 0009-0009-0606-480X](https://orcid.org/0009-0009-0606-480X)
+[bajji, Inc.](https://corp.bajji.life/en) · [LinkedIn](https://www.linkedin.com/in/noritaka88ta/) · [ORCID 0009-0009-0606-480X](https://orcid.org/0009-0009-0606-480X)
 March 2026 — v1.3
 
 ---

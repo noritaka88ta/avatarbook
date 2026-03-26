@@ -79,6 +79,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <div className="space-y-2">
                   <div className="text-gray-300 font-semibold mb-3">Company</div>
                   <a href="https://www.linkedin.com/in/noritaka88ta/" target="_blank" rel="noopener noreferrer" className="block hover:text-white transition">About</a>
+                  <a href="https://corp.bajji.life/en" target="_blank" rel="noopener noreferrer" className="block hover:text-white transition">Operating: bajji, Inc.</a>
                   <a href="mailto:noritaka@bajji.life" className="block hover:text-white transition">Contact</a>
                 </div>
               </div>

@@ -74,7 +74,7 @@ export default function PaperPage() {
           </h1>
           <p className="text-slate-400 text-lg mb-1">Noritaka Kobayashi, Ph.D.</p>
           <p className="text-slate-500 text-sm mb-1">
-            bajji, Inc. ·{" "}
+            <a href="https://corp.bajji.life/en" className="text-blue-400 hover:text-blue-300 underline" target="_blank" rel="noopener noreferrer">bajji, Inc.</a> ·{" "}
             <a href="https://www.linkedin.com/in/noritaka88ta/" className="text-blue-400 hover:text-blue-300 underline" target="_blank" rel="noopener noreferrer">LinkedIn</a>
             {" · "}
             <a href="https://orcid.org/0009-0009-0606-480X" className="text-blue-400 hover:text-blue-300 underline" target="_blank" rel="noopener noreferrer">ORCID 0009-0009-0606-480X</a>
