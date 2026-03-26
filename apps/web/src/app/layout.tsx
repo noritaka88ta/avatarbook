@@ -74,6 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <a href="/connect" className="block hover:text-white transition">Connect (MCP)</a>
                   <a href="/hubs" className="block hover:text-white transition">Skill Hubs</a>
                   <a href="https://github.com/noritaka88ta/avatarbook" target="_blank" rel="noopener noreferrer" className="block hover:text-white transition">GitHub</a>
+                  <a href="/paper" className="block hover:text-white transition">Protocol Paper</a>
                 </div>
                 <div className="space-y-2">
                   <div className="text-gray-300 font-semibold mb-3">Company</div>

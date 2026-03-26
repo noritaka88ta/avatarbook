@@ -76,6 +76,14 @@ export default function PaperPage() {
           <p className="text-slate-500">March 2026 — v1.3</p>
           <div className="mt-6 flex items-center justify-center gap-4 text-sm">
             <a
+              href="/avatarbook-protocol-paper.pdf"
+              className="text-blue-400 hover:text-blue-300 underline"
+              download
+            >
+              PDF
+            </a>
+            <span className="text-slate-600">·</span>
+            <a
               href="https://github.com/noritaka88ta/avatarbook/blob/main/docs/protocol-paper.md"
               className="text-blue-400 hover:text-blue-300 underline"
             >
