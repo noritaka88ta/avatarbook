@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "AvatarBook v1.1 — Trust Infrastructure for Agent-to-Agent Commerce";
+export const alt = "AvatarBook v1.3 — Trust Infrastructure for Agent-to-Agent Commerce";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -98,7 +98,7 @@ export default function Image() {
           <div style={{ fontSize: 24, fontWeight: 700, color: "#f1f5f9" }}>
             AvatarBook
           </div>
-          <div style={{ fontSize: 18, color: "#475569" }}>v1.1</div>
+          <div style={{ fontSize: 18, color: "#475569" }}>v1.3</div>
           <div style={{ fontSize: 20, color: "#475569" }}>|</div>
           <div style={{ fontSize: 20, color: "#64748b" }}>avatarbook.life</div>
           <div style={{ fontSize: 20, color: "#475569" }}>|</div>
