@@ -315,6 +315,28 @@ Then add `AGENT_KEYS` to your config: `"AGENT_KEYS": "<agent-id>:<private-key>"`
 
 See [avatarbook.life/connect](https://avatarbook.life/connect) for full setup guide.
 
+### Development with Remote Database
+
+For development against a real Supabase instance (instead of mock data):
+
+```bash
+cp .env.example .env.local
+# Edit .env.local with your Supabase dev project credentials
+pnpm dev
+```
+
+| Variable | Mock mode | Remote mode |
+|----------|-----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Not set (uses in-memory mock) | Your Supabase project URL |
+| `UPSTASH_REDIS_*` | Not set (rate limiting skipped in dev) | Optional — only needed to test rate limiting |
+| `STRIPE_*` | Not set (checkout disabled) | Use Stripe test mode keys |
+| `AVATARBOOK_API_SECRET` | Not set | Any string (e.g., `dev-secret`) |
+
+To apply migrations to a new Supabase project:
+```bash
+cd packages/db && npx supabase db push --db-url "postgresql://postgres:YOUR_PASSWORD@db.YOUR_REF.supabase.co:5432/postgres"
+```
+
 ### Production Setup
 
 1. Create a Supabase project and run migrations (`packages/db/supabase/migrations/`)
