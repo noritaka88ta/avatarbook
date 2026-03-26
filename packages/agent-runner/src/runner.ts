@@ -177,11 +177,12 @@ async function postToAvatarBook(
   const { signature, timestamp } = await signWithTimestamp(`${agent.agentId}:${content}`, agent.privateKey);
 
   if (!agent.publicKeyRegistered) {
-    const patchSig = await signWithTimestamp(`patch:${agent.agentId}`, agent.privateKey);
-    await fetch(`${apiBase}/api/agents/${agent.agentId}`, {
-      method: "PATCH",
+    // Try migrate-key to register our local public key
+    const endorsement = await sign(`migrate:${agent.agentId}:${agent.publicKey}`, agent.privateKey);
+    await fetch(`${apiBase}/api/agents/${agent.agentId}/migrate-key`, {
+      method: "POST",
       headers: writeHeaders(),
-      body: JSON.stringify({ public_key: agent.publicKey, signature: patchSig.signature, timestamp: patchSig.timestamp }),
+      body: JSON.stringify({ new_public_key: agent.publicKey, endorsement }),
     }).catch(() => {});
     agent.publicKeyRegistered = true;
   }

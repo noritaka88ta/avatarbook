@@ -1,4 +1,4 @@
-import { generateKeypair } from "@avatarbook/poa";
+import { generateKeypair, sign } from "@avatarbook/poa";
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "fs";
 import { resolve, join } from "path";
 import { homedir } from "os";
@@ -65,7 +65,7 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
     id: string; name: string; model_type: string;
     specialty: string; personality: string; system_prompt: string;
     reputation_score: number; api_key?: string;
-    public_key?: string;
+    public_key?: string; private_key?: string;
     schedule_config?: { baseRate?: number; peakHour?: number; activeSpread?: number } | null;
     agent_permissions?: { auto_post_enabled?: boolean };
   }>;
@@ -81,34 +81,44 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
     }
 
     let keys = localKeys[agent.id];
-    let needsPatch = false;
+    let publicKeyRegistered = true;
 
-    if (!keys) {
+    if (agent.private_key && agent.public_key) {
+      // Use server-side keypair (returned via api-secret auth)
+      keys = { privateKey: agent.private_key, publicKey: agent.public_key };
+      if (!localKeys[agent.id] || localKeys[agent.id].privateKey !== agent.private_key) {
+        localKeys[agent.id] = keys;
+        keysChanged = true;
+      }
+    } else if (keys) {
+      // Use local keys
+      if (!keys.publicKey && agent.public_key) {
+        keys.publicKey = agent.public_key;
+        console.log(`Loaded migrated key for ${agent.name}`);
+      } else if (agent.public_key && agent.public_key !== keys.publicKey) {
+        // Local key doesn't match DB — try rotate-key
+        try {
+          const timestamp = Date.now();
+          const signature = await sign(`rotate:${agent.id}:${keys.publicKey}:${timestamp}`, keys.privateKey);
+          await fetch(`${apiBase}/api/agents/${agent.id}/rotate-key`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...headers },
+            body: JSON.stringify({ new_public_key: keys.publicKey, signature, timestamp }),
+          });
+          console.log(`Rotated key for ${agent.name}`);
+        } catch (e: any) {
+          console.error(`  Failed to rotate key for ${agent.name}: ${e.message}`);
+          publicKeyRegistered = false;
+        }
+      }
+    } else {
+      // No server key, no local key — generate new keypair
       const keypair = await generateKeypair();
       keys = { privateKey: keypair.privateKey, publicKey: keypair.publicKey };
       localKeys[agent.id] = keys;
       keysChanged = true;
-      needsPatch = true;
       console.log(`Generated new keypair for ${agent.name}`);
-    } else if (!keys.publicKey && agent.public_key) {
-      // Migrated key from ~/.avatarbook/keys/ — use DB's public_key
-      keys.publicKey = agent.public_key;
-      console.log(`Loaded migrated key for ${agent.name}`);
-    } else if (agent.public_key !== keys.publicKey) {
-      needsPatch = true;
-      console.log(`Public key mismatch for ${agent.name}, will update DB`);
-    }
-
-    if (needsPatch) {
-      try {
-        await fetch(`${apiBase}/api/agents/${agent.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json", ...headers },
-          body: JSON.stringify({ public_key: keys.publicKey }),
-        });
-      } catch (e: any) {
-        console.error(`  Failed to register public key for ${agent.name}: ${e.message}`);
-      }
+      publicKeyRegistered = false;
     }
 
     const role = agent.name.replace(" Agent", "").toLowerCase();
@@ -125,7 +135,7 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
       systemPrompt: agent.system_prompt || "",
       reputationScore: agent.reputation_score ?? 0,
       apiKey: agent.api_key ? decryptApiKey(agent.api_key) : undefined,
-      publicKeyRegistered: true,
+      publicKeyRegistered,
       scheduleConfig: agent.schedule_config ?? null,
       autoPostEnabled: agent.agent_permissions?.auto_post_enabled ?? true,
     });
