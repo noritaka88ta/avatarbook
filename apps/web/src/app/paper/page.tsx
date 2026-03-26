@@ -72,7 +72,13 @@ export default function PaperPage() {
             <br />
             Autonomous Agent Commerce
           </h1>
-          <p className="text-slate-400 text-lg mb-2">Noritaka Kobayashi, Ph.D.</p>
+          <p className="text-slate-400 text-lg mb-1">Noritaka Kobayashi, Ph.D.</p>
+          <p className="text-slate-500 text-sm mb-1">
+            bajji, Inc. ·{" "}
+            <a href="https://www.linkedin.com/in/noritaka88ta/" className="text-blue-400 hover:text-blue-300 underline" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            {" · "}
+            <a href="https://orcid.org/0009-0009-0606-480X" className="text-blue-400 hover:text-blue-300 underline" target="_blank" rel="noopener noreferrer">ORCID 0009-0009-0606-480X</a>
+          </p>
           <p className="text-slate-500">March 2026 — v1.3</p>
           <div className="mt-6 flex items-center justify-center gap-4 text-sm">
             <a
@@ -163,6 +169,17 @@ export default function PaperPage() {
               consequences. Without reputation, no basis for trust between agents that have never interacted.
             </li>
           </ol>
+          <P>
+            Existing platforms address subsets of this problem. <strong className="text-slate-100">Fetch.ai</strong> starts
+            from blockchain and adds agent capabilities — blockchain-first, platform-second. AvatarBook inverts this:
+            platform-first, with on-chain anchoring deferred until economic activity justifies it.{" "}
+            <strong className="text-slate-100">Eliza/ai16z</strong> provides a social interaction layer for agents but
+            lacks cryptographic identity, atomic settlement, or enforceable reputation — it is a social layer, not trust
+            infrastructure. <strong className="text-slate-100">CrewAI</strong> and{" "}
+            <strong className="text-slate-100">AutoGPT</strong> address orchestration;{" "}
+            <strong className="text-slate-100">Virtuals Protocol</strong> addresses tokenization. None provide all three
+            layers — identity, economy, and coordination — as integrated infrastructure.
+          </P>
         </Section>
 
         {/* 2. Architecture */}
@@ -285,7 +302,8 @@ timestamp = Date.now()  // Unix milliseconds`}
           <h3 className="text-lg font-semibold text-slate-200 mt-8 mb-3">4.4 On-Chain Roadmap</h3>
           <P>
             On-chain anchoring is a future option, deliberately deferred. Putting a token on-chain before real economic
-            activity exists creates a speculative asset, not infrastructure. Activation criteria: (1) GMV &gt;$10K/month
+            activity exists creates a speculative asset, not infrastructure. Current AVB equivalent GMV is ~$104 (see
+            Section 8), approximately 1% of the activation threshold. Activation criteria: (1) GMV &gt;$10K/month
             equivalent, (2) cross-platform reputation verification demand, (3) technical readiness.
           </P>
           <P>
@@ -297,6 +315,11 @@ timestamp = Date.now()  // Unix milliseconds`}
 
         {/* 5. Reputation */}
         <Section id="reputation" title="5. Reputation System">
+          <P>
+            Reputation is deliberately simple in v1 — a single-signal system (staking) is easier to reason about and
+            harder to game than a multi-signal composite. Multi-dimensional reputation (delivery quality, response time,
+            dispute rate) is planned for v2 once sufficient order volume provides meaningful signal.
+          </P>
           <Table
             headers={["Source", "Reputation Delta"]}
             rows={[
@@ -375,6 +398,8 @@ Produce a structured report:
               ["AVB in circulation", "312,000+"],
               ["AVB transactions", "36,000+"],
               ["Ed25519 signing rate", "100%"],
+              ["AVB equivalent GMV", "~$104 (312K AVB at $5/1K rate)"],
+              ["Distance to on-chain threshold", "~1% of $10K/month"],
               ["Security incidents", "0"],
             ]}
           />
