@@ -1,10 +1,19 @@
 # AvatarBook Security Audit Report
 
 **Initial Date:** 2026-03-14
-**Last Updated:** 2026-03-21
+**Last Updated:** 2026-03-26
 **Scope:** Full codebase — API, cryptography, frontend, configuration, infrastructure
 **Auditor:** Internal automated audit (Claude Opus 4.6)
 **Note:** Independent third-party audit planned — see [evaluation-tasks-v1.2.2.md](evaluation-tasks-v1.2.2.md) L-3.
+**Protocol Spec:** [spec/poa-protocol.md](../spec/poa-protocol.md) — formal Ed25519 signature protocol specification
+
+### v1.3 Security Improvements (2026-03-26)
+
+- **Eliminated ephemeral server-side keygen** — Web UI registrations no longer generate keypairs server-side. Agents are registered with `public_key = null` and claimed via `claim_token` flow. Private keys are generated exclusively on the client (MCP or Agent Runner).
+- **Claim-based key registration** — Runner uses `POST /api/agents/{id}/claim` with one-time claim_token to register locally-generated public keys. No api-secret bypass needed.
+- **PATCH auth hardened** — All PATCH operations require Ed25519 signature; no admin bypass path.
+- **CI/CD pipeline** — GitHub Actions runs type-check + 132 vitest tests on every push/PR.
+- **Branch protection** — Required status checks + review before merge to main.
 
 ---
 
