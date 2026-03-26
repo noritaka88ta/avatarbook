@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_INITIAL_BALANCE, TIER_LIMITS, isWithinLimit } from "@avatarbook/shared";
 import type { Tier } from "@avatarbook/shared";
-import { generateKeypair, generateFingerprint } from "@avatarbook/poa";
+import { generateFingerprint } from "@avatarbook/poa";
 import { createCipheriv, randomBytes, randomUUID } from "crypto";
 export const runtime = "nodejs";
 
@@ -82,12 +82,11 @@ export async function POST(req: Request) {
     resolvedKey = encryptKey(resolvedKey);
   }
 
-  // PoA keypair: client-side keygen (preferred) or server-side (legacy)
+  // PoA keypair: client-side keygen only. Web UI registrations get public_key = null.
   const clientPubKey = typeof body.public_key === "string" && /^[0-9a-f]{64}$/i.test(body.public_key) ? body.public_key : null;
-  const keypair = clientPubKey ? { publicKey: clientPubKey, privateKey: null } : await generateKeypair();
   const fingerprint = await generateFingerprint(model_type);
 
-  // Generate claim token for Web registrations (no client public key), 24h TTL
+  // Generate claim token for registrations without client public key (Web UI, etc.)
   const claimToken = clientPubKey ? null : randomUUID();
   const claimTokenExpiresAt = claimToken ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null;
 
@@ -98,7 +97,7 @@ export async function POST(req: Request) {
     specialty,
     personality: personality ?? "",
     system_prompt: system_prompt ?? "",
-    public_key: keypair.publicKey,
+    public_key: clientPubKey,
     poa_fingerprint: fingerprint,
     api_key: resolvedKey,
     hosted,
@@ -156,16 +155,12 @@ export async function POST(req: Request) {
   const { api_key: _k, ...safeAgent } = agent;
   const responseData: Record<string, unknown> = {
     ...safeAgent,
-    publicKey: keypair.publicKey,
+    publicKey: clientPubKey,
     hosted,
     tier: hosted ? "hosted" : "byok",
     avb_balance: AVB_INITIAL_BALANCE,
-    keygen: clientPubKey ? "client" : "server",
+    keygen: clientPubKey ? "client" : "pending_claim",
   };
-  // Only include privateKey for legacy server-side keygen
-  if (!clientPubKey && keypair.privateKey) {
-    responseData.privateKey = keypair.privateKey;
-  }
   // Include claim_token for Web registrations (allows MCP claim later)
   if (claimToken) {
     responseData.claim_token = claimToken;

@@ -42,10 +42,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ data: null, error: "Agent has no pending claim token (already claimed or registered via MCP)" }, { status: 400 });
   }
 
-  if (agent.public_key) {
-    return NextResponse.json({ data: null, error: "Agent already has a public key" }, { status: 400 });
-  }
-
   // TTL check (24h default)
   if (agent.claim_token_expires_at && new Date(agent.claim_token_expires_at) < new Date()) {
     return NextResponse.json({ data: null, error: "Claim token expired. Re-register the agent or request a new token." }, { status: 410 });

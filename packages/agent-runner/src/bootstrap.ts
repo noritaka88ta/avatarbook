@@ -57,6 +57,26 @@ function saveLocalKeys(keys: StoredKeys): void {
   writeFileSync(KEYS_FILE, JSON.stringify(keys, null, 2), { mode: 0o600 });
 }
 
+async function claimAgent(apiBase: string, agentId: string, claimToken: string, publicKey: string, name: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${apiBase}/api/agents/${agentId}/claim`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ claim_token: claimToken, public_key: publicKey }),
+    });
+    if (res.ok) {
+      console.log(`Claimed ${name} via claim_token`);
+      return true;
+    }
+    const json = await res.json().catch(() => ({}));
+    console.error(`  Failed to claim ${name}: ${res.status} ${json.error ?? ""}`);
+    return false;
+  } catch (e: any) {
+    console.error(`  Failed to claim ${name}: ${e.message}`);
+    return false;
+  }
+}
+
 export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string, headers?: Record<string, string>): Promise<AgentEntry[]> {
   const url = `${apiBase}/api/agents/list`;
   const res = await fetch(url, { headers });
@@ -65,7 +85,7 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
     id: string; name: string; model_type: string;
     specialty: string; personality: string; system_prompt: string;
     reputation_score: number; api_key?: string;
-    public_key?: string;
+    public_key?: string; claim_token?: string;
     schedule_config?: { baseRate?: number; peakHour?: number; activeSpread?: number } | null;
     agent_permissions?: { auto_post_enabled?: boolean };
   }>;
@@ -84,50 +104,32 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
     let publicKeyRegistered = true;
 
     if (keys) {
-      // Use local keys
       if (!keys.publicKey && agent.public_key) {
         keys.publicKey = agent.public_key;
         console.log(`Loaded migrated key for ${agent.name}`);
+      } else if (agent.public_key && agent.public_key !== keys.publicKey && agent.claim_token) {
+        // Local key doesn't match DB ephemeral key — re-claim with local key
+        publicKeyRegistered = await claimAgent(apiBase, agent.id, agent.claim_token, keys.publicKey, agent.name);
       } else if (agent.public_key && agent.public_key !== keys.publicKey) {
-        // Local key doesn't match DB — update DB via api-secret PATCH
-        try {
-          const res = await fetch(`${apiBase}/api/agents/${agent.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json", ...headers },
-            body: JSON.stringify({ public_key: keys.publicKey }),
-          });
-          if (res.ok) {
-            console.log(`Synced public key for ${agent.name}`);
-          } else {
-            console.error(`  Failed to sync key for ${agent.name}: ${res.status}`);
-            publicKeyRegistered = false;
-          }
-        } catch (e: any) {
-          console.error(`  Failed to sync key for ${agent.name}: ${e.message}`);
-          publicKeyRegistered = false;
-        }
+        console.error(`  Key mismatch for ${agent.name}: no claim_token available to re-claim`);
+        publicKeyRegistered = false;
       }
-    } else {
-      // No local key — generate new keypair and register via api-secret PATCH
+    } else if (agent.claim_token) {
+      // No local key + has claim_token — generate keypair and claim
       const keypair = await generateKeypair();
       keys = { privateKey: keypair.privateKey, publicKey: keypair.publicKey };
       localKeys[agent.id] = keys;
       keysChanged = true;
       console.log(`Generated new keypair for ${agent.name}`);
-      try {
-        const res = await fetch(`${apiBase}/api/agents/${agent.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json", ...headers },
-          body: JSON.stringify({ public_key: keys.publicKey }),
-        });
-        if (!res.ok) {
-          console.error(`  Failed to register key for ${agent.name}: ${res.status}`);
-          publicKeyRegistered = false;
-        }
-      } catch (e: any) {
-        console.error(`  Failed to register key for ${agent.name}: ${e.message}`);
-        publicKeyRegistered = false;
-      }
+      publicKeyRegistered = await claimAgent(apiBase, agent.id, agent.claim_token, keys.publicKey, agent.name);
+    } else if (!agent.public_key) {
+      // No local key, no claim_token, no public_key — orphaned agent, skip
+      console.log(`Skipping ${agent.name}: no key and no claim_token`);
+      continue;
+    } else {
+      // No local key but DB has public_key and no claim_token — already claimed elsewhere
+      console.log(`Skipping ${agent.name}: claimed elsewhere (no local key)`);
+      continue;
     }
 
     const role = agent.name.replace(" Agent", "").toLowerCase();

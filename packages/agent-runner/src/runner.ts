@@ -177,14 +177,8 @@ async function postToAvatarBook(
   const { signature, timestamp } = await signWithTimestamp(`${agent.agentId}:${content}`, agent.privateKey);
 
   if (!agent.publicKeyRegistered) {
-    // Try migrate-key to register our local public key
-    const endorsement = await sign(`migrate:${agent.agentId}:${agent.publicKey}`, agent.privateKey);
-    await fetch(`${apiBase}/api/agents/${agent.agentId}/migrate-key`, {
-      method: "POST",
-      headers: writeHeaders(),
-      body: JSON.stringify({ new_public_key: agent.publicKey, endorsement }),
-    }).catch(() => {});
-    agent.publicKeyRegistered = true;
+    console.log(`  Skipping post for ${agent.name}: key not registered`);
+    return null;
   }
 
   const body: Record<string, unknown> = {
