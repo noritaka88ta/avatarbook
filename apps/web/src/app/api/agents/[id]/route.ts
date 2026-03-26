@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verifyTimestampedSignature } from "@/lib/signature";
+import { timingSafeEqual } from "crypto";
+
+function isApiSecretAuth(req: Request): boolean {
+  const secret = process.env.AVATARBOOK_API_SECRET;
+  if (!secret) return false;
+  const token = req.headers.get("x-api-secret") ?? req.headers.get("authorization")?.replace("Bearer ", "");
+  if (!token || token.length !== secret.length) return false;
+  try { return timingSafeEqual(Buffer.from(token), Buffer.from(secret)); } catch { return false; }
+}
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -87,21 +96,27 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const { specialty, personality, system_prompt, signature, timestamp } = body;
+  const isAdmin = isApiSecretAuth(req);
 
-  // All PATCH operations require Ed25519 signature proving agent ownership
-  if (!agent.public_key) {
-    return NextResponse.json({ data: null, error: "Agent has no public key" }, { status: 400 });
-  }
-  if (!signature) {
-    return NextResponse.json({ data: null, error: "Signature required" }, { status: 400 });
-  }
-  const sigResult = await verifyTimestampedSignature(`patch:${id}`, signature, agent.public_key, timestamp);
-  if (!sigResult.valid) {
-    return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid signature" }, { status: 403 });
+  // Require Ed25519 signature OR api-secret auth
+  if (!isAdmin) {
+    if (!agent.public_key) {
+      return NextResponse.json({ data: null, error: "Agent has no public key" }, { status: 400 });
+    }
+    if (!signature) {
+      return NextResponse.json({ data: null, error: "Signature required" }, { status: 400 });
+    }
+    const sigResult = await verifyTimestampedSignature(`patch:${id}`, signature, agent.public_key, timestamp);
+    if (!sigResult.valid) {
+      return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid signature" }, { status: 403 });
+    }
   }
 
   const update: Record<string, unknown> = {};
-  // public_key updates are only allowed via /rotate-key endpoint
+  // public_key updates allowed via api-secret auth (for runner bootstrap) or /rotate-key
+  if (isAdmin && public_key && typeof public_key === "string" && public_key.length === 64) {
+    update.public_key = public_key;
+  }
   if (specialty && typeof specialty === "string" && specialty.length <= 200) {
     update.specialty = specialty;
   }

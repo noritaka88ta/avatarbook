@@ -1,4 +1,4 @@
-import { generateKeypair, sign } from "@avatarbook/poa";
+import { generateKeypair } from "@avatarbook/poa";
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "fs";
 import { resolve, join } from "path";
 import { homedir } from "os";
@@ -65,7 +65,7 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
     id: string; name: string; model_type: string;
     specialty: string; personality: string; system_prompt: string;
     reputation_score: number; api_key?: string;
-    public_key?: string; private_key?: string;
+    public_key?: string;
     schedule_config?: { baseRate?: number; peakHour?: number; activeSpread?: number } | null;
     agent_permissions?: { auto_post_enabled?: boolean };
   }>;
@@ -83,42 +83,51 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
     let keys = localKeys[agent.id];
     let publicKeyRegistered = true;
 
-    if (agent.private_key && agent.public_key) {
-      // Use server-side keypair (returned via api-secret auth)
-      keys = { privateKey: agent.private_key, publicKey: agent.public_key };
-      if (!localKeys[agent.id] || localKeys[agent.id].privateKey !== agent.private_key) {
-        localKeys[agent.id] = keys;
-        keysChanged = true;
-      }
-    } else if (keys) {
+    if (keys) {
       // Use local keys
       if (!keys.publicKey && agent.public_key) {
         keys.publicKey = agent.public_key;
         console.log(`Loaded migrated key for ${agent.name}`);
       } else if (agent.public_key && agent.public_key !== keys.publicKey) {
-        // Local key doesn't match DB — try rotate-key
+        // Local key doesn't match DB — update DB via api-secret PATCH
         try {
-          const timestamp = Date.now();
-          const signature = await sign(`rotate:${agent.id}:${keys.publicKey}:${timestamp}`, keys.privateKey);
-          await fetch(`${apiBase}/api/agents/${agent.id}/rotate-key`, {
-            method: "POST",
+          const res = await fetch(`${apiBase}/api/agents/${agent.id}`, {
+            method: "PATCH",
             headers: { "Content-Type": "application/json", ...headers },
-            body: JSON.stringify({ new_public_key: keys.publicKey, signature, timestamp }),
+            body: JSON.stringify({ public_key: keys.publicKey }),
           });
-          console.log(`Rotated key for ${agent.name}`);
+          if (res.ok) {
+            console.log(`Synced public key for ${agent.name}`);
+          } else {
+            console.error(`  Failed to sync key for ${agent.name}: ${res.status}`);
+            publicKeyRegistered = false;
+          }
         } catch (e: any) {
-          console.error(`  Failed to rotate key for ${agent.name}: ${e.message}`);
+          console.error(`  Failed to sync key for ${agent.name}: ${e.message}`);
           publicKeyRegistered = false;
         }
       }
     } else {
-      // No server key, no local key — generate new keypair
+      // No local key — generate new keypair and register via api-secret PATCH
       const keypair = await generateKeypair();
       keys = { privateKey: keypair.privateKey, publicKey: keypair.publicKey };
       localKeys[agent.id] = keys;
       keysChanged = true;
       console.log(`Generated new keypair for ${agent.name}`);
-      publicKeyRegistered = false;
+      try {
+        const res = await fetch(`${apiBase}/api/agents/${agent.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ public_key: keys.publicKey }),
+        });
+        if (!res.ok) {
+          console.error(`  Failed to register key for ${agent.name}: ${res.status}`);
+          publicKeyRegistered = false;
+        }
+      } catch (e: any) {
+        console.error(`  Failed to register key for ${agent.name}: ${e.message}`);
+        publicKeyRegistered = false;
+      }
     }
 
     const role = agent.name.replace(" Agent", "").toLowerCase();

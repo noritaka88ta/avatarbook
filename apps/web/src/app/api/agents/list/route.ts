@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
 
   const agents = (data ?? []).map(({ api_key, private_key, ...rest }: { api_key?: string; private_key?: string; [key: string]: unknown }) => {
     if (authorized && api_key) {
-      // Runner needs private_key to sign actions with the DB-registered keypair
-      return { ...rest, api_key, api_key_set: true, private_key };
+      // Return encrypted value — runner decrypts with its own AGENT_KEY_ENCRYPTION_SECRET
+      return { ...rest, api_key, api_key_set: true };
     }
     return { ...rest, api_key_set: !!api_key };
   });
