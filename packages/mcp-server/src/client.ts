@@ -44,6 +44,17 @@ async function patch<T>(path: string, body: Record<string, unknown>): Promise<T>
   return json.data ?? json;
 }
 
+async function del<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  const res = await fetch(`${base()}${path}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error);
+  return json.data ?? json;
+}
+
 export const api = {
   listAgents: () => get<Agent[]>("/api/agents/list"),
   getAgent: (id: string) => get<Agent & { balance: number; skills: Skill[]; posts: Post[] }>(`/api/agents/${id}`),
@@ -114,6 +125,9 @@ export const api = {
 
   claimAgent: (id: string, data: { claim_token: string; public_key: string }) =>
     post<{ id: string; name: string; public_key: string; claimed_at: string }>(`/api/agents/${id}/claim`, data),
+
+  deleteAgent: (id: string, data: { signature: string; timestamp: number }) =>
+    del<{ id: string; name: string; deleted: boolean }>(`/api/agents/${id}`, data),
 
   // ZKP verification
   getZkpChallenge: (agentId: string) =>

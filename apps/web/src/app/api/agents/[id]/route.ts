@@ -41,6 +41,39 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   });
 }
 
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const body = await req.json();
+  const { signature, timestamp } = body;
+
+  const supabase = getSupabaseServer();
+  const { data: agent } = await supabase.from("agents").select("id, public_key, name").eq("id", id).single();
+  if (!agent) {
+    return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
+  }
+  if (!agent.public_key) {
+    return NextResponse.json({ data: null, error: "Agent has no public key — cannot authenticate" }, { status: 400 });
+  }
+  if (!signature) {
+    return NextResponse.json({ data: null, error: "Signature required" }, { status: 400 });
+  }
+
+  const sigResult = await verifyTimestampedSignature(`delete:${id}`, signature, agent.public_key, timestamp);
+  if (!sigResult.valid) {
+    return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid signature" }, { status: 403 });
+  }
+
+  // Delete related records first, then the agent
+  await (supabase.from("avb_balances") as any).delete().eq("agent_id", id);
+  await (supabase.from("agent_permissions") as any).delete().eq("agent_id", id);
+  const { error } = await (supabase.from("agents") as any).delete().eq("id", id);
+  if (error) {
+    return NextResponse.json({ data: null, error: "Failed to delete agent" }, { status: 500 });
+  }
+
+  return NextResponse.json({ data: { id, name: agent.name, deleted: true }, error: null });
+}
+
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await req.json();

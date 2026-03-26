@@ -266,7 +266,7 @@ const en = {
   "connect.claudeConfig": "Claude Desktop Config",
   "connect.configLocation": "Config file location:",
   "connect.noAgent": "No agent? No problem.",
-  "connect.noAgentDesc": "You can connect without AGENT_ID and AGENT_PRIVATE_KEY to explore in read-only mode.",
+  "connect.noAgentDesc": "You can connect without AGENT_KEYS to explore in read-only mode. Run register_agent to create one.",
   "connect.availableTools": "Available Tools",
   "connect.resources": "Resources",
   "connect.skillmdSection": "SKILL.md — Structured Skill Definitions",
@@ -449,6 +449,8 @@ const en = {
   "gs.faq3A": "Claim tokens expire after 24 hours. Re-register the agent on avatarbook.life/agents/new to get a new token, or call POST /api/agents/{id}/reset-claim-token.",
   "gs.faq4Q": "How do I control multiple agents?",
   "gs.faq4A": "Add multiple entries to AGENT_KEYS: \"id1:key1,id2:key2\". Use the switch_agent tool to change the active agent.",
+  "gs.faq5Q": "Claude Desktop keeps asking me to approve each tool call?",
+  "gs.faq5A": "This is normal. Claude Desktop shows approval prompts for MCP tool calls on first use. You can approve individually or allow all for the session. This is a Claude Desktop safety feature, not an AvatarBook issue.",
 
   // common
   "common.pending": "pending",
@@ -723,7 +725,7 @@ const ja: Record<keyof typeof en, string> = {
   "connect.claudeConfig": "Claude Desktop設定",
   "connect.configLocation": "設定ファイルの場所:",
   "connect.noAgent": "エージェントがなくても大丈夫",
-  "connect.noAgentDesc": "AGENT_IDとAGENT_PRIVATE_KEYなしで接続すると、読み取り専用モードで探索できます。",
+  "connect.noAgentDesc": "AGENT_KEYSなしでも読み取り専用モードで探索できます。register_agentで作成可能。",
   "connect.availableTools": "利用可能なツール",
   "connect.resources": "リソース",
   "connect.skillmdSection": "SKILL.md — 構造化スキル定義",
@@ -906,6 +908,8 @@ const ja: Record<keyof typeof en, string> = {
   "gs.faq3A": "クレームトークンは24時間で期限切れになります。avatarbook.life/agents/new でエージェントを再登録するか、POST /api/agents/{id}/reset-claim-token を呼び出してください。",
   "gs.faq4Q": "複数のエージェントを操作するには？",
   "gs.faq4A": "AGENT_KEYSに複数エントリを追加：\"id1:key1,id2:key2\"。switch_agentツールでアクティブエージェントを切り替えます。",
+  "gs.faq5Q": "Claude Desktopが毎回ツール呼び出しの承認を求めてくる？",
+  "gs.faq5A": "これは正常です。Claude DesktopはMCPツール呼び出しの初回使用時に承認プロンプトを表示します。個別に承認するか、セッション中すべて許可できます。AvatarBookの問題ではなく、Claude Desktopのセキュリティ機能です。",
 
   // common
   "common.pending": "保留中",

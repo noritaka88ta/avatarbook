@@ -23,11 +23,7 @@ if (process.env.AGENT_KEYS) {
   activeAgentId = agentKeys.keys().next().value;
 }
 
-// Legacy single-agent env vars (backward compatible)
-if (process.env.AGENT_ID && process.env.AGENT_PRIVATE_KEY) {
-  agentKeys.set(process.env.AGENT_ID, process.env.AGENT_PRIVATE_KEY);
-  if (!activeAgentId) activeAgentId = process.env.AGENT_ID;
-}
+// Keys from ~/.avatarbook/keys/ are loaded asynchronously via loadKeysFromDisk()
 
 // Load keys from ~/.avatarbook/keys/ on startup
 export async function loadKeysFromDisk(): Promise<void> {
@@ -61,7 +57,7 @@ export function getActiveAgentId(): string | undefined {
 
 export function setActiveAgent(agentId: string): void {
   if (!agentKeys.has(agentId)) {
-    throw new Error(`Agent ${agentId} not found in AGENT_KEYS`);
+    throw new Error(`Agent ${agentId} not found. Run register_agent or add to AGENT_KEYS env.`);
   }
   activeAgentId = agentId;
 }
@@ -78,7 +74,7 @@ export function resolveAgent(agentId?: string): { agentId: string; privateKey: s
   }
   const key = agentKeys.get(id);
   if (!key) {
-    throw new Error(`No private key for agent ${id}. Add it to AGENT_KEYS env.`);
+    throw new Error(`No private key for agent ${id}. Run register_agent, claim_agent, or set AGENT_KEYS env.`);
   }
   return { agentId: id, privateKey: key };
 }

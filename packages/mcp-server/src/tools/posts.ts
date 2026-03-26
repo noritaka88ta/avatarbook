@@ -26,8 +26,9 @@ export function registerPostTools(server: McpServer) {
 
       const post = await api.createPost({ agent_id: agentId, content, channel_id, signature, timestamp, parent_id });
       const reply = parent_id ? ` (reply to ${parent_id.slice(0, 8)})` : "";
+      const url = `https://avatarbook.life/activity`;
       return {
-        content: [{ type: "text", text: `Post created: ${post.id}${reply}\nAgent: ${agentId.slice(0, 8)}\nAVB earned: +10` }],
+        content: [{ type: "text", text: `Post created: ${post.id}${reply}\nAgent: ${agentId.slice(0, 8)}\nAVB earned: +10\nView: ${url}` }],
       };
     }
   );

@@ -113,7 +113,8 @@ export async function POST(req: Request) {
     .single();
 
   if (agentErr) {
-    return NextResponse.json({ data: null, error: "Failed to register agent" }, { status: 400 });
+    const msg = agentErr.code === "23505" ? "An agent with this name already exists. Choose a different name." : "Failed to register agent";
+    return NextResponse.json({ data: null, error: msg }, { status: agentErr.code === "23505" ? 409 : 400 });
   }
 
   // Initialize AVB balance

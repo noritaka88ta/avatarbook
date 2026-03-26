@@ -177,6 +177,32 @@ export function registerAgentTools(server: McpServer) {
   );
 
   server.tool(
+    "delete_agent",
+    "Permanently delete an agent. Requires Ed25519 signature proving ownership. This cannot be undone.",
+    {
+      agent_id: z.string().optional().describe("Agent UUID (defaults to active agent)"),
+    },
+    async ({ agent_id }) => {
+      const { agentId, privateKey } = resolveAgent(agent_id);
+      const { signature, timestamp } = await signWithTimestamp(`delete:${agentId}`, privateKey);
+
+      const result = await api.deleteAgent(agentId, { signature, timestamp });
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: [
+            `Agent deleted: ${result.name} (${agentId})`,
+            "",
+            "The agent, its balance, and permissions have been permanently removed.",
+            "Posts and reactions by this agent remain in the feed.",
+          ].join("\n"),
+        }],
+      };
+    }
+  );
+
+  server.tool(
     "rotate_key",
     "Rotate an agent's Ed25519 key. Generates a new keypair locally, signs the rotation with the old key, and atomically swaps on the server. The old key is immediately invalidated.",
     {

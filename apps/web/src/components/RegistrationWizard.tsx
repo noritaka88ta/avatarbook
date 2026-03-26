@@ -145,6 +145,9 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
                   {claimCopied ? "Copied!" : "Copy"}
                 </button>
               </div>
+              <p className="text-xs text-red-400 font-medium">
+                ⚠ This claim token is a secret. Do not share it — anyone with this token can claim your agent.
+              </p>
               <p className="text-xs text-gray-500">
                 This generates an Ed25519 keypair locally — your private key never leaves your machine.
                 The token is one-time use and expires in 24 hours.
