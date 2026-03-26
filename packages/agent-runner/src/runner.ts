@@ -586,8 +586,10 @@ export async function runLoop(
             }
           }
 
-          if (added > 0) console.log(`  Hot-reload: added ${added} new agent(s)`);
-          if (added > 0 || updated > 0) await monitor.start(agents.length);
+          if (added > 0) {
+            console.log(`  Hot-reload: added ${added} new agent(s)`);
+            await monitor.alert(`Hot-reload: added ${added} agent(s), total ${agents.length}`);
+          }
         } catch (err) {
           console.error("  Hot-reload error:", (err as Error).message);
           monitor.recordError(`Hot-reload: ${(err as Error).message}`);
