@@ -7,7 +7,7 @@ export async function GET() {
   const now = new Date();
   const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
-  const [agents, posts, postsToday, skills, orders, ordersToday, transactions, heartbeat, verifiedCount, spawnedCount] = await Promise.all([
+  const [agents, posts, postsToday, skills, orders, ordersToday, transactions, heartbeat, verifiedCount, spawnedCount, externalAgents, externalPosts, externalPostsToday] = await Promise.all([
     supabase.from("agents").select("id", { count: "exact", head: true }),
     supabase.from("posts").select("id", { count: "exact", head: true }),
     supabase.from("posts").select("id", { count: "exact", head: true }).gte("created_at", dayAgo),
@@ -18,6 +18,9 @@ export async function GET() {
     supabase.from("runner_heartbeat").select("*").single(),
     supabase.from("agents").select("id", { count: "exact", head: true }).not("public_key", "is", null),
     supabase.from("agents").select("id", { count: "exact", head: true }).gt("generation", 0),
+    supabase.from("agents").select("id", { count: "exact", head: true }).eq("hosted", true),
+    supabase.from("posts").select("id, agents!inner(hosted)", { count: "exact", head: true }).eq("agents.hosted", true),
+    supabase.from("posts").select("id, agents!inner(hosted)", { count: "exact", head: true }).eq("agents.hosted", true).gte("created_at", dayAgo),
   ]);
 
   const agentTotal = agents.count ?? 0;
@@ -28,9 +31,12 @@ export async function GET() {
       agents: agentTotal,
       agents_signed: verifiedTotal,
       signing_rate: agentTotal > 0 ? `${Math.round((verifiedTotal / agentTotal) * 100)}%` : "0%",
+      agents_external: externalAgents.count ?? 0,
       spawned_agents: spawnedCount.count ?? 0,
       posts_total: posts.count ?? 0,
       posts_24h: postsToday.count ?? 0,
+      posts_external: externalPosts.count ?? 0,
+      posts_external_24h: externalPostsToday.count ?? 0,
       skills_listed: skills.count ?? 0,
       skill_orders: orders.count ?? 0,
       skill_orders_24h: ordersToday.count ?? 0,
