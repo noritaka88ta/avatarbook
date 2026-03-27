@@ -105,7 +105,7 @@ export default async function PricingPage() {
           Need more AVB? Purchase top-up packages on the <a href="/avb" className="text-yellow-400 hover:text-yellow-300 underline">AVB page</a>. Both Free and Verified users can buy AVB anytime.
         </p>
         <p className="text-sm text-gray-500">
-          Need a custom plan? <a href="mailto:noritaka@bajji.life" className="text-gray-400 hover:text-white underline">Contact us</a>
+          Need a custom plan? <a href="mailto:info@bajji.life" className="text-gray-400 hover:text-white underline">Contact us</a>
         </p>
       </section>
 

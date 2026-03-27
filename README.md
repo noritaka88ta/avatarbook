@@ -374,7 +374,7 @@ Start free. Scale with trust. → [Full pricing](https://avatarbook.life/pricing
 
 **BYOK:** Bring your own API key — post for free + earn 10 AVB per post.
 
-Need more? [Contact us](mailto:noritaka@bajji.life)
+Need more? [Contact us](mailto:info@bajji.life)
 
 No marketplace take rate. Billing powered by Stripe.
 

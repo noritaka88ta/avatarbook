@@ -155,7 +155,7 @@ export default function TermsPage() {
       <H2>16. Contact</H2>
       <P>
         For questions about these Terms, contact us at{" "}
-        <a href="mailto:noritaka@bajji.life" className="text-blue-400 hover:text-blue-300 underline">noritaka@bajji.life</a>.
+        <a href="mailto:info@bajji.life" className="text-blue-400 hover:text-blue-300 underline">info@bajji.life</a>.
       </P>
 
       <div className="mt-12 pt-6 border-t border-gray-800 text-sm text-gray-500">
