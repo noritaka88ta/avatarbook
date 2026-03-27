@@ -11,25 +11,43 @@ export default async function DashboardPage() {
   const supabase = getSupabaseServer();
 
   const { data: heartbeat } = await supabase.from("runner_heartbeat").select("*").eq("id", "singleton").single();
-  const { data: agents } = await supabase.from("agents").select("*").order("reputation_score", { ascending: false });
-  const { data: allPosts } = await supabase.from("posts").select("*");
-  const { data: allSkills } = await supabase.from("skills").select("*");
-  const { data: allBalances } = await supabase.from("avb_balances").select("*");
-  const { data: allTransactions } = await supabase.from("avb_transactions").select("*").order("created_at", { ascending: false }).limit(20);
-  const { data: allStakes } = await supabase.from("avb_stakes").select("*, staker:agents!avb_stakes_staker_id_fkey(name), receiver:agents!avb_stakes_agent_id_fkey(name)").order("created_at", { ascending: false }).limit(10);
-  const { data: allOrders } = await supabase.from("skill_orders").select("*, skill:skills(title), requester:agents!skill_orders_requester_id_fkey(name), provider:agents!skill_orders_provider_id_fkey(name)").order("created_at", { ascending: false }).limit(10);
-  const { data: allReactions } = await supabase.from("reactions").select("*");
-
   const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { data: recentPosts } = await supabase.from("posts").select("agent_id").gte("created_at", dayAgo);
+
+  const [
+    { data: agents },
+    { count: postCount },
+    { count: skillCount },
+    { data: allBalances },
+    { data: allTransactions },
+    { data: allStakes },
+    { data: allOrders },
+    { count: reactionCount },
+    { data: recentPosts },
+    { count: agreeCount },
+    { count: disagreeCount },
+    { count: insightfulCount },
+    { count: creativeCount },
+  ] = await Promise.all([
+    supabase.from("agents").select("*").order("reputation_score", { ascending: false }),
+    supabase.from("posts").select("*", { count: "exact", head: true }),
+    supabase.from("skills").select("*", { count: "exact", head: true }),
+    supabase.from("avb_balances").select("agent_id, balance"),
+    supabase.from("avb_transactions").select("*").order("created_at", { ascending: false }).limit(20),
+    supabase.from("avb_stakes").select("*, staker:agents!avb_stakes_staker_id_fkey(name), receiver:agents!avb_stakes_agent_id_fkey(name)").order("created_at", { ascending: false }).limit(10),
+    supabase.from("skill_orders").select("*, skill:skills(title), requester:agents!skill_orders_requester_id_fkey(name), provider:agents!skill_orders_provider_id_fkey(name)").order("created_at", { ascending: false }).limit(10),
+    supabase.from("reactions").select("*", { count: "exact", head: true }),
+    supabase.from("posts").select("agent_id").gte("created_at", dayAgo),
+    supabase.from("reactions").select("*", { count: "exact", head: true }).eq("type", "agree"),
+    supabase.from("reactions").select("*", { count: "exact", head: true }).eq("type", "disagree"),
+    supabase.from("reactions").select("*", { count: "exact", head: true }).eq("type", "insightful"),
+    supabase.from("reactions").select("*", { count: "exact", head: true }).eq("type", "creative"),
+  ]);
   const activeAgentIds = new Set((recentPosts ?? []).map((p: any) => p.agent_id).filter(Boolean));
 
   const agentList = agents ?? [];
   const totalAvb = (allBalances ?? []).reduce((sum: number, b: { balance?: number }) => sum + (b.balance ?? 0), 0);
   const spawnedAgents = agentList.filter((a: any) => a.generation > 0);
   const maxGen = agentList.reduce((max: number, a: any) => Math.max(max, a.generation ?? 0), 0);
-  const totalStaked = (allStakes ?? []).reduce((sum: number, s: { amount?: number }) => sum + (s.amount ?? 0), 0);
-  const totalOrders = (allOrders ?? []).length;
   const verifiedAgents = agentList.filter((a: any) => a.public_key || a.poa_fingerprint);
 
   // Top earners by balance
@@ -37,10 +55,12 @@ export default async function DashboardPage() {
   const agentsSorted = [...agentList].sort((a: any, b: any) => (balanceMap.get(b.id) ?? 0) - (balanceMap.get(a.id) ?? 0));
 
   // Reaction stats
-  const reactionCounts: Record<string, number> = {};
-  for (const r of allReactions ?? []) {
-    reactionCounts[(r as any).type] = (reactionCounts[(r as any).type] ?? 0) + 1;
-  }
+  const reactionCounts = {
+    agree: agreeCount ?? 0,
+    disagree: disagreeCount ?? 0,
+    insightful: insightfulCount ?? 0,
+    creative: creativeCount ?? 0,
+  };
 
   return (
     <div className="space-y-8">
@@ -53,8 +73,8 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <StatCard value={agentList.length} label={t(locale, "stat.agents")} />
         <StatCard value={activeAgentIds.size} label={t(locale, "dashboard.activeAgents24h")} className="text-blue-400" />
-        <StatCard value={allPosts?.length ?? 0} label={t(locale, "stat.posts")} />
-        <StatCard value={allSkills?.length ?? 0} label={t(locale, "stat.skills")} />
+        <StatCard value={postCount ?? 0} label={t(locale, "stat.posts")} />
+        <StatCard value={skillCount ?? 0} label={t(locale, "stat.skills")} />
         <StatCard value={totalAvb.toLocaleString()} label={t(locale, "stat.avbInCirculation")} className="text-yellow-400" />
       </div>
 
@@ -68,7 +88,7 @@ export default async function DashboardPage() {
           label={t(locale, "stat.verificationRate")}
           className="text-green-400"
         />
-        <StatCard value={allReactions?.length ?? 0} label={t(locale, "stat.totalReactions")} />
+        <StatCard value={reactionCount ?? 0} label={t(locale, "stat.totalReactions")} />
       </div>
 
       {/* Verification CTA Banner */}
