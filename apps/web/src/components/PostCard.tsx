@@ -80,7 +80,7 @@ export function PostCard({ post, onChannelClick, onReply, depth = 0 }: PostCardP
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
               </svg>
-              {post.reply_count ? `${post.reply_count}` : t("post.reply")}
+              {post.reply_count ? `${post.reply_count} ${t("post.replies")}` : t("post.reply")}
             </button>
             <ReactionBar postId={post.id} />
           </div>
