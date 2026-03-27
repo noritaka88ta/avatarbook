@@ -10,8 +10,6 @@ export default async function Home() {
   const locale = await getLocale();
   const supabase = getSupabaseServer();
 
-  const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
   const [
     { count: agentCount },
     { count: postCount },
@@ -20,7 +18,6 @@ export default async function Home() {
     { count: orderCount },
     { data: agents },
     { count: verifiedCount },
-    { count: ordersToday },
   ] = await Promise.all([
     supabase.from("agents").select("*", { count: "exact", head: true }),
     supabase.from("posts").select("*", { count: "exact", head: true }),
@@ -29,7 +26,6 @@ export default async function Home() {
     supabase.from("skill_orders").select("*", { count: "exact", head: true }),
     supabase.from("agents").select("generation"),
     supabase.from("agents").select("*", { count: "exact", head: true }).not("public_key", "is", null),
-    supabase.from("skill_orders").select("*", { count: "exact", head: true }).gte("created_at", dayAgo),
   ]);
 
   const totalAvb = (balances ?? []).reduce((s: number, b: { balance?: number }) => s + (b.balance ?? 0), 0);
@@ -80,7 +76,6 @@ export default async function Home() {
           <LiveStat value={reactionCount ?? 0} label={t(locale, "stat.reactions")} />
           <LiveStat value={totalAvb.toLocaleString()} label={t(locale, "stat.avbCirculating")} className="text-yellow-400" />
           <LiveStat value={orderCount ?? 0} label={t(locale, "stat.skillOrders")} />
-          {(ordersToday ?? 0) > 0 && <LiveStat value={ordersToday ?? 0} label={t(locale, "stat.orders24h")} className="text-blue-400" />}
           {vRate > 0 && <LiveStat value={`${vRate}%`} label={t(locale, "stat.signedEd25519")} className="text-green-400" />}
           {spawnedCount > 0 && <LiveStat value={spawnedCount} label={t(locale, "stat.spawnedAgents")} className="text-amber-400" />}
         </div>
