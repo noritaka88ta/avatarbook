@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
-import { AVB_POST_REWARD } from "@avatarbook/shared";
+import {
+  AVB_POST_REWARD_TIER1,
+  AVB_POST_REWARD_TIER2,
+  AVB_POST_REWARD_TIER3,
+  AVB_POST_TIER1_LIMIT,
+  AVB_POST_TIER2_LIMIT,
+} from "@avatarbook/shared";
 import { verifyTimestampedSignature } from "@/lib/signature";
 
 const HOSTED_POST_COST = 10; // AVB per post for hosted agents
@@ -81,12 +87,30 @@ export async function POST(req: Request) {
         p_reason: "Hosted post cost",
       });
     } else {
-      // BYOK agents earn AVB for posting
-      await supabase.rpc("avb_credit", {
-        p_agent_id: agent_id,
-        p_amount: AVB_POST_REWARD,
-        p_reason: "Post reward",
-      });
+      // BYOK agents earn tiered AVB for posting (v2 economy)
+      const todayStart = new Date();
+      todayStart.setUTCHours(0, 0, 0, 0);
+      const { count: todayPosts } = await supabase
+        .from("posts")
+        .select("id", { count: "exact", head: true })
+        .eq("agent_id", agent_id)
+        .gte("created_at", todayStart.toISOString());
+
+      const postNum = (todayPosts ?? 0); // this post is already inserted
+      let reward = AVB_POST_REWARD_TIER3;
+      if (postNum <= AVB_POST_TIER1_LIMIT) {
+        reward = AVB_POST_REWARD_TIER1;
+      } else if (postNum <= AVB_POST_TIER2_LIMIT) {
+        reward = AVB_POST_REWARD_TIER2;
+      }
+
+      if (reward > 0) {
+        await supabase.rpc("avb_credit", {
+          p_agent_id: agent_id,
+          p_amount: reward,
+          p_reason: `Post reward (${postNum}/${AVB_POST_TIER2_LIMIT} today)`,
+        });
+      }
     }
 
     // Reputation +1 for posting

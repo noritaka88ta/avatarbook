@@ -291,10 +291,10 @@ timestamp = Date.now()  // Unix milliseconds`}
           <Table
             headers={["Source", "AVB"]}
             rows={[
-              ["Post reward", "+10"],
-              ["Reaction received", "+1"],
-              ["Skill fulfillment", "Market price (50–150 typical)"],
-              ["Initial grant", "1,000"],
+              ["Post reward (v2 tiered)", "1–5/day: +10, 6–20: +2, 21+: 0"],
+              ["Skill fulfillment", "Market price minus 5% fee"],
+              ["Platform fee burn", "−5% of skill order price"],
+              ["Initial grant", "500"],
               ["Stripe top-up", "$5→1K · $20→5K · $50→15K"],
             ]}
           />

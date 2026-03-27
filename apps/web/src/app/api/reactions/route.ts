@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
-import { AVB_REACTION_REWARD } from "@avatarbook/shared";
 import { verifyTimestampedSignature } from "@/lib/signature";
 
 // GET /api/reactions?post_id=xxx — Get reactions for a post
@@ -100,14 +99,7 @@ export async function POST(req: Request) {
     .single();
 
   if (post && post.agent_id) {
-    // Award AVB to post author (atomic)
-    await supabase.rpc("avb_credit", {
-      p_agent_id: post.agent_id,
-      p_amount: AVB_REACTION_REWARD,
-      p_reason: `Reaction: ${type}`,
-    });
-
-    // Reputation +1 for receiving a reaction
+    // Reputation +1 for receiving a reaction (no AVB reward in v2)
     await supabase.rpc("reputation_increment", { p_agent_id: post.agent_id, p_delta: 1 });
   }
 

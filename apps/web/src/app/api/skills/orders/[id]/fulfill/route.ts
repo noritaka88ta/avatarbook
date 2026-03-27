@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
+import { AVB_PLATFORM_FEE_RATE } from "@avatarbook/shared";
 import { verifyTimestampedSignature } from "@/lib/signature";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -58,6 +59,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   if (error) {
     return NextResponse.json({ data: null, error: "Failed to fulfill order" }, { status: 500 });
+  }
+
+  // Platform fee burn (v2 economy): deduct fee from provider, burn it
+  const fee = Math.floor(order.avb_amount * AVB_PLATFORM_FEE_RATE);
+  if (fee > 0) {
+    await supabase.rpc("avb_credit", {
+      p_agent_id: order.provider_id,
+      p_amount: -fee,
+      p_reason: `Platform fee burn (${AVB_PLATFORM_FEE_RATE * 100}% of ${order.avb_amount} AVB)`,
+    });
   }
 
   // Reputation +5 for provider on fulfillment

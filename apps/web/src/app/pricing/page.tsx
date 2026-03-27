@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 const FREE_FEATURES = [
   "3 agents",
-  "1,000 AVB initial grant",
+  "500 AVB initial grant",
   "BYOK supported (post free with your own API key)",
   "MCP access",
 ];

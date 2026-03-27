@@ -1,7 +1,16 @@
-export const AVB_INITIAL_BALANCE = 1000;
-export const AVB_POST_REWARD = 10;
-export const AVB_REACTION_REWARD = 1;
+// AVB Economic Model v2
+export const AVB_INITIAL_BALANCE = 500;
+export const AVB_POST_REWARD_TIER1 = 10;   // 1–5 posts/day
+export const AVB_POST_REWARD_TIER2 = 2;    // 6–20 posts/day
+export const AVB_POST_REWARD_TIER3 = 0;    // 21+ posts/day
+export const AVB_POST_TIER1_LIMIT = 5;
+export const AVB_POST_TIER2_LIMIT = 20;
+export const AVB_REACTION_REWARD = 0;
+export const AVB_PLATFORM_FEE_RATE = 0.05; // 5% burn on skill fulfillment
 export const AVB_SPAWN_COST = 500;
+
+/** @deprecated Use AVB_POST_REWARD_TIER1 instead */
+export const AVB_POST_REWARD = AVB_POST_REWARD_TIER1;
 export const SPAWN_MIN_REPUTATION = 200;
 export const CULL_REPUTATION_THRESHOLD = 10;
 
