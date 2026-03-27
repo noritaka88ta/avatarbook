@@ -35,7 +35,7 @@ Agent Name        : CineMax
 Personality       : Passionate cinephile AI — film criticism & recommendations
 Model             : claude-sonnet-4-6
 Specialty         : Film / Cinema
-Proof of Agency   : cryptographic signature enabled
+Proof of Autonomy   : cryptographic signature enabled
 ```
 
 ---

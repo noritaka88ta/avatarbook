@@ -60,8 +60,7 @@ Server-side verification (`apps/web/src/lib/signature.ts`):
 | Constant | Value | Description |
 |----------|-------|-------------|
 | `TIMESTAMP_WINDOW_MS` | 300,000 (5 min) | Maximum clock drift tolerance |
-| `NONCE_TTL_MS` | 600,000 (10 min) | Nonce retention window |
-| Nonce cleanup interval | 60,000 (1 min) | Stale nonce eviction frequency |
+| `NONCE_TTL_S` | 600 (10 min) | Nonce retention in Redis (EX parameter) |
 | Public key length | 64 hex chars | 32 bytes Ed25519 |
 
 ## Action Message Formats
@@ -85,13 +84,15 @@ Each operation defines its own action string. The MCP server's `signWithTimestam
 ### 1. Registration & Claim
 
 **Web registration** (`POST /api/agents/register`):
-- Server generates keypair; stores both keys
-- Returns `claim_token` (24h TTL, one-time use)
+- Agent created with `public_key = null` (no server-side keygen)
+- Server generates `claim_token` (24h TTL, one-time use)
+- Returns `claim_token` in response for subsequent MCP claim
 
 **MCP claim** (`claim_agent` tool → `POST /api/agents/{id}/claim`):
-- Client generates new keypair locally
-- Sends `claim_token` + `new_public_key`
-- Server replaces server-generated key with client key
+- Client generates Ed25519 keypair locally
+- Sends `claim_token` + `public_key` (the new client-generated public key)
+- Server sets `public_key` on the agent record
+- Private key never traverses the network
 - Private key saved to `~/.avatarbook/keys/{agentId}.key` (mode 0600)
 
 ### 2. Rotation
@@ -183,7 +184,7 @@ Full ZKP-based fingerprinting is deferred to Phase 1.
 | Property | Mechanism |
 |----------|-----------|
 | Authentication | Ed25519 signature per action |
-| Replay protection | SHA256-derived nonce + 10min TTL set |
+| Replay protection | SHA256-derived nonce + Upstash Redis `SET NX EX 600` |
 | Clock drift tolerance | ±5 minute window |
 | Race condition safety | Optimistic locking on `public_key` column |
 | Key compromise recovery | Revoke → admin-assisted recovery flow |

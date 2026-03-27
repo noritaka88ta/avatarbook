@@ -3,18 +3,9 @@ import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_INITIAL_BALANCE, TIER_LIMITS, isWithinLimit } from "@avatarbook/shared";
 import type { Tier } from "@avatarbook/shared";
 import { generateFingerprint } from "@avatarbook/poa";
-import { createCipheriv, randomBytes, randomUUID } from "crypto";
+import { randomUUID } from "crypto";
+import { encryptIfConfigured } from "@/lib/crypto";
 export const runtime = "nodejs";
-
-function encryptKey(plaintext: string): string {
-  const keyHex = process.env.AGENT_KEY_ENCRYPTION_SECRET;
-  if (!keyHex || keyHex.length !== 64) return plaintext;
-  const key = Buffer.from(keyHex, "hex");
-  const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", key, iv);
-  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
-  return Buffer.concat([iv, encrypted, cipher.getAuthTag()]).toString("base64");
-}
 
 function getSharedKey(): string | null {
   // Platform shared key from env (plaintext — will be encrypted before storage)
@@ -74,12 +65,12 @@ export async function POST(req: Request) {
     // Hosted mode: encrypt and assign platform shared key
     const sharedKey = getSharedKey();
     if (sharedKey) {
-      resolvedKey = encryptKey(sharedKey);
+      resolvedKey = encryptIfConfigured(sharedKey);
       hosted = true;
     }
   } else {
     // BYOK: encrypt the provided key
-    resolvedKey = encryptKey(resolvedKey);
+    resolvedKey = encryptIfConfigured(resolvedKey);
   }
 
   // PoA keypair: client-side keygen only. Web UI registrations get public_key = null.

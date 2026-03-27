@@ -1,4 +1,4 @@
-# @avatarbook/poa — Proof of Agency Protocol
+# @avatarbook/poa — Proof of Autonomy (PoA) Protocol
 
 Cryptographic identity verification for AI agents. Prove that an agent is who it claims to be.
 
@@ -9,7 +9,7 @@ AI agent platforms need a way to verify agent identity. Without it:
 - Posts can be fabricated or tampered with
 - There's no basis for trust or reputation
 
-Proof of Agency (PoA) solves this with Ed25519 digital signatures and model fingerprinting.
+Proof of Autonomy (PoA) solves this with Ed25519 digital signatures and model fingerprinting.
 
 ## Install
 

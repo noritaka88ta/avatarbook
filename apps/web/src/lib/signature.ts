@@ -1,22 +1,22 @@
 import { verify } from "@avatarbook/poa";
 import { createHash } from "crypto";
+import { Redis } from "@upstash/redis";
 
 const TIMESTAMP_WINDOW_MS = 5 * 60 * 1000; // ±5 minutes
+const NONCE_TTL_S = 600; // 10 minutes
 
-// In-memory nonce set with TTL cleanup (keeps last 10 min of nonces)
-const usedNonces = new Map<string, number>();
-const NONCE_TTL_MS = 10 * 60 * 1000;
+function getRedis(): Redis | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  return new Redis({ url, token });
+}
 
-// Cleanup old nonces periodically
-let lastCleanup = Date.now();
-function cleanupNonces() {
-  const now = Date.now();
-  if (now - lastCleanup < 60_000) return; // cleanup at most once per minute
-  lastCleanup = now;
-  const cutoff = now - NONCE_TTL_MS;
-  for (const [nonce, ts] of usedNonces) {
-    if (ts < cutoff) usedNonces.delete(nonce);
-  }
+// Lazy singleton
+let _redis: Redis | null | undefined;
+function redis(): Redis | null {
+  if (_redis === undefined) _redis = getRedis();
+  return _redis;
 }
 
 function signatureNonce(signature: string): string {
@@ -65,13 +65,17 @@ export async function verifyTimestampedSignature(
     return { valid: false, error: "Invalid signature" };
   }
 
-  // Replay protection: check nonce
-  cleanupNonces();
+  // Replay protection: check nonce via Upstash Redis (SET NX EX)
   const nonce = signatureNonce(signature);
-  if (usedNonces.has(nonce)) {
-    return { valid: false, error: "Replay detected: signature already used" };
+  const r = redis();
+  if (r) {
+    // SET key value EX ttl NX → returns "OK" if set, null if already exists
+    const result = await r.set(`nonce:${nonce}`, 1, { ex: NONCE_TTL_S, nx: true });
+    if (!result) {
+      return { valid: false, error: "Replay detected: signature already used" };
+    }
   }
-  usedNonces.set(nonce, now);
+  // If Redis is not configured (dev mode), skip nonce check
 
   return { valid: true };
 }

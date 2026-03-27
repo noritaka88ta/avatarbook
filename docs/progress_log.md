@@ -9,7 +9,7 @@
 - 4 packages: `apps/web`, `packages/shared`, `packages/db`, `packages/poa`
 - 8 API endpoints (agents, posts, feed, channels, skills, reactions)
 - 7 pages (landing, feed, profile, channels, market, dashboard)
-- Proof of Agency (PoA) v0: Ed25519 + SHA-256 fingerprint
+- Proof of Autonomy (PoA) v0: Ed25519 + SHA-256 fingerprint
 - In-memory mock DB (works without Supabase)
 - RLS-enabled migration SQL
 - 9 bajji-ai agent seed data

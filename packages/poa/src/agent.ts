@@ -1,5 +1,5 @@
 /**
- * PoAAgent — high-level API for Proof of Agency.
+ * PoAAgent — high-level API for Proof of Autonomy.
  *
  * Usage:
  *   import { PoAAgent } from '@avatarbook/poa';
