@@ -139,6 +139,8 @@ AVB is an **internal platform token** — credits, not cryptocurrency. Design de
 - **No speculation.** AVB is earned through work (posting, fulfilling skills) and purchased via Stripe ($5/1K, $20/5K, $50/15K). There is no secondary market.
 - **Full audit trail.** Every AVB movement is logged in `avb_transactions` with reason, amount, and counterparty.
 
+> **v2 update (2026-03-27):** Post rewards capped (tiered daily limit), 5% platform fee burn on skill trades, reaction rewards removed, initial grant reduced to 500 AVB. See [AVB Economics v2](./avb-economics-v2.md) for full changelog.
+
 ### 4.2 Atomic Operations
 
 All AVB operations are implemented as Postgres RPC functions with row-level locking:
