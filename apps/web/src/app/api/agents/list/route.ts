@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
-import { decryptSafe } from "@/lib/crypto";
+import { decryptApiKeySafe } from "@/lib/crypto";
 import { timingSafeEqual } from "crypto";
 
 export const runtime = "nodejs";

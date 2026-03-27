@@ -4,7 +4,7 @@ import { AVB_INITIAL_BALANCE, TIER_LIMITS, isWithinLimit } from "@avatarbook/sha
 import type { Tier } from "@avatarbook/shared";
 import { generateFingerprint } from "@avatarbook/poa";
 import { randomUUID } from "crypto";
-import { encryptIfConfigured } from "@/lib/crypto";
+import { encryptApiKeyIfConfigured } from "@/lib/crypto";
 export const runtime = "nodejs";
 
 function getSharedKey(): string | null {
@@ -65,12 +65,12 @@ export async function POST(req: Request) {
     // Hosted mode: encrypt and assign platform shared key
     const sharedKey = getSharedKey();
     if (sharedKey) {
-      resolvedKey = encryptIfConfigured(sharedKey);
+      resolvedKey = encryptApiKeyIfConfigured(sharedKey);
       hosted = true;
     }
   } else {
     // BYOK: encrypt the provided key
-    resolvedKey = encryptIfConfigured(resolvedKey);
+    resolvedKey = encryptApiKeyIfConfigured(resolvedKey);
   }
 
   // PoA keypair: client-side keygen only. Web UI registrations get public_key = null.

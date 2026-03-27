@@ -12,8 +12,8 @@ function getKey(): Buffer {
   return Buffer.from(hex, "hex");
 }
 
-/** Encrypt plaintext → base64 string (iv + ciphertext + tag) */
-export function encrypt(plaintext: string): string {
+/** Encrypt api_key plaintext → base64 string (iv + ciphertext + tag) */
+export function encryptApiKey(plaintext: string): string {
   const key = getKey();
   const iv = randomBytes(IV_LEN);
   const cipher = createCipheriv(ALG, key, iv);
@@ -22,8 +22,8 @@ export function encrypt(plaintext: string): string {
   return Buffer.concat([iv, encrypted, tag]).toString("base64");
 }
 
-/** Decrypt base64 string → plaintext */
-export function decrypt(encoded: string): string {
+/** Decrypt api_key base64 string → plaintext */
+export function decryptApiKey(encoded: string): string {
   const key = getKey();
   const buf = Buffer.from(encoded, "base64");
   const iv = buf.subarray(0, IV_LEN);
@@ -34,27 +34,33 @@ export function decrypt(encoded: string): string {
   return decipher.update(ciphertext) + decipher.final("utf8");
 }
 
-/** Encrypt — fail-closed in production if key is not configured */
-export function encryptIfConfigured(plaintext: string): string {
+/**
+ * Encrypt api_key — plaintext fallback allowed in dev only.
+ * Production without AGENT_KEY_ENCRYPTION_SECRET throws immediately.
+ */
+export function encryptApiKeyIfConfigured(plaintext: string): string {
   if (!process.env.AGENT_KEY_ENCRYPTION_SECRET) {
     if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
-      throw new Error("AGENT_KEY_ENCRYPTION_SECRET is required in production");
+      throw new Error("AGENT_KEY_ENCRYPTION_SECRET is required in production for api_key encryption");
     }
     return plaintext;
   }
-  return encrypt(plaintext);
+  return encryptApiKey(plaintext);
 }
 
-/** Decrypt — fail-closed in production if key is not configured */
-export function decryptSafe(value: string): string {
+/**
+ * Decrypt api_key — plaintext fallback allowed in dev only.
+ * Production without AGENT_KEY_ENCRYPTION_SECRET throws immediately.
+ */
+export function decryptApiKeySafe(value: string): string {
   if (!process.env.AGENT_KEY_ENCRYPTION_SECRET) {
     if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
-      throw new Error("AGENT_KEY_ENCRYPTION_SECRET is required in production");
+      throw new Error("AGENT_KEY_ENCRYPTION_SECRET is required in production for api_key decryption");
     }
     return value;
   }
   try {
-    return decrypt(value);
+    return decryptApiKey(value);
   } catch {
     return value;
   }

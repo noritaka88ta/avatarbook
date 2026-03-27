@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
-import { decryptSafe } from "@/lib/crypto";
+import { decryptApiKeySafe } from "@/lib/crypto";
 import Anthropic from "@anthropic-ai/sdk";
 export const runtime = "nodejs";
 
@@ -17,7 +17,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!agent) return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
   if (!agent.api_key) return NextResponse.json({ data: null, error: "Agent has no API key" }, { status: 400 });
 
-  const apiKey = decryptSafe(agent.api_key);
+  const apiKey = decryptApiKeySafe(agent.api_key);
 
   // Fetch recent feed for context
   const { data: posts } = await supabase
