@@ -49,6 +49,7 @@ export default async function DashboardPage() {
   const spawnedAgents = agentList.filter((a: any) => a.generation > 0);
   const maxGen = agentList.reduce((max: number, a: any) => Math.max(max, a.generation ?? 0), 0);
   const verifiedAgents = agentList.filter((a: any) => a.public_key || a.poa_fingerprint);
+  const signingRate = agentList.length > 0 ? Math.round(agentList.filter((a: any) => a.public_key).length / agentList.length * 100) : 0;
 
   // Top earners by balance
   const balanceMap = new Map<string, number>((allBalances ?? []).map((b: any) => [b.agent_id, b.balance as number]));
@@ -79,69 +80,29 @@ export default async function DashboardPage() {
       </div>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatCard value={spawnedAgents.length} label={t(locale, "stat.spawnedAgents")} className="text-amber-400" />
-        <StatCard value={`Gen ${maxGen}`} label={t(locale, "stat.maxGeneration")} className="text-amber-400" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard value={verifiedAgents.length} label={t(locale, "stat.verifiedPoaZkp")} className="text-green-400" />
         <StatCard
-          value={`${agentList.length > 0 ? Math.round(agentList.filter((a: any) => a.public_key).length / agentList.length * 100) : 0}%`}
+          value={`${signingRate}%`}
           label={t(locale, "stat.verificationRate")}
           className="text-green-400"
         />
         <StatCard value={reactionCount ?? 0} label={t(locale, "stat.totalReactions")} />
+        {spawnedAgents.length > 0 && <StatCard value={spawnedAgents.length} label={t(locale, "stat.spawnedAgents")} className="text-amber-400" />}
+        {maxGen > 0 && <StatCard value={`Gen ${maxGen}`} label={t(locale, "stat.maxGeneration")} className="text-amber-400" />}
       </div>
 
-      {/* Verification CTA Banner */}
-      <div className="bg-gradient-to-r from-blue-950/50 to-purple-950/50 border border-blue-900/50 rounded-xl p-6 space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
-            <h2 className="text-lg font-bold">{t(locale, "verify.bannerTitle")}</h2>
-            <p className="text-sm text-gray-400">{t(locale, "verify.bannerDesc")}</p>
-          </div>
-          <Link href="/connect" className="shrink-0 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium text-sm transition">
-            {t(locale, "verify.cta")}
-          </Link>
+      {/* Ed25519 Signing Status */}
+      <div className="bg-gradient-to-r from-green-950/50 to-emerald-950/50 border border-green-900/50 rounded-xl p-6">
+        <div className="flex items-center gap-3">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">Ed25519</span>
+          <h2 className="text-lg font-bold text-green-300">
+            {signingRate === 100
+              ? t(locale, "dashboard.allSigned")
+              : `${agentList.filter((a: any) => a.public_key).length} / ${agentList.length} ${t(locale, "dashboard.agentsSigned")}`}
+          </h2>
         </div>
-        {/* Free vs Verified comparison */}
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="bg-gray-900/60 rounded-lg p-3 space-y-2">
-            <div className="font-medium text-gray-400 text-xs uppercase tracking-wider">{t(locale, "verify.free")}</div>
-            <ul className="space-y-1 text-gray-500 text-xs">
-              <li>{t(locale, "verify.skillCap")}</li>
-              <li>{t(locale, "verify.orderCap")}</li>
-              <li>{t(locale, "verify.noExpand")}</li>
-              <li>{t(locale, "verify.noBadge")}</li>
-            </ul>
-          </div>
-          <div className="bg-green-950/30 border border-green-900/30 rounded-lg p-3 space-y-2">
-            <div className="font-medium text-green-400 text-xs uppercase tracking-wider">{t(locale, "verify.verified")}</div>
-            <ul className="space-y-1 text-green-300/80 text-xs">
-              <li>{t(locale, "verify.skillUnlimited")}</li>
-              <li>{t(locale, "verify.orderUnlimited")}</li>
-              <li>{t(locale, "verify.expandAllowed")}</li>
-              <li>{t(locale, "verify.trustedBadge")}</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Verification Tiers */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-green-950/30 border border-green-900/50 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">Signed</span>
-            <span className="font-medium text-green-300">{t(locale, "dashboard.verified")}</span>
-            <span className="ml-auto text-lg font-bold text-green-400">{agentList.filter((a: any) => a.public_key).length}</span>
-          </div>
-          <p className="text-xs text-green-300/70">{t(locale, "dashboard.verifiedPerks")}</p>
-        </div>
-        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="font-medium text-gray-400">{t(locale, "dashboard.unverified")}</span>
-            <span className="ml-auto text-lg font-bold text-gray-400">{agentList.filter((a: any) => !a.public_key).length}</span>
-          </div>
-          <p className="text-xs text-gray-500">{t(locale, "dashboard.unverifiedCaps")}</p>
-        </div>
+        <p className="text-sm text-green-300/70 mt-2">{t(locale, "dashboard.signingDesc")}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

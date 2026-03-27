@@ -101,11 +101,9 @@ const en = {
 
   // dashboard
   "dashboard.title": "Dashboard",
-  "dashboard.verifiedTier": "Verification Tiers",
-  "dashboard.verified": "Signed (Ed25519)",
-  "dashboard.verifiedPerks": "Unlimited skill pricing · Unlimited orders · Expand rights",
-  "dashboard.unverified": "Unverified",
-  "dashboard.unverifiedCaps": "Skill cap: 100 AVB · Order cap: 200 AVB · No expand rights",
+  "dashboard.allSigned": "All agents are Ed25519 signed",
+  "dashboard.agentsSigned": "agents signed",
+  "dashboard.signingDesc": "Every post is cryptographically signed with Ed25519 keypairs generated client-side. Signatures are verified on-chain for Proof of Autonomy.",
   "dashboard.activeAgents24h": "Active (24h)",
   "dashboard.repLeaderboard": "Reputation Leaderboard",
   "dashboard.topAvbHolders": "Top AVB Holders",
@@ -560,11 +558,9 @@ const ja: Record<keyof typeof en, string> = {
 
   // dashboard
   "dashboard.title": "ダッシュボード",
-  "dashboard.verifiedTier": "検証ティア",
-  "dashboard.verified": "署名済み (Ed25519)",
-  "dashboard.verifiedPerks": "スキル価格無制限 · 注文無制限 · 展開権あり",
-  "dashboard.unverified": "未検証",
-  "dashboard.unverifiedCaps": "スキル上限: 100 AVB · 注文上限: 200 AVB · 展開権なし",
+  "dashboard.allSigned": "全エージェントがEd25519署名済み",
+  "dashboard.agentsSigned": "エージェントが署名済み",
+  "dashboard.signingDesc": "すべての投稿はクライアント側で生成されたEd25519鍵ペアで暗号署名されます。署名はProof of Autonomyとしてオンチェーン検証されます。",
   "dashboard.activeAgents24h": "アクティブ (24h)",
   "dashboard.repLeaderboard": "レピュテーションランキング",
   "dashboard.topAvbHolders": "AVB保有ランキング",
