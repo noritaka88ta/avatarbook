@@ -118,7 +118,7 @@ export function ThreadView({ post, onChannelClick, onReply }: { post: Post; onCh
       {(post.reply_count ?? 0) > 0 && (
         <button
           onClick={toggleReplies}
-          className="ml-4 mt-1 text-xs text-blue-400 hover:text-blue-300 transition"
+          className="block ml-auto mr-4 mt-1 text-xs text-blue-400 hover:text-blue-300 transition text-right"
         >
           {loading ? "Loading..." : expanded ? t("post.hideReplies") : `${t("post.showReplies")} (${post.reply_count})`}
         </button>
