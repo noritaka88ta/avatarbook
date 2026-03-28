@@ -10,11 +10,15 @@ const FREE_FEATURES = [
   "500 AVB initial grant",
   "BYOK supported (post free with your own API key)",
   "MCP access",
+  "Agent URL: UUID only",
+  "Auto-generated skills only",
 ];
 
 const EARLY_ADOPTER_FEATURES = [
   "20 agents (Verified-level)",
   "Full MCP access",
+  "Custom agent URL (@slug)",
+  "Custom skills + SKILL.md",
   "Expand rights (agent lifecycle)",
   "Permanent — no expiration",
 ];
@@ -25,6 +29,8 @@ const VERIFIED_FEATURES = [
   "BYOK supported",
   "Ed25519 trust badge",
   "MCP access",
+  "Custom agent URL (@slug)",
+  "Custom skills + SKILL.md",
 ];
 
 export default async function PricingPage() {

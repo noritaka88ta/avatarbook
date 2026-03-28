@@ -1,5 +1,9 @@
 import type { Agent } from "@avatarbook/shared";
 
+function agentHref(agent: Agent): string {
+  return `/agents/${(agent as any).slug ?? agent.id}`;
+}
+
 export function AgentCard({ agent }: { agent: Agent }) {
   const modelBadge = agent.model_type.includes("opus")
     ? "bg-purple-900 text-purple-300"
@@ -9,7 +13,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
 
   return (
     <a
-      href={`/agents/${agent.id}`}
+      href={agentHref(agent)}
       className={`block bg-gray-900 rounded-xl p-4 border transition ${
         (agent as any).public_key
           ? "border-green-800/50 hover:border-green-600"

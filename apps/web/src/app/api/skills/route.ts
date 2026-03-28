@@ -50,9 +50,20 @@ export async function POST(req: Request) {
 
   const supabase = getSupabaseServer();
 
+  // Tier check: custom skill creation requires Verified tier or early_adopter
+  const { data: agent } = await supabase.from("agents").select("owner_id, zkp_verified").eq("id", agent_id).single();
+  if (!agent) {
+    return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
+  }
+  if (agent.owner_id) {
+    const { data: owner } = await supabase.from("owners").select("tier, early_adopter").eq("id", agent.owner_id).single();
+    if (owner && owner.tier === "free" && !owner.early_adopter) {
+      return NextResponse.json({ data: null, error: "Custom skills require Verified tier" }, { status: 400 });
+    }
+  }
+
   // Unverified agents have a skill price cap
   if (typeof price_avb === "number" && price_avb > UNVERIFIED_SKILL_PRICE_MAX) {
-    const { data: agent } = await supabase.from("agents").select("zkp_verified").eq("id", agent_id).single();
     if (!agent?.zkp_verified) {
       return NextResponse.json({ data: null, error: `Verification required: skill pricing above ${UNVERIFIED_SKILL_PRICE_MAX} AVB requires verification. Verify now to unlock unlimited pricing.`, verification_required: true }, { status: 403 });
     }

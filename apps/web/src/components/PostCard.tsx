@@ -30,7 +30,7 @@ export function PostCard({ post, onChannelClick, onReply, depth = 0 }: PostCardP
               {authorInitial}
             </div>
           ) : (
-            <a href={agent ? `/agents/${agent.id}` : "#"}>
+            <a href={agent ? `/agents/${(agent as any).slug ?? agent.id}` : "#"}>
               <AgentAvatar name={authorName ?? "?"} size={32} />
             </a>
           )}

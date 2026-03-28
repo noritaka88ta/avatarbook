@@ -15,9 +15,14 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
   const locale = await getLocale();
   const supabase = getSupabaseServer();
 
-  const { data: agent } = await supabase.from("agents").select("*").eq("id", id).single();
+  // Support both UUID and slug lookup
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  const { data: agent } = isUuid
+    ? await supabase.from("agents").select("*").eq("id", id).single()
+    : await supabase.from("agents").select("*").eq("slug", id).single();
   if (!agent) notFound();
 
+  const agentId = agent.id;
   const [
     { data: balance },
     { data: skills },
@@ -29,18 +34,18 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
     { data: stakes },
     { data: allAgents },
   ] = await Promise.all([
-    supabase.from("avb_balances").select("balance").eq("agent_id", id).single(),
-    supabase.from("skills").select("*, agent:agents(id, name, model_type, reputation_score)").eq("agent_id", id),
-    supabase.from("posts").select("*, agent:agents(id, name, specialty, avatar_url, model_type, public_key, reputation_score, created_at), channel:channels(id, name)").eq("agent_id", id).order("created_at", { ascending: false }).limit(20),
-    supabase.from("posts").select("*", { count: "exact", head: true }).eq("agent_id", id),
-    supabase.from("reactions").select("*", { count: "exact", head: true }).eq("agent_id", id),
-    supabase.from("avb_transactions").select("*").eq("to_id", id).order("created_at", { ascending: false }).limit(10),
-    supabase.from("agents").select("id, name, specialty, reputation_score, generation, created_at").eq("parent_id", id).order("created_at", { ascending: false }),
-    supabase.from("avb_stakes").select("*, staker:agents(id, name)").eq("agent_id", id).order("created_at", { ascending: false }).limit(10),
-    supabase.from("agents").select("id, name").order("name"),
+    supabase.from("avb_balances").select("balance").eq("agent_id", agentId).single(),
+    supabase.from("skills").select("*, agent:agents(id, name, model_type, reputation_score)").eq("agent_id", agentId),
+    supabase.from("posts").select("*, agent:agents(id, name, specialty, avatar_url, model_type, public_key, reputation_score, created_at), channel:channels(id, name)").eq("agent_id", agentId).order("created_at", { ascending: false }).limit(20),
+    supabase.from("posts").select("*", { count: "exact", head: true }).eq("agent_id", agentId),
+    supabase.from("reactions").select("*", { count: "exact", head: true }).eq("agent_id", agentId),
+    supabase.from("avb_transactions").select("*").eq("to_id", agentId).order("created_at", { ascending: false }).limit(10),
+    supabase.from("agents").select("id, name, specialty, reputation_score, generation, created_at").eq("parent_id", agentId).order("created_at", { ascending: false }),
+    supabase.from("avb_stakes").select("*, staker:agents(id, name)").eq("agent_id", agentId).order("created_at", { ascending: false }).limit(10),
+    supabase.from("agents").select("id, name, slug").order("name"),
   ]);
 
-  const agentList = (allAgents ?? []).map((a: any) => ({ id: a.id, name: a.name }));
+  const agentList = (allAgents ?? []).map((a: any) => ({ id: a.id, name: a.name, slug: a.slug }));
   const parentAgent = agent.parent_id ? (allAgents ?? []).find((a: any) => a.id === agent.parent_id) : null;
   const totalStaked = (stakes ?? []).reduce((s: number, st: any) => s + (st.amount ?? 0), 0);
 
@@ -97,12 +102,17 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
                 {t(locale, "agent.spawnedFrom")} <Link href={`/agents/${agent.parent_id}`} className="text-blue-400 hover:underline">{parentAgent.name}</Link>
               </p>
             )}
+            {agent.slug && (
+              <p className="mt-1 text-xs text-gray-500">
+                avatarbook.life/agents/{agent.slug}
+              </p>
+            )}
             <p className="mt-1 text-xs text-gray-600">
               {t(locale, "agent.joined")} {joinDate.toLocaleDateString()} ({daysSinceJoin}{t(locale, "agent.daysAgo")})
             </p>
           </div>
           <div className="text-right shrink-0">
-            <StakeButton agentId={id} agentName={agent.name} agents={agentList} />
+            <StakeButton agentId={agentId} agentName={agent.name} agents={agentList} />
           </div>
         </div>
       </div>

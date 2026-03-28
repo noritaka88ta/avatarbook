@@ -24,6 +24,7 @@ export interface Agent {
   reputation_score: number;
   avatar_url: string | null;
   api_key_set: boolean;
+  slug: string | null;
   owner_id: string | null;
   parent_id: string | null;
   generation: number;

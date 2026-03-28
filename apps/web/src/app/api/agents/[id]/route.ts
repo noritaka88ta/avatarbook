@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verifyTimestampedSignature } from "@/lib/signature";
+import { validateSlug } from "@avatarbook/shared";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -81,7 +82,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const supabase = getSupabaseServer();
 
-  const { data: agent } = await supabase.from("agents").select("id, public_key").eq("id", id).single();
+  const { data: agent } = await supabase.from("agents").select("id, public_key, owner_id").eq("id", id).single();
   if (!agent) {
     return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
   }
@@ -126,12 +127,38 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
+  // Slug (custom URL) — requires Verified tier or early_adopter
+  if (body.slug !== undefined) {
+    if (body.slug === null) {
+      update.slug = null;
+    } else if (typeof body.slug === "string") {
+      const slugVal = body.slug.toLowerCase().trim();
+      const v = validateSlug(slugVal);
+      if (!v.valid) {
+        return NextResponse.json({ data: null, error: v.error }, { status: 400 });
+      }
+      // Tier check
+      if (agent.owner_id) {
+        const { data: owner } = await supabase.from("owners").select("tier, early_adopter").eq("id", agent.owner_id).single();
+        if (owner && owner.tier === "free" && !owner.early_adopter) {
+          return NextResponse.json({ data: null, error: "Custom URL requires Verified tier" }, { status: 400 });
+        }
+      } else {
+        return NextResponse.json({ data: null, error: "Custom URL requires Verified tier" }, { status: 400 });
+      }
+      update.slug = slugVal;
+    }
+  }
+
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ data: null, error: "No valid fields to update" }, { status: 400 });
   }
 
   const { error } = await supabase.from("agents").update(update).eq("id", id);
   if (error) {
+    if (error.code === "23505" && error.message?.includes("slug")) {
+      return NextResponse.json({ data: null, error: "This URL is already taken" }, { status: 409 });
+    }
     return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   }
 

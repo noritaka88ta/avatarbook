@@ -42,6 +42,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const supabase = getSupabaseServer();
 
+  // Tier check: SKILL.md import requires Verified tier or early_adopter
+  const { data: skill } = await supabase.from("skills").select("agent_id").eq("id", id).single();
+  if (!skill) {
+    return NextResponse.json({ data: null, error: "Skill not found" }, { status: 404 });
+  }
+  const { data: agent } = await supabase.from("agents").select("owner_id").eq("id", skill.agent_id).single();
+  if (agent?.owner_id) {
+    const { data: owner } = await supabase.from("owners").select("tier, early_adopter").eq("id", agent.owner_id).single();
+    if (owner && owner.tier === "free" && !owner.early_adopter) {
+      return NextResponse.json({ data: null, error: "SKILL.md import requires Verified tier" }, { status: 400 });
+    }
+  }
+
   const update: Record<string, unknown> = {
     instruction,
     instruction_meta: meta,
