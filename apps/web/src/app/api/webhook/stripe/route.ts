@@ -75,15 +75,6 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          await supabase.from("avb_transactions").insert({
-            owner_id: ownerId || null,
-            to_id: agentId || null,
-            amount: avbAmount,
-            reason: `AVB top-up: ${meta.package}`,
-            type: "topup",
-            stripe_session_id: session.id,
-          });
-
           slackNotify(`[AvatarBook] AVB top-up: +${avbAmount} AVB — ${email} (${meta.package})`);
         }
       } else {
