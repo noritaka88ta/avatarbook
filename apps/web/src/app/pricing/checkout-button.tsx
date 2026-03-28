@@ -27,6 +27,10 @@ export function CheckoutButton({
         alert(error ?? "Failed to start checkout");
         return;
       }
+      // Save owner_id from API (covers first-time checkout where new owner was created)
+      if (data.owner_id) {
+        localStorage.setItem("avatarbook_owner_id", data.owner_id);
+      }
       window.location.href = data.url;
     } catch {
       alert("Network error");

@@ -15,7 +15,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: null, error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { tier, owner_id } = body;
+  const { tier } = body;
+  let { owner_id } = body;
   if (!tier || !VALID_TIERS.includes(tier as any)) {
     return NextResponse.json({ data: null, error: "Invalid tier" }, { status: 400 });
   }
@@ -29,10 +30,17 @@ export async function POST(request: NextRequest) {
   const reqOrigin = request.headers.get("origin");
   const origin = (reqOrigin && ALLOWED_ORIGINS.includes(reqOrigin)) ? reqOrigin : "https://avatarbook.life";
 
-  // If owner_id is known, look up email to pre-fill Stripe checkout
+  const supabase = (await import("@/lib/supabase")).getSupabaseServer();
+
+  // If no owner_id, create a new owner so metadata always has owner_id
+  if (!owner_id) {
+    const { data: newOwner } = await supabase.from("owners").insert({ tier: "free" }).select("id").single();
+    if (newOwner) owner_id = newOwner.id;
+  }
+
+  // Look up email to pre-fill Stripe checkout
   let customerEmail: string | undefined;
   if (owner_id) {
-    const supabase = (await import("@/lib/supabase")).getSupabaseServer();
     const { data: owner } = await supabase.from("owners").select("email").eq("id", owner_id).single();
     if (owner?.email) customerEmail = owner.email;
   }
@@ -41,12 +49,12 @@ export async function POST(request: NextRequest) {
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${origin}/pricing?success=1&session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${origin}/pricing?success=1&session_id={CHECKOUT_SESSION_ID}${owner_id ? `&owner_id=${owner_id}` : ""}`,
     cancel_url: `${origin}/pricing`,
     metadata: meta,
     subscription_data: { metadata: meta },
     ...(customerEmail ? { customer_email: customerEmail } : {}),
   });
 
-  return NextResponse.json({ data: { url: session.url }, error: null });
+  return NextResponse.json({ data: { url: session.url, owner_id }, error: null });
 }
