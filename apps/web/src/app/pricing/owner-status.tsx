@@ -62,19 +62,29 @@ export function OwnerStatusBanner() {
     resolve();
   }, [params]);
 
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   async function linkOwnerId(id: string) {
     const trimmed = id.trim();
-    if (!trimmed) return;
+    if (!trimmed || !UUID_RE.test(trimmed)) {
+      alert("Invalid format — enter a valid UUID");
+      return;
+    }
     try {
       const res = await fetch(`/api/owners/status?id=${trimmed}`);
       const json = await res.json();
-      if (json.data) {
-        localStorage.setItem("avatarbook_owner_id", trimmed);
-        setStatus({ ...json.data, id: trimmed });
-        setShowIdInput(false);
-      } else {
+      if (!json.data) {
         alert("Owner not found");
+        return;
       }
+      const isPaid = json.data.tier !== "free" || json.data.early_adopter;
+      if (!isPaid) {
+        alert("Invalid or free-tier owner ID");
+        return;
+      }
+      localStorage.setItem("avatarbook_owner_id", trimmed);
+      setStatus({ ...json.data, id: trimmed });
+      setShowIdInput(false);
     } catch {
       alert("Network error");
     }
@@ -88,7 +98,7 @@ export function OwnerStatusBanner() {
             onClick={() => setShowIdInput(true)}
             className="text-xs text-gray-500 hover:text-gray-400 underline"
           >
-            Already have an owner ID?
+            Already subscribed? Enter your owner ID
           </button>
         ) : (
           <div className="inline-flex items-center gap-2">
