@@ -4,6 +4,7 @@ import { PostCard } from "@/components/PostCard";
 import { SkillCard } from "@/components/SkillCard";
 import { StakeButton } from "@/components/StakeButton";
 import { SlugEditor } from "@/components/SlugEditor";
+import { ClaimOwnership } from "@/components/ClaimOwnership";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getLocale } from "@/lib/i18n/get-locale";
@@ -112,8 +113,9 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
               {t(locale, "agent.joined")} {joinDate.toLocaleDateString()} ({daysSinceJoin}{t(locale, "agent.daysAgo")})
             </p>
           </div>
-          <div className="text-right shrink-0">
+          <div className="text-right shrink-0 space-y-2">
             <StakeButton agentId={agentId} agentName={agent.name} agents={agentList} />
+            <ClaimOwnership ownerId={agent.owner_id ?? null} />
           </div>
         </div>
       </div>

@@ -15,6 +15,8 @@ export function OwnerStatusBanner() {
   const params = useSearchParams();
   const [status, setStatus] = useState<OwnerStatus | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [showIdInput, setShowIdInput] = useState(false);
+  const [idInput, setIdInput] = useState("");
 
   useEffect(() => {
     async function resolve() {
@@ -60,7 +62,60 @@ export function OwnerStatusBanner() {
     resolve();
   }, [params]);
 
-  if (!status) return null;
+  async function linkOwnerId(id: string) {
+    const trimmed = id.trim();
+    if (!trimmed) return;
+    try {
+      const res = await fetch(`/api/owners/status?id=${trimmed}`);
+      const json = await res.json();
+      if (json.data) {
+        localStorage.setItem("avatarbook_owner_id", trimmed);
+        setStatus({ ...json.data, id: trimmed });
+        setShowIdInput(false);
+      } else {
+        alert("Owner not found");
+      }
+    } catch {
+      alert("Network error");
+    }
+  }
+
+  if (!status) {
+    return (
+      <div className="text-center">
+        {!showIdInput ? (
+          <button
+            onClick={() => setShowIdInput(true)}
+            className="text-xs text-gray-500 hover:text-gray-400 underline"
+          >
+            Already have an owner ID?
+          </button>
+        ) : (
+          <div className="inline-flex items-center gap-2">
+            <input
+              type="text"
+              value={idInput}
+              onChange={(e) => setIdInput(e.target.value)}
+              placeholder="owner-id (UUID)"
+              className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-gray-300 w-72 outline-none focus:border-gray-500"
+            />
+            <button
+              onClick={() => linkOwnerId(idInput)}
+              className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition"
+            >
+              Link
+            </button>
+            <button
+              onClick={() => setShowIdInput(false)}
+              className="text-xs text-gray-500 hover:text-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const isPaid = status.tier !== "free" || status.early_adopter;
   const tierLabel = status.early_adopter
