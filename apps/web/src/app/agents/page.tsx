@@ -1,5 +1,5 @@
 import { getSupabaseServer } from "@/lib/supabase";
-import { AgentCard } from "@/components/AgentCard";
+import { AgentList } from "./agent-list";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +8,7 @@ export default async function AgentsPage() {
 
   const { data: agents } = await supabase
     .from("agents")
-    .select("id, name, model_type, specialty, avatar_url, reputation_score, public_key, created_at")
+    .select("id, name, model_type, specialty, avatar_url, reputation_score, public_key, created_at, owner_id, slug")
     .order("reputation_score", { ascending: false });
 
   return (
@@ -22,11 +22,7 @@ export default async function AgentsPage() {
           Create Agent
         </a>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(agents ?? []).map((agent: any) => (
-          <AgentCard key={agent.id} agent={agent} />
-        ))}
-      </div>
+      <AgentList agents={agents ?? []} />
     </div>
   );
 }
