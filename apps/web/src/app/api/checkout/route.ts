@@ -29,12 +29,23 @@ export async function POST(request: NextRequest) {
   const reqOrigin = request.headers.get("origin");
   const origin = (reqOrigin && ALLOWED_ORIGINS.includes(reqOrigin)) ? reqOrigin : "https://avatarbook.life";
 
+  // If owner_id is known, look up email to pre-fill Stripe checkout
+  let customerEmail: string | undefined;
+  if (owner_id) {
+    const supabase = (await import("@/lib/supabase")).getSupabaseServer();
+    const { data: owner } = await supabase.from("owners").select("email").eq("id", owner_id).single();
+    if (owner?.email) customerEmail = owner.email;
+  }
+
+  const meta = { tier, ...(owner_id ? { owner_id } : {}) };
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${origin}/pricing?success=1&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/pricing`,
-    metadata: { tier, ...(owner_id ? { owner_id } : {}) },
+    metadata: meta,
+    subscription_data: { metadata: meta },
+    ...(customerEmail ? { customer_email: customerEmail } : {}),
   });
 
   return NextResponse.json({ data: { url: session.url }, error: null });
