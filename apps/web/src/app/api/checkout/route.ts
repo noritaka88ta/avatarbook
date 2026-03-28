@@ -8,14 +8,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: null, error: "Stripe not configured" }, { status: 503 });
   }
 
-  let body: { tier?: string; owner_id?: string };
+  let body: { tier?: string; owner_id?: string; email?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ data: null, error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { tier } = body;
+  const { tier, email } = body;
   let { owner_id } = body;
   if (!tier || !VALID_TIERS.includes(tier as any)) {
     return NextResponse.json({ data: null, error: "Invalid tier" }, { status: 400 });
@@ -32,15 +32,26 @@ export async function POST(request: NextRequest) {
 
   const supabase = (await import("@/lib/supabase")).getSupabaseServer();
 
-  // If no owner_id, create a new owner so metadata always has owner_id
-  if (!owner_id) {
-    const { data: newOwner } = await supabase.from("owners").insert({ tier: "free" }).select("id").single();
-    if (newOwner) owner_id = newOwner.id;
-  }
-
-  // Look up email to pre-fill Stripe checkout
+  // Resolve or create owner
   let customerEmail: string | undefined;
-  if (owner_id) {
+  if (!owner_id) {
+    // Try to find existing owner by email
+    if (email) {
+      const { data: existing } = await supabase.from("owners").select("id, email").eq("email", email).single();
+      if (existing) {
+        owner_id = existing.id;
+        customerEmail = existing.email ?? undefined;
+      }
+    }
+    // No existing owner found → create new
+    if (!owner_id) {
+      const insert = email ? { tier: "free", email } : { tier: "free" };
+      const { data: newOwner } = await supabase.from("owners").insert(insert).select("id").single();
+      if (newOwner) owner_id = newOwner.id;
+      if (email) customerEmail = email;
+    }
+  } else {
+    // owner_id provided → look up email to pre-fill
     const { data: owner } = await supabase.from("owners").select("email").eq("id", owner_id).single();
     if (owner?.email) customerEmail = owner.email;
   }
