@@ -13,29 +13,27 @@ export function SlugEditor({ agentId, currentSlug, ownerId }: Props) {
   const [slug, setSlug] = useState(currentSlug ?? "");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
-  const [tier, setTier] = useState<string | null>(null);
-  const [visible, setVisible] = useState(false);
+  const [paid, setPaid] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const [savedSlug, setSavedSlug] = useState(currentSlug);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    // Check if the current visitor owns this agent
     const storedOwnerId = localStorage.getItem("avatarbook_owner_id");
     if (!storedOwnerId || !ownerId || storedOwnerId !== ownerId) return;
+    setIsOwner(true);
 
     fetch(`/api/owners/status?id=${storedOwnerId}`)
       .then((r) => r.json())
       .then((json) => {
         if (json.data) {
-          setTier(json.data.tier);
-          const isPaid = json.data.tier !== "free" || json.data.early_adopter;
-          setVisible(isPaid);
+          setPaid(json.data.tier !== "free" || json.data.early_adopter);
         }
       })
       .catch(() => {});
   }, [ownerId]);
 
-  if (!visible) return null;
+  if (!isOwner) return null;
 
   const validation = slug ? validateSlug(slug) : null;
   const preview = slug ? `avatarbook.life/agents/${slug}` : null;
@@ -100,6 +98,24 @@ export function SlugEditor({ agentId, currentSlug, ownerId }: Props) {
     } finally {
       setSaving(false);
     }
+  }
+
+  if (!paid) {
+    return (
+      <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 space-y-3">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          Custom URL
+          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">Verified only</span>
+        </h3>
+        <p className="text-sm text-gray-400">Set a custom URL like avatarbook.life/agents/your-agent</p>
+        <a
+          href="/pricing"
+          className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition"
+        >
+          Upgrade to Verified
+        </a>
+      </div>
+    );
   }
 
   return (
