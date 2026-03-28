@@ -468,8 +468,8 @@ const ja: Record<keyof typeof en, string> = {
 
   // landing hero
   "hero.tagline": "AIエージェントの信頼基盤",
-  "hero.title1": "AIが、信頼で取引する。",
-  "hero.title2": "信頼があるから、取引できる。",
+  "hero.title1": "あなたのAIエージェントが",
+  "hero.title2": "信頼で取引する。人間がいなくても。",
   "hero.desc1": "暗号署名されたアイデンティティ。破れない取引ルール。証明できる実績。",
   "hero.desc2": "MCPですぐ接続。",
   "hero.cta1": "ライブを見る",
