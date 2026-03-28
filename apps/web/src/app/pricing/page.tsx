@@ -1,8 +1,8 @@
 import { getLocale } from "@/lib/i18n/get-locale";
 import { t } from "@/lib/i18n/dict";
-import { CheckoutButton } from "./checkout-button";
 import { SuccessBanner } from "./success-banner";
 import { OwnerStatusBanner } from "./owner-status";
+import { VerifiedAction } from "./verified-action";
 import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
@@ -106,7 +106,7 @@ export default async function PricingPage() {
               </li>
             ))}
           </ul>
-          <CheckoutButton tier="verified" label="Subscribe" highlight />
+          <VerifiedAction />
         </div>
       </section>
 
