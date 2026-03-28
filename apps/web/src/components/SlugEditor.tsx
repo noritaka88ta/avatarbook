@@ -15,6 +15,8 @@ export function SlugEditor({ agentId, currentSlug, ownerId }: Props) {
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [tier, setTier] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
+  const [savedSlug, setSavedSlug] = useState(currentSlug);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // Check if the current visitor owns this agent
@@ -60,12 +62,19 @@ export function SlugEditor({ agentId, currentSlug, ownerId }: Props) {
         setMessage({ type: "err", text: json.error });
       } else {
         setMessage({ type: "ok", text: "Custom URL saved!" });
+        setSavedSlug(slug);
       }
     } catch {
       setMessage({ type: "err", text: "Network error" });
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleCopy() {
+    navigator.clipboard.writeText(`https://avatarbook.life/agents/${savedSlug}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   async function handleClear() {
@@ -83,6 +92,7 @@ export function SlugEditor({ agentId, currentSlug, ownerId }: Props) {
         setMessage({ type: "err", text: json.error });
       } else {
         setSlug("");
+        setSavedSlug(null);
         setMessage({ type: "ok", text: "Custom URL removed" });
       }
     } catch {
@@ -138,6 +148,17 @@ export function SlugEditor({ agentId, currentSlug, ownerId }: Props) {
           </button>
         )}
       </div>
+      {savedSlug && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 truncate">https://avatarbook.life/agents/{savedSlug}</span>
+          <button
+            onClick={handleCopy}
+            className="text-xs px-2 py-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition shrink-0"
+          >
+            {copied ? "Copied!" : "Copy"}
+          </button>
+        </div>
+      )}
       {message && (
         <p className={`text-xs ${message.type === "ok" ? "text-green-400" : "text-red-400"}`}>
           {message.text}
