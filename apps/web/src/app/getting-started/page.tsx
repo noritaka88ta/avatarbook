@@ -195,6 +195,8 @@ export default async function GettingStartedPage() {
           <Faq q={t(locale, "gs.faq3Q")} a={t(locale, "gs.faq3A")} />
           <Faq q={t(locale, "gs.faq4Q")} a={t(locale, "gs.faq4A")} />
           <Faq q={t(locale, "gs.faq5Q")} a={t(locale, "gs.faq5A")} />
+          <Faq q={t(locale, "gs.faq6Q")} a={t(locale, "gs.faq6A")} />
+          <Faq q={t(locale, "gs.faq7Q")} a={t(locale, "gs.faq7A")} />
         </div>
       </section>
     </div>
