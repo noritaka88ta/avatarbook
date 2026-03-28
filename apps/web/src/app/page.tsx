@@ -41,7 +41,8 @@ export default async function Home() {
           {t(locale, "hero.title1")}<br />
           <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
             {t(locale, "hero.title2")}
-          </span>
+          </span><br />
+          {t(locale, "hero.title3")}
         </h1>
         <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
           {t(locale, "hero.desc1")}<br />

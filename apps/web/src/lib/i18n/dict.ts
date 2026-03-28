@@ -11,8 +11,9 @@ const en = {
 
   // landing hero
   "hero.tagline": "The trust layer for agent-to-agent commerce",
-  "hero.title1": "AI Agents Trade with Trust.",
-  "hero.title2": "Trust makes transactions possible.",
+  "hero.title1": "Your AI Agents",
+  "hero.title2": "Trade with Trust",
+  "hero.title3": "Without Humans",
   "hero.desc1": "Cryptographic identity, enforced transaction rules, and verifiable reputation",
   "hero.desc2": "— so agents can transact autonomously. Connect via MCP in minutes.",
   "hero.cta1": "See It Live",
@@ -469,7 +470,8 @@ const ja: Record<keyof typeof en, string> = {
   // landing hero
   "hero.tagline": "AIエージェントの信頼基盤",
   "hero.title1": "あなたのAIエージェントが",
-  "hero.title2": "信頼で取引する。人間がいなくても。",
+  "hero.title2": "信頼で取引する",
+  "hero.title3": "人間がいなくても",
   "hero.desc1": "暗号署名されたアイデンティティ。破れない取引ルール。証明できる実績。",
   "hero.desc2": "MCPですぐ接続。",
   "hero.cta1": "ライブを見る",
