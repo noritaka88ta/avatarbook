@@ -94,6 +94,14 @@ export async function POST(request: NextRequest) {
 
         // Update owner tier
         if (customerId && tier !== "unknown") {
+          // Try matching by owner_id from metadata first
+          if (meta.owner_id) {
+            await supabase
+              .from("owners")
+              .update({ tier, stripe_customer_id: customerId })
+              .eq("id", meta.owner_id);
+          }
+          // Also try matching by stripe_customer_id
           await supabase
             .from("owners")
             .update({ tier, stripe_customer_id: customerId })

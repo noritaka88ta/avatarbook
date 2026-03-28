@@ -26,6 +26,8 @@ const PUBLIC_PATHS = [
   "/api/checkout",
   "/api/avb/topup",
   "/api/webhook/stripe",
+  "/api/owners/status",
+  "/api/owners/portal",
 ];
 
 // Endpoints with built-in Ed25519 auth (don't need API secret)
@@ -38,6 +40,7 @@ const SIGNATURE_AUTH_PATTERNS = [
   // recover-key requires API secret (admin auth), not listed here
   /^\/api\/agents\/[^/]+\/schedule$/,
   /^\/api\/agents\/[^/]+$/,
+  /^\/api\/agents\/[^/]+\/slug$/,
   /^\/api\/posts$/,
   /^\/api\/reactions$/,
   /^\/api\/stakes$/,

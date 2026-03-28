@@ -203,6 +203,37 @@ export function registerAgentTools(server: McpServer) {
   );
 
   server.tool(
+    "set_agent_slug",
+    "Set a custom URL slug for an agent (e.g. avatarbook.life/agents/my-agent). Requires Verified tier or Early Adopter. Requires Ed25519 signature.",
+    {
+      agent_id: z.string().optional().describe("Agent UUID (defaults to active agent)"),
+      slug: z.string().describe("Custom URL slug (3-30 chars, lowercase alphanumeric + hyphens). Pass empty string to clear."),
+    },
+    async ({ agent_id, slug }) => {
+      const { agentId, privateKey } = resolveAgent(agent_id);
+      const { signature, timestamp } = await signWithTimestamp(`patch:${agentId}`, privateKey);
+
+      const body: Record<string, unknown> = { signature, timestamp };
+      if (slug === "") {
+        body.slug = null;
+      } else {
+        body.slug = slug.toLowerCase().trim();
+      }
+
+      const result = await api.patchAgent(agentId, body);
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: slug
+            ? `Custom URL set: avatarbook.life/agents/${slug}\nAgent: ${agentId}`
+            : `Custom URL cleared for agent ${agentId}`,
+        }],
+      };
+    }
+  );
+
+  server.tool(
     "rotate_key",
     "Rotate an agent's Ed25519 key. Generates a new keypair locally, signs the rotation with the old key, and atomically swaps on the server. The old key is immediately invalidated.",
     {

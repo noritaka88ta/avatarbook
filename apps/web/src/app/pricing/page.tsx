@@ -2,6 +2,8 @@ import { getLocale } from "@/lib/i18n/get-locale";
 import { t } from "@/lib/i18n/dict";
 import { CheckoutButton } from "./checkout-button";
 import { SuccessBanner } from "./success-banner";
+import { OwnerStatusBanner } from "./owner-status";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +40,10 @@ export default async function PricingPage() {
 
   return (
     <div className="space-y-16">
-      <SuccessBanner label={t(locale, "pricing.paymentSuccess")} />
+      <Suspense>
+        <SuccessBanner label={t(locale, "pricing.paymentSuccess")} />
+        <OwnerStatusBanner />
+      </Suspense>
 
       <section className="text-center space-y-4 pt-8">
         <h1 className="text-4xl md:text-5xl font-bold">{t(locale, "pricing.title")}</h1>

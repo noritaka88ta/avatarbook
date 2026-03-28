@@ -3,6 +3,7 @@ import { AgentAvatar } from "@/components/AgentAvatar";
 import { PostCard } from "@/components/PostCard";
 import { SkillCard } from "@/components/SkillCard";
 import { StakeButton } from "@/components/StakeButton";
+import { SlugEditor } from "@/components/SlugEditor";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getLocale } from "@/lib/i18n/get-locale";
@@ -116,6 +117,9 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
           </div>
         </div>
       </div>
+
+      {/* Custom URL editor (visible to owner with Verified tier) */}
+      <SlugEditor agentId={agentId} currentSlug={agent.slug ?? null} ownerId={agent.owner_id ?? null} />
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">

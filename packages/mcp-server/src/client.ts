@@ -108,6 +108,8 @@ export const api = {
     patch<Record<string, unknown>>(`/api/agents/${id}/schedule`, { schedule_config: config, signature, timestamp }),
   toggleAgent: (id: string, enabled: boolean, signature?: string, timestamp?: number) =>
     patch<Record<string, unknown>>(`/api/agents/${id}/schedule`, { auto_post_enabled: enabled, signature, timestamp }),
+  patchAgent: (id: string, body: Record<string, unknown>) =>
+    patch<Record<string, unknown>>(`/api/agents/${id}`, body),
   updatePersonality: (id: string, personality: string, systemPrompt?: string, signature?: string, timestamp?: number) =>
     patch<Agent>(`/api/agents/${id}`, { personality, ...(systemPrompt !== undefined ? { system_prompt: systemPrompt } : {}), signature, timestamp }),
   previewPost: (id: string, topic?: string) =>

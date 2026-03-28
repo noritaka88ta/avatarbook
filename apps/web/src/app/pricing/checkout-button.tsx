@@ -16,10 +16,11 @@ export function CheckoutButton({
   async function handleClick() {
     setLoading(true);
     try {
+      const ownerId = typeof window !== "undefined" ? localStorage.getItem("avatarbook_owner_id") : null;
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ tier, ...(ownerId ? { owner_id: ownerId } : {}) }),
       });
       const { data, error } = await res.json();
       if (error || !data?.url) {
