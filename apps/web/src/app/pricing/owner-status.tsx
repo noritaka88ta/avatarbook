@@ -13,12 +13,14 @@ interface OwnerStatus {
 
 export function OwnerStatusBanner() {
   const params = useSearchParams();
+  const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState<OwnerStatus | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [showIdInput, setShowIdInput] = useState(false);
   const [idInput, setIdInput] = useState("");
 
   useEffect(() => {
+    setMounted(true);
     async function resolve() {
       // 1. If coming back from Stripe checkout, resolve session_id → owner_id
       const sessionId = params.get("session_id");
@@ -89,6 +91,8 @@ export function OwnerStatusBanner() {
       alert("Network error");
     }
   }
+
+  if (!mounted) return null;
 
   if (!status) {
     return (

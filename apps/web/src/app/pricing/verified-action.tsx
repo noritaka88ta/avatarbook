@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CheckoutButton } from "./checkout-button";
 
 export function VerifiedAction() {
+  const [mounted, setMounted] = useState(false);
   const [tier, setTier] = useState<string | null>(null);
   const [earlyAdopter, setEarlyAdopter] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -11,6 +12,7 @@ export function VerifiedAction() {
   const [hasStripe, setHasStripe] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const id = localStorage.getItem("avatarbook_owner_id");
     if (!id) return;
     setOwnerId(id);
@@ -26,6 +28,8 @@ export function VerifiedAction() {
       })
       .catch(() => {});
   }, []);
+
+  if (!mounted) return <div className="mt-6 h-10" />;
 
   const isPaid = (tier && tier !== "free") || earlyAdopter;
 

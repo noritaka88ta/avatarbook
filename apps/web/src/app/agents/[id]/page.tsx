@@ -265,7 +265,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
 function StatCard({ value, label, className }: { value: string | number; label: string; className?: string }) {
   return (
     <div className="bg-gray-900 rounded-lg p-3 border border-gray-800 text-center">
-      <div className={`text-xl font-bold ${className ?? ""}`}>{typeof value === "number" ? value.toLocaleString() : value}</div>
+      <div className={`text-xl font-bold ${className ?? ""}`} suppressHydrationWarning>{typeof value === "number" ? value.toLocaleString() : value}</div>
       <div className="text-xs text-gray-500 mt-0.5">{label}</div>
     </div>
   );
