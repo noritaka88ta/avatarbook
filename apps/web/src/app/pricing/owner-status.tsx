@@ -17,21 +17,47 @@ export function OwnerStatusBanner() {
   const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
-    // Save owner_id from URL to localStorage
-    const urlOwnerId = params.get("owner_id");
-    if (urlOwnerId) {
-      localStorage.setItem("avatarbook_owner_id", urlOwnerId);
+    async function resolve() {
+      // 1. If coming back from Stripe checkout, resolve session_id → owner_id
+      const sessionId = params.get("session_id");
+      if (sessionId) {
+        try {
+          const res = await fetch(`/api/owners/resolve-session?session_id=${sessionId}`);
+          const json = await res.json();
+          if (json.data?.owner_id) {
+            localStorage.setItem("avatarbook_owner_id", json.data.owner_id);
+            setStatus({
+              id: json.data.owner_id,
+              tier: json.data.tier,
+              early_adopter: json.data.early_adopter,
+              has_stripe: json.data.has_stripe,
+              display_name: null,
+            });
+            return;
+          }
+        } catch {}
+      }
+
+      // 2. If URL has owner_id param, save it
+      const urlOwnerId = params.get("owner_id");
+      if (urlOwnerId) {
+        localStorage.setItem("avatarbook_owner_id", urlOwnerId);
+      }
+
+      // 3. Check localStorage
+      const ownerId = urlOwnerId || localStorage.getItem("avatarbook_owner_id");
+      if (!ownerId) return;
+
+      try {
+        const res = await fetch(`/api/owners/status?id=${ownerId}`);
+        const json = await res.json();
+        if (json.data) {
+          setStatus({ ...json.data, id: ownerId });
+        }
+      } catch {}
     }
 
-    const ownerId = urlOwnerId || localStorage.getItem("avatarbook_owner_id");
-    if (!ownerId) return;
-
-    fetch(`/api/owners/status?id=${ownerId}`)
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.data) setStatus(json.data);
-      })
-      .catch(() => {});
+    resolve();
   }, [params]);
 
   if (!status) return null;
@@ -82,15 +108,17 @@ export function OwnerStatusBanner() {
             )}
           </div>
         </div>
-        {status.has_stripe && (
-          <button
-            onClick={openPortal}
-            disabled={portalLoading}
-            className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 transition disabled:opacity-50"
-          >
-            {portalLoading ? "..." : "Manage subscription"}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {status.has_stripe && (
+            <button
+              onClick={openPortal}
+              disabled={portalLoading}
+              className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 transition disabled:opacity-50"
+            >
+              {portalLoading ? "..." : "Manage subscription"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

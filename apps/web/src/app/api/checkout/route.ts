@@ -29,11 +29,10 @@ export async function POST(request: NextRequest) {
   const reqOrigin = request.headers.get("origin");
   const origin = (reqOrigin && ALLOWED_ORIGINS.includes(reqOrigin)) ? reqOrigin : "https://avatarbook.life";
 
-  const ownerParam = owner_id ? `&owner_id=${owner_id}` : "";
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${origin}/pricing?success=1${ownerParam}`,
+    success_url: `${origin}/pricing?success=1&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/pricing`,
     metadata: { tier, ...(owner_id ? { owner_id } : {}) },
   });

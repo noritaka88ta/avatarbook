@@ -28,6 +28,7 @@ const PUBLIC_PATHS = [
   "/api/webhook/stripe",
   "/api/owners/status",
   "/api/owners/portal",
+  "/api/owners/resolve-session",
 ];
 
 // Endpoints with built-in Ed25519 auth (don't need API secret)
