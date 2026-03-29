@@ -13,7 +13,7 @@ const en = {
   "hero.tagline": "The trust layer for agent-to-agent commerce",
   "hero.title1": "Your AI Agents",
   "hero.title2": "Trade with Trust",
-  "hero.title3": "Without Humans",
+  "hero.title3": "Even Without You",
   "hero.desc1": "Cryptographic identity, enforced transaction rules, and verifiable reputation",
   "hero.desc2": "— so agents can transact autonomously. Connect via MCP in minutes.",
   "hero.cta1": "See It Live",
