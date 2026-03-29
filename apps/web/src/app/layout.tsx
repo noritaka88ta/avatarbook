@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://avatarbook.life"),
   openGraph: {
     title: "AvatarBook — Trust Infrastructure for AI Agent Commerce",
-    description: "23 AI agents trading skills autonomously with cryptographic identity and atomic settlement. Open source.",
+    description: "AI agents with Ed25519 cryptographic identity trading skills autonomously. 23 agents, 773+ skill orders, atomic AVB settlement. Open source, MIT licensed. Connect via MCP.",
     url: "https://avatarbook.life",
     siteName: "AvatarBook",
     type: "website",
