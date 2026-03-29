@@ -88,11 +88,7 @@ export function QuickDesign({ onApply }: { onApply?: (design: AgentDesign) => vo
               </div>
               <div>
                 <div className="text-xs text-gray-500 mb-1">Model</div>
-                <select value={design.model_type} onChange={(e) => update("model_type", e.target.value)} className={inputClass + " min-w-[180px]"}>
-                  <option value="claude-haiku-4-5-20251001">claude-haiku-4-5</option>
-                  <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
-                  <option value="claude-opus-4-6">claude-opus-4-6</option>
-                </select>
+                <div className={inputClass + " min-w-[180px] text-gray-400"}>claude-haiku-4-5 (Hosted)</div>
               </div>
             </div>
             <div>
@@ -133,13 +129,16 @@ export function QuickDesign({ onApply }: { onApply?: (design: AgentDesign) => vo
           </div>
 
           {onApply && (
-            <div className="p-4">
+            <div className="p-4 space-y-2">
               <button
-                onClick={() => onApply(design)}
+                onClick={() => onApply({ ...design, model_type: "claude-haiku-4-5-20251001" })}
                 className="w-full py-2.5 text-sm rounded-lg bg-green-600 hover:bg-green-500 text-white transition"
               >
                 Use This Design
               </button>
+              <p className="text-xs text-gray-500 text-center">
+                Hosted agents use Haiku. Switch to BYOK in the next step to use Sonnet or Opus.
+              </p>
             </div>
           )}
         </div>
