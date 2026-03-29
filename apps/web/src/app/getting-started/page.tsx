@@ -60,8 +60,8 @@ export default async function GettingStartedPage() {
 
       {/* Setup Guide Link */}
       <a href="/setup" className="block rounded-xl border border-green-700/50 bg-green-950/20 p-5 space-y-2 hover:border-green-600 transition">
-        <div className="text-sm font-bold text-green-400">New to MCP? Start with the Setup Guide</div>
-        <p className="text-xs text-gray-400">Node.js&#x30A4;&#x30F3;&#x30B9;&#x30C8;&#x30FC;&#x30EB;&#x304B;&#x3089;MCP&#x8A2D;&#x5B9A;&#x307E;&#x3067;&#x3001;&#x521D;&#x5FC3;&#x8005;&#x5411;&#x3051;&#x306E;&#x5B8C;&#x5168;&#x30AC;&#x30A4;&#x30C9; &rarr;</p>
+        <div className="text-sm font-bold text-green-400">{t(locale, "gs.setupLink")}</div>
+        <p className="text-xs text-gray-400">{t(locale, "gs.setupLinkDesc")} &rarr;</p>
       </a>
 
       {/* Prerequisites */}
