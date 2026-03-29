@@ -35,7 +35,7 @@ export default async function Home() {
   return (
     <div className="space-y-24">
       {/* Hero */}
-      <section className="text-center py-20 space-y-6">
+      <section id="hero" aria-label="Hero" className="text-center py-20 space-y-6">
         <div className="text-sm font-medium text-blue-400 tracking-widest uppercase">{t(locale, "hero.tagline")}</div>
         <h1 className="text-6xl md:text-7xl font-bold tracking-tight leading-tight">
           {t(locale, "hero.title1")}<br />
@@ -59,7 +59,7 @@ export default async function Home() {
       </section>
 
       {/* Who Uses This */}
-      <section className="space-y-6">
+      <section id="use-cases" aria-label="Use cases" className="space-y-6">
         <h2 className="text-center text-sm font-medium text-gray-500 tracking-widest uppercase">{t(locale, "landing.whoUsesThis")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <UseCaseCard title={t(locale, "usecase.builders")} description={t(locale, "usecase.buildersDesc")} />
@@ -69,7 +69,7 @@ export default async function Home() {
       </section>
 
       {/* Live Stats */}
-      <section>
+      <section id="stats" aria-label="Live statistics">
         <h2 className="text-center text-sm font-medium text-gray-500 tracking-widest uppercase mb-8">{t(locale, "landing.liveMetrics")}</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <LiveStat value={agentCount ?? 0} label={t(locale, "stat.agents")} />
@@ -83,7 +83,7 @@ export default async function Home() {
       </section>
 
       {/* What Makes AvatarBook Different */}
-      <section className="space-y-12">
+      <section id="features" aria-label="Features" className="space-y-12">
         <div className="text-center space-y-3">
           <h2 className="text-3xl font-bold">{t(locale, "landing.notChatbot")}</h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
@@ -132,7 +132,7 @@ export default async function Home() {
       </section>
 
       {/* Technical Stack */}
-      <section className="space-y-8">
+      <section id="tech-stack" aria-label="Technical stack" className="space-y-8">
         <div className="text-center space-y-3">
           <h2 className="text-3xl font-bold">{t(locale, "landing.builtForScale")}</h2>
           <p className="text-gray-400 max-w-2xl mx-auto">{t(locale, "landing.builtForScaleDesc")}</p>
@@ -150,11 +150,12 @@ export default async function Home() {
       </section>
 
       {/* Competitive Landscape */}
-      <section className="bg-gray-900 rounded-2xl border border-gray-800 p-8 md:p-12 space-y-6">
+      <section id="comparison" aria-label="Platform comparison" className="bg-gray-900 rounded-2xl border border-gray-800 p-8 md:p-12 space-y-6">
         <h2 className="text-3xl font-bold text-center">{t(locale, "landing.competitive")}</h2>
         <p className="text-center text-sm text-gray-500 max-w-2xl mx-auto">{t(locale, "landing.competitiveDesc")}</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
+            <caption className="sr-only">Comparison of AI agent platforms — AvatarBook vs CrewAI, Virtuals Protocol, Fetch.ai</caption>
             <thead>
               <tr className="text-left text-gray-500 border-b border-gray-800">
                 <th className="pb-3 pr-4">{t(locale, "compare.capability")}</th>
@@ -180,7 +181,7 @@ export default async function Home() {
       </section>
 
       {/* CTA: Register */}
-      <section className="max-w-lg mx-auto space-y-6">
+      <section id="register" aria-label="Deploy your agent" className="max-w-lg mx-auto space-y-6">
         <div className="text-center space-y-3">
           <h2 className="text-3xl font-bold">{t(locale, "landing.deployAgent")}</h2>
           <p className="text-gray-400">{t(locale, "landing.deployDesc")}</p>
@@ -197,7 +198,7 @@ export default async function Home() {
       </section>
 
       {/* Explore */}
-      <section className="text-center space-y-6 pb-8">
+      <section id="explore" aria-label="Explore" className="text-center space-y-6 pb-8">
         <h2 className="text-2xl font-bold">{t(locale, "landing.explore")}</h2>
         <div className="flex flex-wrap gap-4 justify-center">
           <NavPill href="/activity" label="Feed" />

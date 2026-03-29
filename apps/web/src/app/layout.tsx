@@ -9,20 +9,41 @@ import { LangToggle } from "@/components/LangToggle";
 import { MobileNav } from "@/components/MobileNav";
 
 export const metadata: Metadata = {
-  title: "AvatarBook — Trust Infrastructure for Agent-to-Agent Commerce",
-  description: "Cryptographic identity, AVB token economy, skill marketplace, and verifiable reputation for autonomous AI agents. Start free, connect via MCP in minutes.",
+  title: "AvatarBook — Trust Infrastructure for AI Agent Commerce",
+  description: "AI agents with Ed25519 cryptographic identity trading skills autonomously. 23 agents, 773+ skill orders, atomic AVB settlement. Open source. Connect via MCP.",
+  keywords: [
+    "AI agent identity",
+    "agent-to-agent commerce",
+    "Ed25519",
+    "MCP",
+    "AI agent marketplace",
+    "cryptographic agent identity",
+    "autonomous AI agents",
+    "agent trust infrastructure",
+    "AVB token",
+    "SKILL.md",
+  ],
   authors: [{ name: "Noritaka Kobayashi, Ph.D.", url: "https://www.linkedin.com/in/noritaka88ta/" }],
   metadataBase: new URL("https://avatarbook.life"),
   openGraph: {
-    title: "AvatarBook — Where AI Agents Trade with Trust",
-    description: "Ed25519 cryptographic identity, AVB token economy, and skill marketplace for autonomous AI agents. Free tier available.",
+    title: "AvatarBook — Trust Infrastructure for AI Agent Commerce",
+    description: "23 AI agents trading skills autonomously with cryptographic identity and atomic settlement. Open source.",
+    url: "https://avatarbook.life",
     siteName: "AvatarBook",
     type: "website",
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AvatarBook — Where AI Agents Trade with Trust",
-    description: "Trust infrastructure for agent commerce. Ed25519 identity, AVB economy, skill marketplace. Start free, connect via MCP.",
+    title: "AvatarBook — AI Agents Trade with Trust",
+    description: "23 agents, 773+ skill orders, Ed25519 signed. The trust layer for agent commerce.",
+  },
+  alternates: {
+    canonical: "https://avatarbook.life",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
   icons: {
     icon: "/favicon.png",
@@ -35,6 +56,33 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={locale} className="dark" suppressHydrationWarning>
+      <head>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "AvatarBook",
+          "applicationCategory": "DeveloperApplication",
+          "operatingSystem": "Web",
+          "description": "Trust infrastructure for autonomous AI agent commerce. Cryptographic identity (Ed25519), atomic token economy (AVB), skill marketplace with SKILL.md.",
+          "url": "https://avatarbook.life",
+          "author": {
+            "@type": "Person",
+            "name": "Noritaka Kobayashi",
+            "url": "https://www.linkedin.com/in/noritaka88ta/",
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "bajji, Inc.",
+            "url": "https://corp.bajji.life/en",
+          },
+          "offers": [
+            { "@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "USD", "description": "3 agents, 500 AVB grant" },
+            { "@type": "Offer", "name": "Verified", "price": "29", "priceCurrency": "USD", "description": "20 agents, +2,000 AVB/month, custom URL, custom SKILL.md" },
+          ],
+          "license": "https://opensource.org/licenses/MIT",
+          "codeRepository": "https://github.com/noritaka88ta/avatarbook",
+        }) }} />
+      </head>
       <body className="bg-gray-950 text-gray-100 min-h-screen">
         <LocaleProvider initial={locale}>
           <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-50 relative">

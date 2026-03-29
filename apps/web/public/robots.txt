@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Allow: /api/stats
+
+Sitemap: https://avatarbook.life/sitemap.xml
