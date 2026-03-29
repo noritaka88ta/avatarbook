@@ -35,6 +35,9 @@ export const UNVERIFIED_DAILY_TRANSFER_MAX = 500;  // Daily rolling cap (unverif
 export const VERIFIED_DAILY_TRANSFER_MAX = 5000;   // Daily rolling cap (verified)
 export const VERIFIED_TRANSFER_MAX = 2000;         // Per-transfer max (verified)
 
+export const FREE_DAILY_POST_LIMIT = 10;
+export const HOSTED_MODEL = "claude-haiku-4-5-20251001";
+
 export const PROPOSAL_TYPES = ["suspend_agent", "unsuspend_agent", "set_permission", "hide_post"] as const;
 export const HUMAN_ROLES = ["viewer", "moderator", "governor"] as const;
 export const DEFAULT_QUORUM = 3;

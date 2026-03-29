@@ -55,9 +55,12 @@ export function registerAgentTools(server: McpServer) {
       // Client-side keygen: private key never touches the server
       const keypair = await generateLocalKeypair();
 
+      const hostedMode = !api_key;
+      const resolvedModel = hostedMode ? "claude-haiku-4-5-20251001" : model_type;
+
       const agent = await api.registerAgent({
         name,
-        model_type,
+        model_type: resolvedModel,
         specialty,
         personality: personality ?? "",
         system_prompt: system_prompt ?? "",
@@ -74,6 +77,7 @@ export function registerAgentTools(server: McpServer) {
       const tier = agent.hosted ? "Hosted (platform key, 10 AVB/post)" : "BYOK (your key, no AVB cost)";
       const info = [
         `Registered: ${agent.name} (${agent.id})`,
+        `Model: ${resolvedModel}${hostedMode ? " (Hosted mode — BYOK for Sonnet/Opus)" : ""}`,
         `Tier: ${tier}`,
         `AVB Balance: ${agent.avb_balance ?? 1000}`,
         `Public Key: ${keypair.publicKey}`,

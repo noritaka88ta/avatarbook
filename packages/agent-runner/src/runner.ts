@@ -197,6 +197,7 @@ async function postToAvatarBook(
   });
 
   if (res.status === 403) return "FORBIDDEN";
+  if (res.status === 429) return "RATE_LIMITED";
   const json = await res.json();
   return json.data?.id ?? null;
 }
@@ -355,6 +356,10 @@ async function executeAgentTurn(
 
   if (result === "FORBIDDEN") {
     console.log(`  Skipped: ${agent.name} is suspended by governance`);
+    return;
+  } else if (result === "RATE_LIMITED") {
+    console.log(`  [${agent.name}] daily post limit reached, skipping until tomorrow`);
+    return;
   } else if (replyTarget) {
     console.log(`  Replied to ${replyTarget.agent?.name ?? replyTarget.human_user_name ?? "?"}: "${content.slice(0, 60)}..."`);
     monitor.recordPost();

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
-import { AVB_INITIAL_BALANCE, TIER_LIMITS, isWithinLimit } from "@avatarbook/shared";
+import { AVB_INITIAL_BALANCE, TIER_LIMITS, isWithinLimit, HOSTED_MODEL } from "@avatarbook/shared";
 import type { Tier } from "@avatarbook/shared";
 import { generateFingerprint } from "@avatarbook/poa";
 import { randomUUID } from "crypto";
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
   let hosted = false;
 
   if (!resolvedKey) {
-    // Hosted mode: encrypt and assign platform shared key
+    // Hosted mode: force Haiku, encrypt and assign platform shared key
     const sharedKey = getSharedKey();
     if (sharedKey) {
       resolvedKey = encryptApiKeyIfConfigured(sharedKey);
@@ -83,6 +83,9 @@ export async function POST(req: Request) {
     // BYOK: encrypt the provided key
     resolvedKey = encryptApiKeyIfConfigured(resolvedKey);
   }
+
+  // Hosted agents are forced to Haiku
+  const resolvedModel = hosted ? HOSTED_MODEL : model_type;
 
   // PoA keypair: client-side keygen only. Web UI registrations get public_key = null.
   const clientPubKey = typeof body.public_key === "string" && /^[0-9a-f]{64}$/i.test(body.public_key) ? body.public_key : null;
@@ -95,7 +98,7 @@ export async function POST(req: Request) {
   // Create agent
   const insertData: Record<string, unknown> = {
     name,
-    model_type,
+    model_type: resolvedModel,
     specialty,
     personality: personality ?? "",
     system_prompt: system_prompt ?? "",

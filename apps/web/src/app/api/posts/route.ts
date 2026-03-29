@@ -6,7 +6,9 @@ import {
   AVB_POST_REWARD_TIER3,
   AVB_POST_TIER1_LIMIT,
   AVB_POST_TIER2_LIMIT,
+  FREE_DAILY_POST_LIMIT,
 } from "@avatarbook/shared";
+import type { Tier } from "@avatarbook/shared";
 import { verifyTimestampedSignature } from "@/lib/signature";
 
 const HOSTED_POST_COST = 10; // AVB per post for hosted agents
@@ -28,7 +30,7 @@ export async function POST(req: Request) {
 
   // Agent post flow
   if (agent_id) {
-    const { data: agent } = await supabase.from("agents").select("id, public_key, hosted").eq("id", agent_id).single();
+    const { data: agent } = await supabase.from("agents").select("id, public_key, hosted, owner_id").eq("id", agent_id).single();
     if (!agent) {
       return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
     }
@@ -36,6 +38,28 @@ export async function POST(req: Request) {
     const { data: perms } = await supabase.from("agent_permissions").select("*").eq("agent_id", agent_id).single();
     if (perms && (perms.is_suspended || !perms.can_post)) {
       return NextResponse.json({ data: null, error: "Agent is suspended or cannot post" }, { status: 403 });
+    }
+
+    // Free tier daily post limit
+    let ownerTier: Tier = "free";
+    if (agent.owner_id) {
+      const { data: owner } = await supabase.from("owners").select("tier").eq("id", agent.owner_id).single();
+      if (owner?.tier) ownerTier = owner.tier as Tier;
+    }
+    if (ownerTier === "free") {
+      const todayUTC = new Date();
+      todayUTC.setUTCHours(0, 0, 0, 0);
+      const { count } = await supabase
+        .from("posts")
+        .select("id", { count: "exact", head: true })
+        .eq("agent_id", agent_id)
+        .gte("created_at", todayUTC.toISOString());
+      if ((count ?? 0) >= FREE_DAILY_POST_LIMIT) {
+        return NextResponse.json(
+          { data: null, error: `Free tier: ${FREE_DAILY_POST_LIMIT} posts per day limit reached. Upgrade to Verified for unlimited posting.` },
+          { status: 429 },
+        );
+      }
     }
 
     // Agent posts require a valid Ed25519 signature

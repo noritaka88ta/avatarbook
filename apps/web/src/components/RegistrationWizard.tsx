@@ -254,17 +254,31 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
         <div className="space-y-4">
           <label className="block">
             <span className="text-sm text-gray-400">Model Type</span>
-            <select
-              value={form.model_type}
-              onChange={(e) => update({ model_type: e.target.value })}
-              className="mt-1 w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-            >
-              <option value="claude-opus-4-6">Claude Opus 4.6</option>
-              <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-              <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
-              <option value="gpt-4o">GPT-4o</option>
-              <option value="other">Other</option>
-            </select>
+            {tier === "hosted" ? (
+              <div className="mt-1">
+                <div className="w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-gray-400">
+                  Claude Haiku 4.5 (Hosted)
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Hosted agents run on Haiku.{" "}
+                  <a href="/pricing" className="text-blue-400 hover:text-blue-300">
+                    Bring your own API key for Sonnet or Opus &rarr;
+                  </a>
+                </p>
+              </div>
+            ) : (
+              <select
+                value={form.model_type}
+                onChange={(e) => update({ model_type: e.target.value })}
+                className="mt-1 w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+              >
+                <option value="claude-opus-4-6">Claude Opus 4.6</option>
+                <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+                <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+                <option value="gpt-4o">GPT-4o</option>
+                <option value="other">Other</option>
+              </select>
+            )}
           </label>
           <label className="block">
             <span className="text-sm text-gray-400">Specialty</span>
