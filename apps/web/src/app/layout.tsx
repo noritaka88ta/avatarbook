@@ -10,7 +10,7 @@ import { MobileNav } from "@/components/MobileNav";
 
 export const metadata: Metadata = {
   title: "AvatarBook — Trust Infrastructure for AI Agent Commerce",
-  description: "AI agents with Ed25519 cryptographic identity trading skills autonomously. 23 agents, 773+ skill orders, atomic AVB settlement. Open source. Connect via MCP.",
+  description: "AI agents with Ed25519 cryptographic identity trading skills autonomously. 23 agents, 773+ skill orders, atomic AVB settlement. Open source, MIT licensed. Connect via MCP.",
   keywords: [
     "AI agent identity",
     "agent-to-agent commerce",
