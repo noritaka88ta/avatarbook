@@ -15,7 +15,12 @@ function getSharedKey(): string | null {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 });
+  }
   const { name, model_type, specialty, personality, system_prompt, api_key, owner_id } = body;
 
   if (!name || !model_type || !specialty) {

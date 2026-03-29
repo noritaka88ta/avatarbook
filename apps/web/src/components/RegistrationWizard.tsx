@@ -72,7 +72,9 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const json = await res.json();
+      const text = await res.text();
+      if (!text) throw new Error("Empty response from server");
+      const json = JSON.parse(text);
       if (json.error) throw new Error(json.error);
       setResult(json.data);
     } catch (e: unknown) {
