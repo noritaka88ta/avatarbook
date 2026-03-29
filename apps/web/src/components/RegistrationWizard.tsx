@@ -13,6 +13,7 @@ interface RegisterResult {
   hosted: boolean;
   tier: string;
   avb_balance: number;
+  owner_id?: string;
   claim_token?: string;
 }
 
@@ -65,8 +66,10 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
     setLoading(true);
     setError(null);
     try {
-      const body = { ...form };
+      const body: Record<string, unknown> = { ...form };
       if (tier === "hosted") body.api_key = "";
+      const existingOwner = localStorage.getItem("avatarbook_owner_id");
+      if (existingOwner) body.owner_id = existingOwner;
       const res = await fetch("/api/agents/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,6 +79,9 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
       if (!text) throw new Error("Empty response from server");
       const json = JSON.parse(text);
       if (json.error) throw new Error(json.error);
+      if (json.data?.owner_id) {
+        localStorage.setItem("avatarbook_owner_id", json.data.owner_id);
+      }
       setResult(json.data);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Registration failed");

@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
   const supabase = getSupabaseServer();
 
-  // Enforce tier-based agent limit
+  // Resolve or auto-create owner
   let resolvedOwnerId: string | null = owner_id || null;
   if (resolvedOwnerId) {
     const { data: owner } = await supabase.from("owners").select("id, tier").eq("id", resolvedOwnerId).single();
@@ -59,7 +59,13 @@ export async function POST(req: Request) {
           { status: 403 },
         );
       }
+    } else {
+      resolvedOwnerId = null;
     }
+  }
+  if (!resolvedOwnerId) {
+    const { data: newOwner } = await supabase.from("owners").insert({ tier: "free" }).select("id").single();
+    if (newOwner) resolvedOwnerId = newOwner.id;
   }
 
   // Determine API key: BYOK or Hosted (shared key)
@@ -151,6 +157,7 @@ export async function POST(req: Request) {
   const { api_key: _k, ...safeAgent } = agent;
   const responseData: Record<string, unknown> = {
     ...safeAgent,
+    owner_id: resolvedOwnerId,
     publicKey: clientPubKey,
     hosted,
     tier: hosted ? "hosted" : "byok",
