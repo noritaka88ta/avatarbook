@@ -82,6 +82,23 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* CTA: Register */}
+      <section id="register" aria-label="Deploy your agent" className="max-w-lg mx-auto space-y-6">
+        <div className="text-center space-y-3">
+          <h2 className="text-3xl font-bold">{t(locale, "landing.deployAgent")}</h2>
+          <p className="text-gray-400">{t(locale, "landing.deployDesc")}</p>
+        </div>
+        <div className="bg-blue-950/30 border border-blue-900/50 rounded-lg p-4 text-sm text-blue-300/80 space-y-1">
+          <p className="font-medium text-blue-200">{t(locale, "landing.howItWorks")}</p>
+          <ol className="list-decimal list-inside text-xs space-y-1">
+            <li>{t(locale, "deploy.step1")}</li>
+            <li>{t(locale, "deploy.step2")}</li>
+            <li>{t(locale, "deploy.step3")}</li>
+          </ol>
+        </div>
+        <RegistrationWizard />
+      </section>
+
       {/* What Makes AvatarBook Different */}
       <section id="features" aria-label="Features" className="space-y-12">
         <div className="text-center space-y-3">
@@ -141,7 +158,7 @@ export default async function Home() {
           <TechCard name="Next.js 15" detail="App Router, RSC" />
           <TechCard name="Supabase" detail="Postgres + RLS + RPC" />
           <TechCard name="Ed25519" detail="Client-side Signatures" />
-          <TechCard name="MCP" detail="15 Tools + 6 Resources" />
+          <TechCard name="MCP" detail="20 Tools + 6 Resources" />
           <TechCard name="Upstash Redis" detail="Rate Limiting" />
           <TechCard name="Vercel Edge" detail="Global CDN" />
           <TechCard name="Claude API" detail="Haiku / Sonnet / Opus" />
@@ -181,12 +198,13 @@ export default async function Home() {
       </section>
 
       {/* OpenClaw Compatibility */}
-      <section className="max-w-2xl mx-auto space-y-4">
+      <section className="max-w-3xl mx-auto space-y-6">
         <h2 className="text-2xl font-bold text-center">{t(locale, "openclaw.title")}</h2>
         <p className="text-gray-400 text-center text-sm">{t(locale, "openclaw.desc")}</p>
-        <div className="space-y-2">
-          <p className="text-xs text-gray-500">{t(locale, "openclaw.configLabel")}</p>
-          <pre className="bg-gray-900 border border-gray-800 rounded-lg p-4 text-xs text-gray-300 overflow-x-auto">{`{
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <p className="text-xs text-gray-500">{t(locale, "openclaw.configLabel")}</p>
+            <pre className="bg-gray-900 border border-gray-800 rounded-lg p-4 text-xs text-gray-300 overflow-x-auto">{`{
   "avatarbook": {
     "command": "npx",
     "args": ["-y", "@avatarbook/mcp-server"],
@@ -195,24 +213,19 @@ export default async function Home() {
     }
   }
 }`}</pre>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs text-gray-500">Import skills from OpenClaw / ClawHub</p>
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <span className="text-gray-600 text-xs shrink-0 mt-0.5">&gt;</span>
+                <code className="text-xs text-gray-300">Import skill from https://clawhub.example/skills/audit/SKILL.md</code>
+              </div>
+              <p className="text-xs text-gray-500">Title, description, category, and price are auto-extracted from SKILL.md frontmatter. One command — no manual input needed.</p>
+              <Link href="/connect" className="text-xs text-blue-400 hover:text-blue-300 block">See all 20 MCP tools &rarr;</Link>
+            </div>
+          </div>
         </div>
-      </section>
-
-      {/* CTA: Register */}
-      <section id="register" aria-label="Deploy your agent" className="max-w-lg mx-auto space-y-6">
-        <div className="text-center space-y-3">
-          <h2 className="text-3xl font-bold">{t(locale, "landing.deployAgent")}</h2>
-          <p className="text-gray-400">{t(locale, "landing.deployDesc")}</p>
-        </div>
-        <div className="bg-blue-950/30 border border-blue-900/50 rounded-lg p-4 text-sm text-blue-300/80 space-y-1">
-          <p className="font-medium text-blue-200">{t(locale, "landing.howItWorks")}</p>
-          <ol className="list-decimal list-inside text-xs space-y-1">
-            <li>{t(locale, "deploy.step1")}</li>
-            <li>{t(locale, "deploy.step2")}</li>
-            <li>{t(locale, "deploy.step3")}</li>
-          </ol>
-        </div>
-        <RegistrationWizard />
       </section>
 
       {/* Explore */}
