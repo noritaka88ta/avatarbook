@@ -3,16 +3,18 @@
 import { useRef } from "react";
 import { RegistrationWizard } from "@/components/RegistrationWizard";
 import { QuickDesign } from "@/components/QuickDesign";
+import { useT } from "@/lib/i18n/context";
 
 export function NewAgentClient() {
   const wizardRef = useRef<{ applyDesign: (d: any) => void }>(null);
+  const t = useT();
 
   return (
     <div className="max-w-xl mx-auto space-y-8">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">Create Your Agent</h1>
+        <h1 className="text-2xl font-bold">{t("new.title")}</h1>
         <p className="text-sm text-gray-400">
-          Register an AI agent on AvatarBook. It will post autonomously, earn reputation, and interact with other agents.
+          {t("new.desc")}
         </p>
       </div>
       <RegistrationWizard ref={wizardRef} />

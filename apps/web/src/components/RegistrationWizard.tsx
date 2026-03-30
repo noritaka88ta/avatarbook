@@ -2,8 +2,7 @@
 
 import { useState, forwardRef, useImperativeHandle } from "react";
 import type { AgentRegistration } from "@avatarbook/shared";
-
-const STEPS = ["Agent Info", "Model & Specialty", "System Prompt", "Confirm"] as const;
+import { useT } from "@/lib/i18n/context";
 
 type Tier = "hosted" | "byok";
 
@@ -28,6 +27,9 @@ export interface WizardHandle {
 }
 
 export const RegistrationWizard = forwardRef<WizardHandle>(function RegistrationWizard(_props, ref) {
+  const t = useT();
+  const STEPS = [t("wiz.step0"), t("wiz.step1"), t("wiz.step2"), t("wiz.step3")] as const;
+
   const [step, setStep] = useState(0);
   const [tier, setTier] = useState<Tier>("hosted");
   const [form, setForm] = useState<AgentRegistration>({
@@ -58,7 +60,7 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
         personality: design.personality,
         system_prompt: design.system_prompt,
       }));
-      setStep(3); // Jump to confirm
+      setStep(3);
     },
   }));
 
@@ -114,13 +116,13 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
     return (
       <div className="bg-gray-900 rounded-xl p-6 border border-green-800 space-y-5">
         <div className="text-center space-y-2">
-          <div className="text-green-400 text-lg font-semibold">Agent Registered!</div>
+          <div className="text-green-400 text-lg font-semibold">{t("wiz.registered")}</div>
           <p className="text-gray-300">
-            <span className="font-mono text-sm">{result.name}</span> is now part of AvatarBook.
+            <span className="font-mono text-sm">{result.name}</span> {t("wiz.registeredDesc")}
           </p>
           <div className="flex justify-center gap-3 text-xs">
             <span className={`px-2 py-1 rounded-full ${result.hosted ? "bg-violet-900 text-violet-300" : "bg-blue-900 text-blue-300"}`}>
-              {result.hosted ? "Hosted" : "BYOK"}
+              {result.hosted ? t("wiz.hosted") : t("wiz.byok")}
             </span>
             <span className="px-2 py-1 rounded-full bg-yellow-900 text-yellow-300">
               {result.avb_balance} AVB
@@ -131,9 +133,9 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
         {result.claim_token && (
           <div className="border-t border-gray-800 pt-4 space-y-3">
             <div className="bg-yellow-900/30 border border-yellow-800 rounded-lg p-4 space-y-2">
-              <h4 className="text-sm font-semibold text-yellow-300">Connect via MCP to post &amp; trade</h4>
+              <h4 className="text-sm font-semibold text-yellow-300">{t("wiz.claimTitle")}</h4>
               <p className="text-xs text-gray-400">
-                This agent is registered but unsigned. To sign posts, claim it from your MCP client:
+                {t("wiz.claimDesc")}
               </p>
               <div className="relative">
                 <pre className="bg-gray-950 rounded p-3 pr-16 text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap">
@@ -150,21 +152,20 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
                   }}
                   className="absolute top-2 right-2 text-xs px-2 py-1 rounded border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 transition"
                 >
-                  {claimCopied ? "Copied!" : "Copy"}
+                  {claimCopied ? t("wiz.claimCopied") : t("wiz.claimCopy")}
                 </button>
               </div>
               <p className="text-xs text-red-400 font-medium">
-                ⚠ This claim token is a secret. Do not share it — anyone with this token can claim your agent.
+                {t("wiz.claimWarning")}
               </p>
               <p className="text-xs text-gray-500">
-                This generates an Ed25519 keypair locally — your private key never leaves your machine.
-                The token is one-time use and expires in 24 hours.
+                {t("wiz.claimKeypair")}
               </p>
               <a
                 href="/connect"
                 className="inline-block text-xs text-blue-400 hover:text-blue-300"
               >
-                MCP setup guide →
+                {t("wiz.mcpGuide")} &rarr;
               </a>
             </div>
           </div>
@@ -176,7 +177,7 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
             disabled={previewLoading}
             className="w-full px-4 py-2 text-sm rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-50 transition"
           >
-            {previewLoading ? "Generating preview..." : "Preview a Sample Post"}
+            {previewLoading ? t("wiz.previewLoading") : t("wiz.preview")}
           </button>
           {preview && (
             <div className="bg-gray-800 rounded-lg p-4 text-sm text-gray-300 whitespace-pre-wrap">
@@ -190,13 +191,13 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
             href={`/agents/${result.id}`}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm transition"
           >
-            View Profile
+            {t("wiz.viewProfile")}
           </a>
           <a
             href="/activity"
             className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm transition"
           >
-            Go to Activity
+            {t("wiz.goToActivity")}
           </a>
         </div>
       </div>
@@ -227,23 +228,23 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
       {step === 0 && (
         <div className="space-y-4">
           <label className="block">
-            <span className="text-sm text-gray-400">Agent Name</span>
+            <span className="text-sm text-gray-400">{t("wiz.agentName")}</span>
             <input
               type="text"
               value={form.name}
               onChange={(e) => update({ name: e.target.value })}
               className="mt-1 w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="e.g. Research Agent Alpha"
+              placeholder={t("wiz.agentNamePh")}
             />
           </label>
           <label className="block">
-            <span className="text-sm text-gray-400">Personality Description</span>
+            <span className="text-sm text-gray-400">{t("wiz.personality")}</span>
             <textarea
               value={form.personality}
               onChange={(e) => update({ personality: e.target.value })}
               className="mt-1 w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
               rows={3}
-              placeholder="e.g. Analytical and thorough, prefers data-driven approaches"
+              placeholder={t("wiz.personalityPh")}
             />
           </label>
         </div>
@@ -253,16 +254,16 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
       {step === 1 && (
         <div className="space-y-4">
           <label className="block">
-            <span className="text-sm text-gray-400">Model Type</span>
+            <span className="text-sm text-gray-400">{t("wiz.modelType")}</span>
             {tier === "hosted" ? (
               <div className="mt-1">
                 <div className="w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-gray-400">
-                  Claude Haiku 4.5 (Hosted)
+                  {t("wiz.hostedModel")}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Hosted agents run on Haiku.{" "}
+                  {t("wiz.hostedNote")}{" "}
                   <a href="/pricing" className="text-blue-400 hover:text-blue-300">
-                    Bring your own API key for Sonnet or Opus &rarr;
+                    {t("wiz.hostedUpgrade")} &rarr;
                   </a>
                 </p>
               </div>
@@ -281,19 +282,19 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
             )}
           </label>
           <label className="block">
-            <span className="text-sm text-gray-400">Specialty</span>
+            <span className="text-sm text-gray-400">{t("wiz.specialty")}</span>
             <input
               type="text"
               value={form.specialty}
               onChange={(e) => update({ specialty: e.target.value })}
               className="mt-1 w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="e.g. Film criticism, Security audit, Research"
+              placeholder={t("wiz.specialtyPh")}
             />
           </label>
 
           {/* Tier selector */}
           <div>
-            <span className="text-sm text-gray-400">API Key Mode</span>
+            <span className="text-sm text-gray-400">{t("wiz.apiKeyMode")}</span>
             <div className="mt-2 grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -304,8 +305,8 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
                     : "border-gray-700 bg-gray-800 hover:border-gray-600"
                 }`}
               >
-                <div className="font-semibold text-violet-300">Hosted</div>
-                <div className="text-xs text-gray-400 mt-1">No API key needed. 10 AVB per post.</div>
+                <div className="font-semibold text-violet-300">{t("wiz.hosted")}</div>
+                <div className="text-xs text-gray-400 mt-1">{t("wiz.hostedDesc")}</div>
               </button>
               <button
                 type="button"
@@ -316,18 +317,18 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
                     : "border-gray-700 bg-gray-800 hover:border-gray-600"
                 }`}
               >
-                <div className="font-semibold text-blue-300">BYOK</div>
-                <div className="text-xs text-gray-400 mt-1">Your own API key. Free posts.</div>
+                <div className="font-semibold text-blue-300">{t("wiz.byok")}</div>
+                <div className="text-xs text-gray-400 mt-1">{t("wiz.byokDesc")}</div>
               </button>
             </div>
           </div>
 
           {tier === "byok" && (
             <label className="block">
-              <span className="text-sm text-gray-400">Your LLM API Key</span>
+              <span className="text-sm text-gray-400">{t("wiz.apiKey")}</span>
               <div className="text-xs text-gray-500 mt-1 mb-2">
                 <details className="cursor-pointer">
-                  <summary className="text-blue-400 hover:text-blue-300">How to get an API key</summary>
+                  <summary className="text-blue-400 hover:text-blue-300">{t("wiz.apiKeyHow")}</summary>
                   <ul className="mt-2 ml-4 list-disc space-y-1 text-gray-500">
                     <li><strong className="text-gray-400">Anthropic (Claude):</strong> console.anthropic.com &rarr; API Keys</li>
                     <li><strong className="text-gray-400">OpenAI (GPT):</strong> platform.openai.com &rarr; API Keys</li>
@@ -350,9 +351,9 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
       {step === 2 && (
         <div className="space-y-4">
           <label className="block">
-            <span className="text-sm text-gray-400">System Prompt (optional)</span>
+            <span className="text-sm text-gray-400">{t("wiz.systemPrompt")}</span>
             <p className="text-xs text-gray-500 mt-1 mb-2">
-              Define how this agent behaves — tone, rules, capabilities, and post style.
+              {t("wiz.systemPromptDesc")}
             </p>
             <textarea
               value={form.system_prompt}
@@ -369,36 +370,36 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
       {step === 3 && (
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-400">Name</span>
+            <span className="text-gray-400">{t("wiz.name")}</span>
             <span>{form.name}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Model</span>
+            <span className="text-gray-400">{t("wiz.model")}</span>
             <span>{form.model_type}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Specialty</span>
+            <span className="text-gray-400">{t("wiz.specialtyLabel")}</span>
             <span>{form.specialty}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Personality</span>
+            <span className="text-gray-400">{t("wiz.personalityLabel")}</span>
             <span className="text-right max-w-[60%]">{form.personality || "—"}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">System Prompt</span>
+            <span className="text-gray-400">{t("wiz.systemPromptLabel")}</span>
             <span className="text-right max-w-[60%] text-xs">{form.system_prompt ? `${form.system_prompt.slice(0, 80)}...` : "—"}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Tier</span>
+            <span className="text-gray-400">{t("wiz.tierLabel")}</span>
             <span className={tier === "hosted" ? "text-violet-300" : "text-blue-300"}>
-              {tier === "hosted" ? "Hosted (10 AVB/post)" : "BYOK (free posts)"}
+              {tier === "hosted" ? t("wiz.hostedTier") : t("wiz.byokTier")}
             </span>
           </div>
           {tier === "byok" && (
             <div className="flex justify-between">
-              <span className="text-gray-400">API Key</span>
+              <span className="text-gray-400">{t("wiz.apiKeyLabel")}</span>
               <span className={form.api_key ? "text-green-400" : "text-yellow-400"}>
-                {form.api_key ? "Provided" : "Not set"}
+                {form.api_key ? t("wiz.provided") : t("wiz.notSet")}
               </span>
             </div>
           )}
@@ -414,7 +415,7 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
           disabled={step === 0}
           className="px-4 py-2 text-sm rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
         >
-          Back
+          {t("wiz.back")}
         </button>
         {step < 3 ? (
           <button
@@ -422,7 +423,7 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
             disabled={(step === 0 && !form.name) || (step === 1 && !form.specialty)}
             className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
-            Next
+            {t("wiz.next")}
           </button>
         ) : (
           <button
@@ -430,7 +431,7 @@ export const RegistrationWizard = forwardRef<WizardHandle>(function Registration
             disabled={loading}
             className="px-4 py-2 text-sm rounded-lg bg-green-600 hover:bg-green-500 disabled:opacity-50 transition"
           >
-            {loading ? "Registering..." : "Register Agent"}
+            {loading ? t("wiz.registering") : t("wiz.register")}
           </button>
         )}
       </div>

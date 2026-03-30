@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useT } from "@/lib/i18n/context";
 
 interface AgentDesign {
   name: string;
@@ -18,6 +19,7 @@ export function QuickDesign({ onApply }: { onApply?: (design: AgentDesign) => vo
   const [design, setDesign] = useState<AgentDesign | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useT();
 
   function update<K extends keyof AgentDesign>(key: K, value: AgentDesign[K]) {
     setDesign((prev) => prev ? { ...prev, [key]: value } : prev);
@@ -51,9 +53,9 @@ export function QuickDesign({ onApply }: { onApply?: (design: AgentDesign) => vo
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-bold">Quick Agent Design</h2>
+        <h2 className="text-lg font-bold">{t("qd.title")}</h2>
         <p className="text-sm text-gray-400 mt-1">
-          Enter a keyword or idea — AI will generate a complete agent spec.
+          {t("qd.desc")}
         </p>
       </div>
 
@@ -64,7 +66,7 @@ export function QuickDesign({ onApply }: { onApply?: (design: AgentDesign) => vo
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !loading && generate()}
           className="flex-1 rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-          placeholder="e.g. legal, data analytics, devrel, cooking, philosophy..."
+          placeholder={t("qd.placeholder")}
           maxLength={500}
         />
         <button
@@ -72,7 +74,7 @@ export function QuickDesign({ onApply }: { onApply?: (design: AgentDesign) => vo
           disabled={loading || !prompt.trim()}
           className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-30 transition shrink-0"
         >
-          {loading ? "Generating..." : "Design"}
+          {loading ? t("qd.generating") : t("qd.design")}
         </button>
       </div>
 
@@ -83,43 +85,43 @@ export function QuickDesign({ onApply }: { onApply?: (design: AgentDesign) => vo
           <div className="p-4 space-y-3">
             <div className="flex items-center gap-3">
               <div className="flex-1">
-                <div className="text-xs text-gray-500 mb-1">Name</div>
+                <div className="text-xs text-gray-500 mb-1">{t("qd.name")}</div>
                 <input value={design.name} onChange={(e) => update("name", e.target.value)} className={inputClass} />
               </div>
               <div>
-                <div className="text-xs text-gray-500 mb-1">Model</div>
+                <div className="text-xs text-gray-500 mb-1">{t("qd.model")}</div>
                 <div className={inputClass + " min-w-[180px] text-gray-400"}>claude-haiku-4-5 (Hosted)</div>
               </div>
             </div>
             <div>
-              <div className="text-xs text-gray-500 mb-1">Rationale</div>
+              <div className="text-xs text-gray-500 mb-1">{t("qd.rationale")}</div>
               <input value={design.rationale} onChange={(e) => update("rationale", e.target.value)} className={inputClass} />
             </div>
           </div>
 
           <div className="p-4 space-y-3">
             <div>
-              <div className="text-xs text-gray-500 mb-1">Specialty</div>
+              <div className="text-xs text-gray-500 mb-1">{t("qd.specialty")}</div>
               <input value={design.specialty} onChange={(e) => update("specialty", e.target.value)} className={inputClass} />
             </div>
             <div>
-              <div className="text-xs text-gray-500 mb-1">Personality</div>
+              <div className="text-xs text-gray-500 mb-1">{t("qd.personality")}</div>
               <textarea value={design.personality} onChange={(e) => update("personality", e.target.value)} rows={2} className={inputClass} />
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
-                <div className="text-xs text-gray-500 mb-1">Skill Name</div>
+                <div className="text-xs text-gray-500 mb-1">{t("qd.skillName")}</div>
                 <input value={design.skill_name} onChange={(e) => update("skill_name", e.target.value)} className={inputClass} />
               </div>
               <div className="w-28">
-                <div className="text-xs text-gray-500 mb-1">Price (AVB)</div>
+                <div className="text-xs text-gray-500 mb-1">{t("qd.skillPrice")}</div>
                 <input type="number" value={design.skill_price} onChange={(e) => update("skill_price", parseInt(e.target.value) || 0)} className={inputClass} />
               </div>
             </div>
           </div>
 
           <div className="p-4">
-            <div className="text-xs text-gray-500 mb-1">System Prompt</div>
+            <div className="text-xs text-gray-500 mb-1">{t("qd.systemPrompt")}</div>
             <textarea
               value={design.system_prompt}
               onChange={(e) => update("system_prompt", e.target.value)}
@@ -134,10 +136,10 @@ export function QuickDesign({ onApply }: { onApply?: (design: AgentDesign) => vo
                 onClick={() => onApply({ ...design, model_type: "claude-haiku-4-5-20251001" })}
                 className="w-full py-2.5 text-sm rounded-lg bg-green-600 hover:bg-green-500 text-white transition"
               >
-                Use This Design
+                {t("qd.useDesign")}
               </button>
               <p className="text-xs text-gray-500 text-center">
-                Hosted agents use Haiku. Switch to BYOK in the next step to use Sonnet or Opus.
+                {t("qd.hostedNote")}
               </p>
             </div>
           )}
