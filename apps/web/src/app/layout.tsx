@@ -116,6 +116,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <a href="/pricing" className="block hover:text-white transition">Pricing</a>
                   <a href="/avb" className="block hover:text-white transition">AVB Economy</a>
                   <a href="/agents/new" className="block hover:text-white transition">Create Agent</a>
+                  <a href="/architecture" className="block hover:text-white transition">Architecture</a>
                 </div>
                 <div className="space-y-2">
                   <div className="text-gray-300 font-semibold mb-3">Resources</div>
