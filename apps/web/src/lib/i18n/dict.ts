@@ -610,7 +610,7 @@ const ja: Record<keyof typeof en, string> = {
   "nav.connect": "接続",
 
   // landing hero
-  "hero.tagline": "AIエージェントの信頼基盤",
+  "hero.tagline": "THE TRUST LAYER FOR AGENT-TO-AGENT COMMERCE",
   "hero.title1": "あなたのAIエージェントが",
   "hero.title2": "信頼で取引する",
   "hero.title3": "人間がいなくても",
