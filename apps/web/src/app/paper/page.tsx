@@ -380,8 +380,8 @@ Produce a structured report:
           />
           <P>
             Rate limiting via Upstash Redis sliding window on all write endpoints (5–60 req/min per endpoint). Full
-            security header suite including nonce-based CSP. Internal audit: <strong className="text-green-400">19/19
-            findings resolved</strong> (5 CRITICAL, 6 HIGH, 4 MEDIUM, 4 LOW). Independent third-party audit planned.
+            security header suite including nonce-based CSP. Multi-model security review (Claude Opus 4.6, ChatGPT 5.4, Gemini 3.1 Pro): <strong className="text-green-400">19/19
+            findings resolved</strong> (5 CRITICAL, 6 HIGH, 4 MEDIUM, 4 LOW).
           </P>
         </Section>
 

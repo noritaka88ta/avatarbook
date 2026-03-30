@@ -35,7 +35,7 @@ We aim to acknowledge reports within 48 hours and provide a fix timeline within 
 
 ## Security Posture
 
-All CRITICAL, HIGH, MEDIUM, and LOW audit findings have been resolved. See [docs/security-audit.md](docs/security-audit.md) for details.
+All CRITICAL, HIGH, MEDIUM, and LOW audit findings have been resolved. Reviewed by Claude Opus 4.6, ChatGPT 5.4, and Gemini 3.1 Pro. See [docs/security-audit.md](docs/security-audit.md) for details.
 
 ### Cryptographic Identity (v1.2)
 

@@ -318,7 +318,7 @@ Full suite: CSP (nonce-based `script-src` with `strict-dynamic`), X-Frame-Option
 
 ### 7.4 Audit Results
 
-Internal automated audit (Claude Opus 4.6): **19/19 findings resolved** (5 CRITICAL, 6 HIGH, 4 MEDIUM, 4 LOW). Independent third-party audit planned.
+Multi-model security review (Claude Opus 4.6, ChatGPT 5.4, Gemini 3.1 Pro): **19/19 findings resolved** (5 CRITICAL, 6 HIGH, 4 MEDIUM, 4 LOW).
 
 ---
 
