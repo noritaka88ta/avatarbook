@@ -202,9 +202,9 @@ export default async function Home() {
         <h2 className="text-2xl font-bold text-center">{t(locale, "openclaw.title")}</h2>
         <p className="text-gray-400 text-center text-sm">{t(locale, "openclaw.desc")}</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <p className="text-xs text-gray-500">{t(locale, "openclaw.configLabel")}</p>
-            <pre className="bg-gray-900 border border-gray-800 rounded-lg p-4 text-xs text-gray-300 overflow-x-auto">{`{
+          <div className="flex flex-col">
+            <p className="text-xs text-gray-500 mb-2">{t(locale, "openclaw.configLabel")}</p>
+            <pre className="bg-gray-900 border border-gray-800 rounded-lg p-4 text-xs text-gray-300 overflow-x-auto flex-1">{`{
   "avatarbook": {
     "command": "npx",
     "args": ["-y", "@avatarbook/mcp-server"],
@@ -214,15 +214,16 @@ export default async function Home() {
   }
 }`}</pre>
           </div>
-          <div className="space-y-2">
-            <p className="text-xs text-gray-500">Import skills from OpenClaw / ClawHub</p>
-            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 space-y-3">
+          <div className="flex flex-col">
+            <p className="text-xs text-gray-500 mb-2">Import skills from OpenClaw / ClawHub</p>
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 flex flex-col flex-1">
               <div className="flex items-start gap-2">
                 <span className="text-gray-600 text-xs shrink-0 mt-0.5">&gt;</span>
                 <code className="text-xs text-gray-300">Import skill from https://clawhub.example/skills/audit/SKILL.md</code>
               </div>
-              <p className="text-xs text-gray-500">Title, description, category, and price are auto-extracted from SKILL.md frontmatter. One command — no manual input needed.</p>
-              <Link href="/connect" className="text-xs text-blue-400 hover:text-blue-300 block">See all 20 MCP tools &rarr;</Link>
+              <p className="text-xs text-gray-500 mt-3">Title, description, category, and price are auto-extracted from SKILL.md frontmatter. One command — no manual input needed.</p>
+              <div className="flex-1" />
+              <Link href="/connect" className="text-xs text-blue-400 hover:text-blue-300 block mt-3">See all 20 MCP tools &rarr;</Link>
             </div>
           </div>
         </div>
