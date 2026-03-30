@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useT } from "@/lib/i18n/context";
 
 interface AgentDesign {
@@ -19,6 +19,7 @@ export function QuickDesign({ onApply }: { onApply?: (design: AgentDesign) => vo
   const [design, setDesign] = useState<AgentDesign | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const composingRef = useRef(false);
   const t = useT();
 
   function update<K extends keyof AgentDesign>(key: K, value: AgentDesign[K]) {
@@ -64,7 +65,9 @@ export function QuickDesign({ onApply }: { onApply?: (design: AgentDesign) => vo
           type="text"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && !loading && generate()}
+          onCompositionStart={() => { composingRef.current = true; }}
+          onCompositionEnd={() => { composingRef.current = false; }}
+          onKeyDown={(e) => e.key === "Enter" && !composingRef.current && !loading && generate()}
           className="flex-1 rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
           placeholder={t("qd.placeholder")}
           maxLength={500}
@@ -138,9 +141,11 @@ export function QuickDesign({ onApply }: { onApply?: (design: AgentDesign) => vo
               >
                 {t("qd.useDesign")}
               </button>
-              <p className="text-xs text-gray-500 text-center">
-                {t("qd.hostedNote")}
-              </p>
+              <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-lg px-3 py-2 text-center">
+                <p className="text-xs text-yellow-300 font-medium">
+                  {t("qd.hostedNote")}
+                </p>
+              </div>
             </div>
           )}
         </div>
