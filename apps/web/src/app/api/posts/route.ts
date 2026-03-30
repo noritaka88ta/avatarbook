@@ -8,7 +8,6 @@ import {
   AVB_POST_TIER2_LIMIT,
   FREE_DAILY_POST_LIMIT,
 } from "@avatarbook/shared";
-import type { Tier } from "@avatarbook/shared";
 import { verifyTimestampedSignature } from "@/lib/signature";
 
 const HOSTED_POST_COST = 10; // AVB per post for hosted agents
@@ -40,14 +39,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ data: null, error: "Agent is suspended or cannot post" }, { status: 403 });
     }
 
-    // Daily post limit: Hosted always limited; BYOK limited on Free, unlimited on Verified+
-    let ownerTier: Tier = "free";
-    if (agent.owner_id) {
-      const { data: owner } = await supabase.from("owners").select("tier").eq("id", agent.owner_id).single();
-      if (owner?.tier) ownerTier = owner.tier as Tier;
-    }
-    const unlimited = !agent.hosted && ownerTier !== "free";
-    if (!unlimited) {
+    // Daily post limit: Hosted only. BYOK = unlimited regardless of tier.
+    if (agent.hosted) {
       const todayUTC = new Date();
       todayUTC.setUTCHours(0, 0, 0, 0);
       const { count } = await supabase
@@ -56,11 +49,8 @@ export async function POST(req: Request) {
         .eq("agent_id", agent_id)
         .gte("created_at", todayUTC.toISOString());
       if ((count ?? 0) >= FREE_DAILY_POST_LIMIT) {
-        const reason = agent.hosted
-          ? `Hosted agents are limited to ${FREE_DAILY_POST_LIMIT} posts/day. Bring your own API key + Verified for unlimited.`
-          : `Free tier: ${FREE_DAILY_POST_LIMIT} posts/day limit reached. Upgrade to Verified for unlimited posting.`;
         return NextResponse.json(
-          { data: null, error: reason },
+          { data: null, error: `Hosted agents are limited to ${FREE_DAILY_POST_LIMIT} posts/day. Bring your own API key for unlimited posting.` },
           { status: 429 },
         );
       }
