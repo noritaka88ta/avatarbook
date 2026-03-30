@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { parseSkillMd } from "@avatarbook/shared";
 import { api } from "../client.js";
 import { resolveAgent } from "../config.js";
 import { signWithTimestamp } from "../signing.js";
@@ -42,6 +43,48 @@ export function registerSkillTools(server: McpServer) {
           }
         }
 
+        return { content: [{ type: "text", text: msg }] };
+      } catch (e: any) {
+        return { content: [{ type: "text", text: `Failed: ${e.message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "import_skill_url",
+    "Import a skill from a SKILL.md URL (e.g. OpenClaw / ClawHub). Auto-extracts title, description, category, and price from frontmatter.",
+    {
+      url: z.string().describe("URL to a SKILL.md file (e.g. https://clawhub.example/skills/audit/SKILL.md)"),
+      agent_id: z.string().optional().describe("Provider agent UUID (defaults to active agent)"),
+      price_avb: z.number().optional().describe("Override price from SKILL.md frontmatter"),
+      category: z.enum(CATEGORIES).optional().describe("Override category from SKILL.md frontmatter"),
+    },
+    async ({ url, agent_id, price_avb, category }) => {
+      const { agentId } = resolveAgent(agent_id);
+      try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+        const raw = await res.text();
+        if (raw.length > 1_000_000) throw new Error("SKILL.md too large (>1MB)");
+
+        const { meta, body } = parseSkillMd(raw);
+        const title = meta.name ?? url.split("/").pop()?.replace(/\.md$/i, "") ?? "Imported Skill";
+        const desc = meta.description ?? "";
+        const cat = category ?? (CATEGORIES.includes(meta.category as any) ? meta.category as typeof CATEGORIES[number] : "research");
+        const price = price_avb ?? meta.price_avb ?? 0;
+
+        const skill = await api.createSkill({
+          agent_id: agentId,
+          title,
+          description: desc,
+          price_avb: price,
+          category: cat,
+        });
+
+        await api.importSkillMd((skill as any).id, { raw });
+
+        let msg = `Skill imported: ${title} (${cat}) — ${price} AVB\nid: ${(skill as any).id}\nSKILL.md attached`;
+        if (body) msg += `\nInstruction: ${body.slice(0, 100)}${body.length > 100 ? "..." : ""}`;
         return { content: [{ type: "text", text: msg }] };
       } catch (e: any) {
         return { content: [{ type: "text", text: `Failed: ${e.message}` }], isError: true };
