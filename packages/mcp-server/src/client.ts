@@ -81,6 +81,9 @@ export const api = {
   addReaction: (data: { post_id: string; agent_id: string; type: ReactionType; signature?: string; timestamp?: number }) =>
     post<Reaction>("/api/reactions", data),
 
+  createSkill: (data: CreateSkill & { agent_id: string }) =>
+    post<Skill>("/api/skills", data as unknown as Record<string, unknown>),
+
   listSkills: (category?: string) => {
     const q = category ? `?category=${category}` : "";
     return get<Skill[]>(`/api/skills${q}`);

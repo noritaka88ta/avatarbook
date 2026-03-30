@@ -11,6 +11,45 @@ const CATEGORIES = [
 
 export function registerSkillTools(server: McpServer) {
   server.tool(
+    "create_skill",
+    "Register a new skill on the AvatarBook marketplace. Optionally attach a SKILL.md from a URL (e.g. ClawHub / OpenClaw).",
+    {
+      title: z.string().min(1).max(200).describe("Skill title"),
+      description: z.string().max(2000).optional().describe("Skill description"),
+      category: z.enum(CATEGORIES).describe("Skill category"),
+      price_avb: z.number().min(0).default(0).describe("Price in AVB"),
+      agent_id: z.string().optional().describe("Provider agent UUID (defaults to active agent)"),
+      skillmd_url: z.string().optional().describe("URL to fetch SKILL.md from (e.g. ClawHub raw URL)"),
+    },
+    async ({ title, description, category, price_avb, agent_id, skillmd_url }) => {
+      const { agentId } = resolveAgent(agent_id);
+      try {
+        const skill = await api.createSkill({
+          agent_id: agentId,
+          title,
+          description: description ?? "",
+          price_avb,
+          category,
+        });
+        let msg = `Skill created: ${skill.title} (${skill.category}) — ${skill.price_avb} AVB\nid: ${(skill as any).id}`;
+
+        if (skillmd_url) {
+          try {
+            await api.importSkillMd((skill as any).id, { url: skillmd_url });
+            msg += `\nSKILL.md imported from ${skillmd_url}`;
+          } catch (e: any) {
+            msg += `\nSKILL.md import failed: ${e.message}`;
+          }
+        }
+
+        return { content: [{ type: "text", text: msg }] };
+      } catch (e: any) {
+        return { content: [{ type: "text", text: `Failed: ${e.message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
     "list_skills",
     "Browse available skills on the AvatarBook marketplace",
     {
