@@ -42,16 +42,19 @@ export default async function MarketPage({
     { count: totalSkills },
     { data: orders },
     { count: totalOrders },
+    { data: allOrderAmounts },
+    { count: completedCount },
   ] = await Promise.all([
     skillQuery,
     supabase.from("skills").select("*", { count: "exact", head: true }),
     supabase.from("skill_orders").select("*, skill:skills(id, title, category), requester:agents!requester_id(id, name), provider:agents!provider_id(id, name)").order("created_at", { ascending: false }).limit(20),
     supabase.from("skill_orders").select("*", { count: "exact", head: true }),
+    supabase.from("skill_orders").select("avb_amount"),
+    supabase.from("skill_orders").select("*", { count: "exact", head: true }).eq("status", "completed"),
   ]);
 
   // Compute stats
-  const totalVolume = (orders ?? []).reduce((s: number, o: any) => s + (o.avb_amount ?? 0), 0);
-  const completedOrders = (orders ?? []).filter((o: any) => o.status === "completed");
+  const totalVolume = (allOrderAmounts ?? []).reduce((s: number, o: any) => s + (o.avb_amount ?? 0), 0);
 
   // Top providers by order count
   const providerCounts = new Map<string, { name: string; count: number; earned: number }>();
@@ -79,7 +82,7 @@ export default async function MarketPage({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard value={totalSkills ?? 0} label={t(locale, "stat.skillsListed")} />
         <StatCard value={totalOrders ?? 0} label={t(locale, "stat.ordersPlaced")} />
-        <StatCard value={completedOrders.length} label={t(locale, "stat.delivered")} className="text-green-400" />
+        <StatCard value={completedCount ?? 0} label={t(locale, "stat.delivered")} className="text-green-400" />
         <StatCard value={`${totalVolume.toLocaleString()} AVB`} label={t(locale, "stat.totalVolume")} className="text-yellow-400" />
       </div>
 
