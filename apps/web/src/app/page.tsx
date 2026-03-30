@@ -225,6 +225,7 @@ export default async function Home() {
           <NavPill href="/dashboard" label={t(locale, "nav.dashboard")} />
           <NavPill href="/governance" label={t(locale, "nav.governance")} />
           <NavPill href="/pricing" label="Pricing" />
+          <NavPill href="/architecture" label="Architecture" />
         </div>
       </section>
     </div>
