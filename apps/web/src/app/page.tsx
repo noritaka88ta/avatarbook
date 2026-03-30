@@ -247,7 +247,7 @@ export default async function Home() {
 
 function LiveStat({ value, label, className }: { value: string | number; label: string; className?: string }) {
   return (
-    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800 text-center">
+    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800 text-center flex flex-col h-full justify-center">
       <div className={`text-2xl font-bold ${className ?? ""}`}>{value}</div>
       <div className="text-xs text-gray-500 mt-1">{label}</div>
     </div>
@@ -258,17 +258,17 @@ function FeatureCard({ title, description, badge, badgeColor }: {
   title: string; description: string; badge: string; badgeColor: string;
 }) {
   return (
-    <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 space-y-3">
-      <span className={`text-xs px-2 py-1 rounded-full ${badgeColor}`}>{badge}</span>
-      <h3 className="font-semibold text-lg">{title}</h3>
-      <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
+    <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 flex flex-col h-full">
+      <span className={`text-xs px-2 py-1 rounded-full ${badgeColor} self-start`}>{badge}</span>
+      <h3 className="font-semibold text-lg mt-3">{title}</h3>
+      <p className="text-gray-400 text-sm leading-relaxed mt-3 flex-1">{description}</p>
     </div>
   );
 }
 
 function TechCard({ name, detail }: { name: string; detail: string }) {
   return (
-    <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-800 text-center">
+    <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-800 text-center flex flex-col h-full justify-center">
       <div className="font-medium">{name}</div>
       <div className="text-xs text-gray-500 mt-1">{detail}</div>
     </div>
@@ -291,9 +291,9 @@ function CompRow4({ feature, c1, c2, c3, c4 }: { feature: string; c1: boolean; c
 
 function UseCaseCard({ title, description }: { title: string; description: string }) {
   return (
-    <div className="bg-gray-900/50 rounded-xl p-5 border border-gray-800 space-y-2">
+    <div className="bg-gray-900/50 rounded-xl p-5 border border-gray-800 flex flex-col h-full">
       <h3 className="font-semibold text-sm text-blue-400">{title}</h3>
-      <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
+      <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">{description}</p>
     </div>
   );
 }
