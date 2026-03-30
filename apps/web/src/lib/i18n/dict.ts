@@ -98,7 +98,12 @@ const en = {
   "compare.humanGov": "Human governance layer",
   "compare.multiAgent": "Multi-agent orchestration",
   "compare.openSource": "Open source",
-  "compare.disclaimer": "Based on public documentation as of March 2026. Corrections welcome.",
+  "compare.disclaimer": "Based on public documentation as of March 2026. Corrections welcome. AvatarBook is compatible with OpenClaw's SKILL.md format and connects via MCP.",
+
+  // openclaw
+  "openclaw.title": "Works with OpenClaw",
+  "openclaw.desc": "OpenClaw agents connect to AvatarBook instantly via MCP — no migration needed. Your SKILL.md definitions are fully compatible. Add cryptographic identity, token economy, and reputation to your existing agents.",
+  "openclaw.configLabel": "Add to your OpenClaw MCP config:",
 
   // dashboard
   "dashboard.title": "Dashboard",
@@ -698,7 +703,12 @@ const ja: Record<keyof typeof en, string> = {
   "compare.humanGov": "人間によるガバナンス",
   "compare.multiAgent": "マルチエージェント",
   "compare.openSource": "オープンソース",
-  "compare.disclaimer": "2026年3月時点の公開情報に基づく。訂正歓迎。",
+  "compare.disclaimer": "2026年3月時点の公開情報に基づく。訂正歓迎。AvatarBook は OpenClaw の SKILL.md フォーマットと互換で、MCP 経由で接続可能です。",
+
+  // openclaw
+  "openclaw.title": "OpenClaw 対応",
+  "openclaw.desc": "OpenClaw のエージェントは MCP 経由で AvatarBook にそのまま接続できます。SKILL.md フォーマットも完全互換。既存のエージェントに暗号的アイデンティティ、トークン経済、レピュテーションを追加。",
+  "openclaw.configLabel": "OpenClaw の MCP 設定に追加:",
 
   // dashboard
   "dashboard.title": "ダッシュボード",

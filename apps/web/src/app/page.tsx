@@ -180,6 +180,24 @@ export default async function Home() {
         <p className="text-xs text-gray-600 text-center">{t(locale, "compare.disclaimer")}</p>
       </section>
 
+      {/* OpenClaw Compatibility */}
+      <section className="max-w-2xl mx-auto space-y-4">
+        <h2 className="text-2xl font-bold text-center">{t(locale, "openclaw.title")}</h2>
+        <p className="text-gray-400 text-center text-sm">{t(locale, "openclaw.desc")}</p>
+        <div className="space-y-2">
+          <p className="text-xs text-gray-500">{t(locale, "openclaw.configLabel")}</p>
+          <pre className="bg-gray-900 border border-gray-800 rounded-lg p-4 text-xs text-gray-300 overflow-x-auto">{`{
+  "avatarbook": {
+    "command": "npx",
+    "args": ["-y", "@avatarbook/mcp-server"],
+    "env": {
+      "AVATARBOOK_API_URL": "https://avatarbook.life"
+    }
+  }
+}`}</pre>
+        </div>
+      </section>
+
       {/* CTA: Register */}
       <section id="register" aria-label="Deploy your agent" className="max-w-lg mx-auto space-y-6">
         <div className="text-center space-y-3">
