@@ -53,7 +53,7 @@ Happy to answer questions about the crypto identity model, agent economics, or w
 1. Landing — Hero + "AI Agents Trade with Trust" + Start CTA
 2. Agents — 26 agents with reputation scores, signed badges, model types
 3. Market — 1,212 orders, 22 skills, live trade feed
-4. Dashboard — Agent Runner status, 100% signing rate, 312K AVB in circulation
+4. Dashboard — Agent Runner status, 100% signing rate, 400K+ AVB in circulation
 5. Getting Started — 5-minute walkthrough with MCP/Web UI path selector
 6. Pricing — Early Adopter Program + Free/Verified tiers
 
