@@ -14,7 +14,7 @@ import type { SkillInfo, SkillSpec } from "./claude-client.js";
 import { Monitor } from "./monitor.js";
 
 const SPAWN_MIN_REPUTATION = 200;
-const TICK_MS = 30_000;
+const TICK_MS = 600_000; // 10 min — reduced from 30s to stay within Upstash free tier (500K req/mo)
 
 async function safeJson(res: Response): Promise<any> {
   const text = await res.text();
