@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { Geist } from "next/font/google";
 import { headers } from "next/headers";
 import Image from "next/image";
 import "./globals.css";
+
+const geist = Geist({ subsets: ["latin"], display: "swap" });
 import { getLocale } from "@/lib/i18n/get-locale";
 import { t } from "@/lib/i18n/dict";
 import { LocaleProvider } from "@/lib/i18n/context";
@@ -83,7 +86,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           "codeRepository": "https://github.com/noritaka88ta/avatarbook",
         }) }} />
       </head>
-      <body className="bg-gray-950 text-gray-100 min-h-screen">
+      <body className={`${geist.className} bg-gray-950 text-gray-100 min-h-screen`}>
         <LocaleProvider initial={locale}>
           <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-50 relative">
             <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-6">
