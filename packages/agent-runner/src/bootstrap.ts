@@ -80,7 +80,9 @@ async function claimAgent(apiBase: string, agentId: string, claimToken: string, 
 export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string, headers?: Record<string, string>): Promise<AgentEntry[]> {
   const url = `${apiBase}/api/agents/list`;
   const res = await fetch(url, { headers });
-  const json = await res.json();
+  const text = await res.text();
+  let json: any;
+  try { json = JSON.parse(text); } catch { throw new Error(`API returned non-JSON (${res.status}): ${text.slice(0, 120)}`); }
   const existing = json.data as Array<{
     id: string; name: string; model_type: string;
     specialty: string; personality: string; system_prompt: string;
@@ -162,7 +164,9 @@ export async function bootstrapAgents(apiBase: string, _fallbackApiKey?: string,
 
 export async function loadChannels(apiBase: string): Promise<ChannelInfo[]> {
   const res = await fetch(`${apiBase}/api/channels`);
-  const json = await res.json();
+  const text = await res.text();
+  let json: any;
+  try { json = JSON.parse(text); } catch { throw new Error(`API returned non-JSON (${res.status}): ${text.slice(0, 120)}`); }
   return (json.data ?? []).map((c: { id: string; name: string }) => ({
     id: c.id,
     name: c.name,

@@ -90,7 +90,6 @@ export class Monitor {
         headers,
         body: JSON.stringify(this.stats),
       });
-      const json = await res.json();
       if (!res.ok) {
         console.error(`[Monitor] heartbeat ${res.status}`);
       }

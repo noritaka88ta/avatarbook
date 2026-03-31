@@ -16,6 +16,15 @@ import { Monitor } from "./monitor.js";
 const SPAWN_MIN_REPUTATION = 200;
 const TICK_MS = 30_000;
 
+async function safeJson(res: Response): Promise<any> {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`API returned non-JSON (${res.status}): ${text.slice(0, 120)}`);
+  }
+}
+
 let apiSecret: string | undefined;
 
 // ─── Biological state initialization ───
@@ -138,7 +147,7 @@ export function recoverEnergy(state: AgentState): void {
 
 async function fetchFeed(apiBase: string): Promise<Post[]> {
   const res = await fetch(`${apiBase}/api/feed?per_page=10`);
-  const json = await res.json();
+  const json = await safeJson(res);
   return json.data ?? [];
 }
 
@@ -198,13 +207,13 @@ async function postToAvatarBook(
 
   if (res.status === 403) return "FORBIDDEN";
   if (res.status === 429) return "RATE_LIMITED";
-  const json = await res.json();
+  const json = await safeJson(res);
   return json.data?.id ?? null;
 }
 
 async function registerSkillsIfNeeded(apiBase: string, agent: AgentEntry): Promise<void> {
   const res = await fetch(`${apiBase}/api/skills`);
-  const json = await res.json();
+  const json = await safeJson(res);
   const existing = (json.data ?? []).filter((s: any) => s.agent_id === agent.agentId);
   if (existing.length > 0) return;
 
@@ -243,7 +252,7 @@ async function registerSkillsIfNeeded(apiBase: string, agent: AgentEntry): Promi
 
 async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monitor?: Monitor): Promise<void> {
   const res = await fetch(`${apiBase}/api/skills/orders?status=pending`);
-  const json = await res.json();
+  const json = await safeJson(res);
   const orders = json.data ?? [];
 
   for (const order of orders) {
@@ -283,7 +292,7 @@ async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monit
 
 async function fetchSkills(apiBase: string, excludeAgentId: string): Promise<SkillInfo[]> {
   const res = await fetch(`${apiBase}/api/skills`);
-  const json = await res.json();
+  const json = await safeJson(res);
   return (json.data ?? []).filter((s: SkillInfo) => s.agent_id !== excludeAgentId);
 }
 
@@ -294,7 +303,7 @@ async function orderSkill(apiBase: string, skillId: string, requesterId: string,
     headers: writeHeaders(),
     body: JSON.stringify({ requester_id: requesterId, signature, timestamp }),
   });
-  const json = await res.json();
+  const json = await safeJson(res);
   return !json.error;
 }
 
@@ -311,7 +320,7 @@ async function reactToPost(
     headers: writeHeaders(),
     body: JSON.stringify({ post_id: postId, agent_id: agentId, type, signature, timestamp }),
   });
-  const json = await res.json();
+  const json = await safeJson(res);
   return !json.error;
 }
 
@@ -423,7 +432,7 @@ async function executeAgentTurn(
             system_prompt: spec.system_prompt,
           }),
         });
-        const json = await res.json();
+        const json = await safeJson(res);
         if (json.data) {
           console.log(`  Expanded: "${spec.name}" (${spec.specialty}) — gen ${json.data.generation}`);
           monitor.recordSpawn();
@@ -540,7 +549,7 @@ export async function runLoop(
             method: "POST",
             headers: writeHeaders(),
           });
-          const json = await res.json();
+          const json = await safeJson(res);
           if (json.data?.culled > 0) {
             console.log(`  Retired ${json.data.culled} agents: ${json.data.agents.join(", ")}`);
           }
