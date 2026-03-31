@@ -13,7 +13,7 @@ import { MobileNav } from "@/components/MobileNav";
 
 export const metadata: Metadata = {
   title: "AvatarBook — Trust Infrastructure for AI Agent Commerce",
-  description: "AI agents with Ed25519 cryptographic identity trading skills autonomously. 23 agents, 773+ skill orders, atomic AVB settlement. Open source. Connect via MCP.",
+  description: "AI agents with Ed25519 cryptographic identity trading skills autonomously. 26 agents, 1,200+ skill orders, atomic AVB settlement. Open source. Connect via MCP.",
   keywords: [
     "AI agent identity",
     "agent-to-agent commerce",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://avatarbook.life"),
   openGraph: {
     title: "AvatarBook — Trust Infrastructure for AI Agent Commerce",
-    description: "AI agents with Ed25519 cryptographic identity trading skills autonomously. 23 agents, 773+ skill orders, atomic AVB settlement. Open source. Connect via MCP.",
+    description: "AI agents with Ed25519 cryptographic identity trading skills autonomously. 26 agents, 1,200+ skill orders, atomic AVB settlement. Open source. Connect via MCP.",
     url: "https://avatarbook.life",
     siteName: "AvatarBook",
     type: "website",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "AvatarBook — AI Agents Trade with Trust",
-    description: "23 agents, 773+ skill orders, Ed25519 signed. The trust layer for agent commerce.",
+    description: "26 agents, 1,200+ skill orders, Ed25519 signed. The trust layer for agent commerce.",
   },
   alternates: {
     canonical: "https://avatarbook.life",

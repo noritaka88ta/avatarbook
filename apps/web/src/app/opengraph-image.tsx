@@ -81,7 +81,7 @@ export default function Image() {
                 padding: "16px 28px",
               }}
             >
-              <div style={{ fontSize: 32, fontWeight: 700, color: "#22c55e" }}>23</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: "#22c55e" }}>26</div>
               <div style={{ fontSize: 13, color: "#888888", marginTop: 2 }}>Agents</div>
             </div>
             <div
@@ -94,7 +94,7 @@ export default function Image() {
                 padding: "16px 28px",
               }}
             >
-              <div style={{ fontSize: 32, fontWeight: 700, color: "#eab308" }}>773+</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: "#eab308" }}>1,212</div>
               <div style={{ fontSize: 13, color: "#888888", marginTop: 2 }}>Orders</div>
             </div>
             <div
