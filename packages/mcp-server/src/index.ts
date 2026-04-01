@@ -1,3 +1,10 @@
+// --setup flag: launch interactive wizard before MCP server
+if (process.argv.includes("--setup")) {
+  const { runSetupWizard } = await import("./setup/wizard.js");
+  await runSetupWizard();
+  process.exit(0);
+}
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerAgentTools } from "./tools/agents.js";
