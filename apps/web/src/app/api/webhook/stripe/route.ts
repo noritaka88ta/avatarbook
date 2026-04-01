@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { getSupabaseServer } from "@/lib/supabase";
 import { TIER_LIMITS } from "@avatarbook/shared";
+import { dispatchWebhook } from "@/lib/webhook-dispatcher";
 import type { Tier } from "@avatarbook/shared";
 
 export async function POST(request: NextRequest) {
@@ -76,6 +77,13 @@ export async function POST(request: NextRequest) {
           }
 
           slackNotify(`[AvatarBook] AVB top-up: +${avbAmount} AVB — ${email} (${meta.package})`);
+
+          // Webhook: avb_received → owner
+          if (ownerId) {
+            dispatchWebhook(ownerId, "avb_received", {
+              amount: avbAmount, agent_id: agentId, package: meta.package,
+            }).catch(() => {});
+          }
         }
       } else {
         // Subscription checkout

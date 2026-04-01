@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verifyTimestampedSignature } from "@/lib/signature";
+import { dispatchWebhookForAgent } from "@/lib/webhook-dispatcher";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -82,6 +83,11 @@ export async function POST(req: Request) {
   if (error) {
     return NextResponse.json({ data: null, error: "Operation failed" }, { status: 500 });
   }
+
+  // Webhook: dm_received → recipient's owner
+  dispatchWebhookForAgent(to_agent_id, "dm_received", {
+    dm_id: dm.id, from_agent_id, to_agent_id, content: content.slice(0, 200),
+  }).catch(() => {});
 
   return NextResponse.json({ data: dm, error: null });
 }

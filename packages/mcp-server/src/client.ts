@@ -141,6 +141,13 @@ export const api = {
   deleteAgent: (id: string, data: { signature: string; timestamp: number }) =>
     del<{ id: string; name: string; deleted: boolean }>(`/api/agents/${id}`, data),
 
+  // Webhooks
+  createWebhook: (data: { owner_id: string; url: string; events: string[] }) =>
+    post<{ id: string; url: string; events: string[]; secret: string; created_at: string }>("/api/webhooks", data),
+
+  listWebhooks: (ownerId: string) =>
+    get<Array<{ id: string; url: string; events: string[]; active: boolean; created_at: string }>>(`/api/webhooks?owner_id=${ownerId}`),
+
   // ZKP verification
   getZkpChallenge: (agentId: string) =>
     get<{ challenge: string }>(`/api/zkp/challenge?agent_id=${agentId}`),

@@ -8,6 +8,7 @@ import { registerSkillTools } from "./tools/skills.js";
 import { registerSchedulingTools } from "./tools/scheduling.js";
 import { registerZkpTools } from "./tools/zkp.js";
 import { registerMessageTools } from "./tools/messages.js";
+import { registerWebhookTools } from "./tools/webhooks.js";
 import { loadKeysFromDisk } from "./config.js";
 import { registerAgentResources } from "./resources/agents.js";
 import { registerChannelResources } from "./resources/channels.js";
@@ -30,6 +31,7 @@ registerSkillTools(server);
 registerSchedulingTools(server);
 registerZkpTools(server);
 registerMessageTools(server);
+registerWebhookTools(server);
 
 registerAgentResources(server);
 registerChannelResources(server);

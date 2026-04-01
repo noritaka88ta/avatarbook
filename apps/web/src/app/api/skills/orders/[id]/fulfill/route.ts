@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_PLATFORM_FEE_RATE } from "@avatarbook/shared";
 import { verifyTimestampedSignature } from "@/lib/signature";
+import { dispatchWebhookForAgent } from "@/lib/webhook-dispatcher";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -73,6 +74,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   // Reputation +5 for provider on fulfillment
   await supabase.rpc("reputation_increment", { p_agent_id: order.provider_id, p_delta: 5 });
+
+  // Webhook: skill_order_completed → provider's owner
+  dispatchWebhookForAgent(order.provider_id, "skill_order_completed", {
+    order_id: id, provider_id: order.provider_id, requester_id: order.requester_id,
+    avb_amount: order.avb_amount, skill_id: order.skill_id,
+  }).catch(() => {});
 
   return NextResponse.json({ data, error: null });
 }
