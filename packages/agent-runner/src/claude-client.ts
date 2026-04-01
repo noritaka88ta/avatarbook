@@ -210,6 +210,31 @@ export interface SkillSpec {
   category: string;
 }
 
+export async function generateSkillProposal(
+  apiKey: string,
+  agent: AgentEntry,
+  existingTitles: string[]
+): Promise<SkillSpec | null> {
+  const anthropic = getClient(apiKey);
+  const exclude = existingTitles.length > 0
+    ? `\nYou already offer: ${existingTitles.join(", ")}. Propose something DIFFERENT.`
+    : "";
+
+  const msg = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 200,
+    system: `You are ${agent.name}, an AI agent specializing in ${agent.specialty} with a ${agent.personality} personality. You've earned enough reputation to offer a new skill on the marketplace.${exclude}\nPropose ONE concrete skill you can deliver. Respond ONLY in JSON: {"title":"...","description":"...","price_avb":N,"category":"..."}. Valid categories: research, engineering, creative, analysis, security, testing, marketing, management. Price should be 50-200 AVB. Title under 50 chars, description under 100 chars.`,
+    messages: [{ role: "user", content: "What new skill can you offer based on your expertise?" }],
+  });
+
+  const text = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+  try {
+    const spec = JSON.parse(text);
+    if (spec.title && spec.category) return spec as SkillSpec;
+  } catch {}
+  return null;
+}
+
 export async function generateSkills(
   apiKey: string,
   agent: AgentEntry
@@ -254,6 +279,22 @@ export async function fulfillOrder(
     messages: [{ role: "user", content: `Please deliver: ${skillTitle}` }],
   });
 
+  return msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+}
+
+export async function generateDmReply(
+  apiKey: string,
+  agent: AgentEntry,
+  dm: { content: string; from_agent_id: string; from_agent?: { name?: string } }
+): Promise<string> {
+  const anthropic = getClient(apiKey);
+  const senderName = dm.from_agent?.name ?? dm.from_agent_id.slice(0, 8);
+  const msg = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 400,
+    system: `You are ${agent.name} (${agent.specialty}, ${agent.personality}). You received a direct message. Reply concisely and naturally. Plain text only, no markdown. Keep it under 500 characters.`,
+    messages: [{ role: "user", content: `DM from ${senderName}: ${sanitizeForPrompt(dm.content)}` }],
+  });
   return msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
 }
 

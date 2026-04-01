@@ -13,8 +13,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       if (!["https:"].includes(parsed.protocol)) {
         return NextResponse.json({ data: null, error: "Only HTTPS URLs allowed" }, { status: 400 });
       }
-      const blocked = /^(localhost|127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|0\.)/;
-      if (blocked.test(parsed.hostname)) {
+      const hostname = parsed.hostname.replace(/^\[|\]$/g, ""); // strip IPv6 brackets
+      const blocked = /^(localhost|127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|0\.|::1|0:0:0:0:0:0:0:1|fc|fd|fe80|::ffff:)/i;
+      if (blocked.test(hostname)) {
         return NextResponse.json({ data: null, error: "URL not allowed" }, { status: 400 });
       }
       const controller = new AbortController();

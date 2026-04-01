@@ -9,11 +9,13 @@ import type { Post } from "@avatarbook/shared";
 import type { RunnerConfig } from "./config.js";
 import type { AgentEntry, AgentState, ChannelInfo } from "./types.js";
 import { bootstrapAgents } from "./bootstrap.js";
-import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, fulfillOrder, SPECIALTY_KEYWORDS } from "./claude-client.js";
+import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, generateSkillProposal, generateDmReply, fulfillOrder, SPECIALTY_KEYWORDS } from "./claude-client.js";
 import type { SkillInfo, SkillSpec } from "./claude-client.js";
 import { Monitor } from "./monitor.js";
 
 const SPAWN_MIN_REPUTATION = 200;
+const AUTO_SKILL_MIN_REPUTATION = 500;
+const AUTO_SKILL_MAX_PER_AGENT = 3;
 const TICK_MS = 600_000; // 10 min — reduced from 30s to stay within Upstash free tier (500K req/mo)
 
 async function safeJson(res: Response): Promise<any> {
@@ -24,6 +26,8 @@ async function safeJson(res: Response): Promise<any> {
     throw new Error(`API returned non-JSON (${res.status}): ${text.slice(0, 120)}`);
   }
 }
+
+const repliedDmIds = new Set<string>();
 
 let apiSecret: string | undefined;
 
@@ -250,6 +254,45 @@ async function registerSkillsIfNeeded(apiBase: string, agent: AgentEntry): Promi
   }
 }
 
+async function autoCreateSkill(apiBase: string, agent: AgentEntry, monitor?: Monitor): Promise<void> {
+  if (agent.reputationScore < AUTO_SKILL_MIN_REPUTATION) return;
+  if (!agent.apiKey) return;
+
+  // Fetch current skills for this agent
+  const res = await fetch(`${apiBase}/api/skills`);
+  const json = await safeJson(res);
+  const existing = (json.data ?? []).filter((s: any) => s.agent_id === agent.agentId);
+  if (existing.length >= AUTO_SKILL_MAX_PER_AGENT) return;
+
+  const existingTitles = existing.map((s: any) => s.title as string);
+
+  let spec;
+  try {
+    spec = await generateSkillProposal(agent.apiKey, agent, existingTitles);
+  } catch (err) {
+    console.log(`  Auto-skill LLM failed for ${agent.name}: ${(err as Error).message}`);
+    return;
+  }
+  if (!spec) return;
+
+  const createRes = await fetch(`${apiBase}/api/skills`, {
+    method: "POST",
+    headers: writeHeaders(),
+    body: JSON.stringify({
+      agent_id: agent.agentId,
+      title: spec.title.slice(0, 200),
+      description: (spec.description ?? "").slice(0, 2000),
+      price_avb: Math.max(10, Math.min(500, spec.price_avb || 50)),
+      category: spec.category,
+    }),
+  });
+  const createJson = await safeJson(createRes);
+  if (createJson.data) {
+    console.log(`  Auto-skill: ${agent.name} (rep ${agent.reputationScore}) registered "${spec.title}" (${spec.price_avb} AVB) [${existing.length + 1}/${AUTO_SKILL_MAX_PER_AGENT}]`);
+    monitor?.recordSkillOrder();
+  }
+}
+
 async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monitor?: Monitor): Promise<void> {
   const res = await fetch(`${apiBase}/api/skills/orders?status=pending`);
   const json = await safeJson(res);
@@ -322,6 +365,48 @@ async function reactToPost(
   });
   const json = await safeJson(res);
   return !json.error;
+}
+
+// ─── DM check & auto-reply ───
+
+async function processDms(apiBase: string, agent: AgentEntry, monitor: Monitor): Promise<void> {
+  if (!agent.apiKey) return;
+
+  const res = await fetch(`${apiBase}/api/messages?agent_id=${agent.agentId}&limit=5`);
+  const json = await safeJson(res);
+  const dms = (json.data ?? []) as Array<{ id: string; from_agent_id: string; content: string; from_agent?: { name?: string } }>;
+
+  for (const dm of dms) {
+    if (repliedDmIds.has(dm.id)) continue;
+    if (dm.from_agent_id === agent.agentId) continue;
+
+    try {
+      const reply = await generateDmReply(agent.apiKey, agent, dm);
+      if (reply.length < 5) continue;
+
+      const content = sanitizeContent(reply);
+      const { signature, timestamp } = await signWithTimestamp(
+        `dm:${agent.agentId}:${dm.from_agent_id}:${content}`,
+        agent.privateKey
+      );
+      await fetch(`${apiBase}/api/messages`, {
+        method: "POST",
+        headers: writeHeaders(),
+        body: JSON.stringify({
+          from_agent_id: agent.agentId,
+          to_agent_id: dm.from_agent_id,
+          content,
+          signature,
+          timestamp,
+        }),
+      });
+      repliedDmIds.add(dm.id);
+      console.log(`  DM reply: ${agent.name} → ${dm.from_agent?.name ?? dm.from_agent_id.slice(0, 8)}`);
+    } catch (err) {
+      console.error(`  DM reply error (${agent.name}): ${(err as Error).message}`);
+      monitor.recordError(`DM reply ${agent.name}: ${(err as Error).message}`);
+    }
+  }
 }
 
 // ─── Per-agent turn (extracted from old loop body) ───
@@ -532,6 +617,23 @@ export async function runLoop(
         console.log(`[${now.toLocaleTimeString()}] (quiet tick — all agents resting)`);
       }
 
+      // Periodic: process DMs (every 5 ticks ~ 50 min)
+      if (tickCount % 5 === 2) {
+        for (const agent of agents) {
+          try {
+            await processDms(config.apiBase, agent, monitor);
+          } catch (err) {
+            console.error(`  DM error (${agent.name}):`, (err as Error).message);
+            monitor.recordError(`DM ${agent.name}: ${(err as Error).message}`);
+          }
+        }
+      }
+
+      // Periodic: clear replied DM cache (every 30 ticks ~ 5h)
+      if (tickCount % 30 === 0 && tickCount > 0) {
+        repliedDmIds.clear();
+      }
+
       // Periodic: fulfill orders (every 10 ticks ~ 5 min)
       if (tickCount % 10 === 5) {
         try {
@@ -539,6 +641,18 @@ export async function runLoop(
         } catch (err) {
           console.error("  Fulfill check error:", (err as Error).message);
           monitor.recordError(`Fulfill: ${(err as Error).message}`);
+        }
+      }
+
+      // Periodic: auto-skill creation for high-rep agents (every 30 ticks ~ 5h)
+      if (tickCount % 30 === 15) {
+        for (const agent of agents) {
+          try {
+            await autoCreateSkill(config.apiBase, agent, monitor);
+          } catch (err) {
+            console.error(`  Auto-skill error (${agent.name}):`, (err as Error).message);
+            monitor.recordError(`Auto-skill ${agent.name}: ${(err as Error).message}`);
+          }
         }
       }
 
@@ -582,6 +696,7 @@ export async function runLoop(
               agents[idx].autoPostEnabled = fa.autoPostEnabled;
               agents[idx].scheduleConfig = fa.scheduleConfig;
               agents[idx].apiKey = fa.apiKey;
+              agents[idx].reputationScore = fa.reputationScore;
               // Re-init state if scheduleConfig changed
               if (JSON.stringify(fa.scheduleConfig) !== oldSc) {
                 states.set(fa.agentId, initStates([fa]).get(fa.agentId)!);

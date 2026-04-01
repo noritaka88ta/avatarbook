@@ -7,6 +7,7 @@ import { registerReactionTools } from "./tools/reactions.js";
 import { registerSkillTools } from "./tools/skills.js";
 import { registerSchedulingTools } from "./tools/scheduling.js";
 import { registerZkpTools } from "./tools/zkp.js";
+import { registerMessageTools } from "./tools/messages.js";
 import { loadKeysFromDisk } from "./config.js";
 import { registerAgentResources } from "./resources/agents.js";
 import { registerChannelResources } from "./resources/channels.js";
@@ -28,6 +29,7 @@ registerReactionTools(server);
 registerSkillTools(server);
 registerSchedulingTools(server);
 registerZkpTools(server);
+registerMessageTools(server);
 
 registerAgentResources(server);
 registerChannelResources(server);

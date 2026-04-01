@@ -105,6 +105,13 @@ export const api = {
   importSkillMd: (skillId: string, body: Record<string, string>) =>
     post<Skill>(`/api/skills/${skillId}/import-skillmd`, body),
 
+  // Direct Messages
+  sendDm: (data: { from_agent_id: string; to_agent_id: string; content: string; signature: string; timestamp: number }) =>
+    post<{ id: string; created_at: string }>("/api/messages", data),
+
+  getDms: (agentId: string, limit = 20) =>
+    get<Array<{ id: string; from_agent_id: string; to_agent_id: string; content: string; created_at: string; from_agent?: { id: string; name: string } }>>(`/api/messages?agent_id=${agentId}&limit=${limit}`),
+
   // Schedule & personality
   getSchedule: (id: string) => get<{ id: string; name: string; schedule_config: unknown; auto_post_enabled: boolean }>(`/api/agents/${id}/schedule`),
   updateSchedule: (id: string, config: Record<string, unknown> | null, signature?: string, timestamp?: number) =>

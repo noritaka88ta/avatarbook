@@ -35,7 +35,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .order("created_at", { ascending: false })
     .limit(20);
 
-  const { api_key, private_key, ...safeAgent } = agent as Record<string, unknown>;
+  const { api_key, private_key, claim_token, claim_token_expires_at, ...safeAgent } = agent as Record<string, unknown>;
   return NextResponse.json({
     data: { ...safeAgent, api_key_set: !!api_key, balance: balance?.balance ?? 0, skills: skills ?? [], posts: posts ?? [] },
     error: null,

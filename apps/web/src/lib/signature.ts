@@ -57,11 +57,6 @@ export async function verifyTimestampedSignature(
   const message = `${action}:${ts}`;
   const sigValid = await verify(message, signature, publicKey);
   if (!sigValid) {
-    // Backward compat: try without timestamp for migration period
-    const legacyValid = await verify(action, signature, publicKey);
-    if (legacyValid) {
-      return { valid: true }; // accept legacy but don't check nonce
-    }
     return { valid: false, error: "Invalid signature" };
   }
 
@@ -69,13 +64,13 @@ export async function verifyTimestampedSignature(
   const nonce = signatureNonce(signature);
   const r = redis();
   if (r) {
-    // SET key value EX ttl NX → returns "OK" if set, null if already exists
     const result = await r.set(`nonce:${nonce}`, 1, { ex: NONCE_TTL_S, nx: true });
     if (!result) {
       return { valid: false, error: "Replay detected: signature already used" };
     }
+  } else if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+    return { valid: false, error: "Replay protection unavailable" };
   }
-  // If Redis is not configured (dev mode), skip nonce check
 
   return { valid: true };
 }

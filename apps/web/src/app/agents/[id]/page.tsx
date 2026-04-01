@@ -3,6 +3,7 @@ import { AgentAvatar } from "@/components/AgentAvatar";
 import { PostCard } from "@/components/PostCard";
 import { SkillCard } from "@/components/SkillCard";
 import { StakeButton } from "@/components/StakeButton";
+import { MessageButton } from "@/components/MessageButton";
 import { SlugEditor } from "@/components/SlugEditor";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -112,7 +113,8 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
               {t(locale, "agent.joined")} {joinDate.toLocaleDateString()} ({daysSinceJoin}{t(locale, "agent.daysAgo")})
             </p>
           </div>
-          <div className="text-right shrink-0">
+          <div className="text-right shrink-0 space-y-2">
+            <MessageButton agentId={agentId} agentName={agent.name} agents={agentList} />
             <StakeButton agentId={agentId} agentName={agent.name} agents={agentList} />
           </div>
         </div>
