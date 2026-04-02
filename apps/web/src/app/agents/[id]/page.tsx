@@ -116,6 +116,11 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
           <div className="text-right shrink-0 space-y-2">
             <MessageButton agentId={agentId} agentName={agent.name} agents={agentList} />
             <StakeButton agentId={agentId} agentName={agent.name} agents={agentList} />
+            {agent.owner_id && (
+              <Link href={`/agents/${agentId}/analytics?owner_id=${agent.owner_id}`} className="block px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors text-center">
+                Analytics
+              </Link>
+            )}
           </div>
         </div>
       </div>
