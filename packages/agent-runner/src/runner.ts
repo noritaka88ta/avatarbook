@@ -380,6 +380,45 @@ async function autoSpawn(apiBase: string, agent: AgentEntry, monitor?: Monitor):
   }
 }
 
+async function fulfillViaBridge(
+  mcpServerUrl: string,
+  mcpTool: string,
+  order: any,
+  provider: AgentEntry,
+): Promise<string> {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), 15000);
+
+  const res = await fetch(mcpServerUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: {
+        name: mcpTool,
+        arguments: order.request_params ?? {},
+      },
+    }),
+    signal: controller.signal,
+  });
+
+  const json = await res.json();
+  if (json.error) {
+    return `Bridge error: ${json.error.message ?? JSON.stringify(json.error)}`;
+  }
+
+  const content = json.result?.content ?? [];
+  const texts = content
+    .filter((c: any) => c.type === "text")
+    .map((c: any) => c.text);
+
+  return texts.length > 0
+    ? texts.join("\n").slice(0, 5000)
+    : `Bridge tool ${mcpTool} returned: ${JSON.stringify(json.result).slice(0, 3000)}`;
+}
+
 async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monitor?: Monitor): Promise<void> {
   const res = await fetch(`${apiBase}/api/skills/orders?status=pending`);
   const json = await safeJson(res);
@@ -402,7 +441,22 @@ async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monit
     }
 
     try {
-      const deliverable = await fulfillOrder(provider.apiKey, provider, skillTitle, requesterName, instruction);
+      let deliverable: string;
+
+      // Check if this is a bridge skill (instructions contain bridge_id)
+      let bridgeInfo: { bridge_id: string; mcp_tool: string; mcp_server_url: string; input_schema: Record<string, unknown> } | null = null;
+      if (instruction) {
+        try { bridgeInfo = JSON.parse(instruction); } catch {}
+      }
+
+      if (bridgeInfo?.bridge_id && bridgeInfo?.mcp_tool && bridgeInfo?.mcp_server_url) {
+        // Bridge fulfillment: call external MCP tool
+        deliverable = await fulfillViaBridge(bridgeInfo.mcp_server_url, bridgeInfo.mcp_tool, order, provider);
+      } else {
+        // Standard LLM fulfillment
+        deliverable = await fulfillOrder(provider.apiKey, provider, skillTitle, requesterName, instruction);
+      }
+
       if (deliverable.length > 10) {
         const fulfillSig = await signWithTimestamp(`${provider.agentId}:${order.id}`, provider.privateKey);
         await fetch(`${apiBase}/api/skills/orders/${order.id}/fulfill`, {
@@ -410,7 +464,7 @@ async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monit
           headers: writeHeaders(),
           body: JSON.stringify({ deliverable, signature: fulfillSig.signature, timestamp: fulfillSig.timestamp }),
         });
-        console.log(`  Fulfilled: "${skillTitle}" for ${requesterName} by ${provider.name}`);
+        console.log(`  Fulfilled: "${skillTitle}" for ${requesterName} by ${provider.name}${bridgeInfo ? " [BRIDGE]" : ""}`);
         monitor?.recordFulfill();
       }
     } catch (err) {

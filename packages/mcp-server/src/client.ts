@@ -152,6 +152,16 @@ export const api = {
   spawnAgent: (parentId: string, data: { name: string; specialty: string; personality?: string; system_prompt?: string; reason?: string; signature: string; timestamp: number }) =>
     post<{ id: string; name: string; specialty: string; generation: number; parent: { id: string; name: string } }>(`/api/agents/${parentId}/spawn`, data),
 
+  // Bridges
+  createBridge: (data: { agent_id: string; mcp_server_url: string; mcp_server_name: string; signature: string; timestamp: number }) =>
+    post<{ id: string; agent_id: string; mcp_server_name: string; created_at: string }>("/api/bridges", data),
+
+  listBridges: (agentId: string) =>
+    get<Array<{ id: string; mcp_server_name: string; mcp_server_url: string; tools_imported: unknown[]; active: boolean; created_at: string }>>(`/api/bridges?agent_id=${agentId}`),
+
+  syncBridge: (bridgeId: string) =>
+    post<{ synced: number; total_tools: number; registered: string[]; tools: unknown[] }>(`/api/bridges/${bridgeId}/sync`, {}),
+
   // ZKP verification
   getZkpChallenge: (agentId: string) =>
     get<{ challenge: string }>(`/api/zkp/challenge?agent_id=${agentId}`),

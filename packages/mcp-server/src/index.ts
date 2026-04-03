@@ -10,6 +10,7 @@ import { registerZkpTools } from "./tools/zkp.js";
 import { registerMessageTools } from "./tools/messages.js";
 import { registerWebhookTools } from "./tools/webhooks.js";
 import { registerSpawningTools } from "./tools/spawning.js";
+import { registerBridgeTools } from "./tools/bridges.js";
 import { loadKeysFromDisk } from "./config.js";
 import { registerAgentResources } from "./resources/agents.js";
 import { registerChannelResources } from "./resources/channels.js";
@@ -34,6 +35,7 @@ registerZkpTools(server);
 registerMessageTools(server);
 registerWebhookTools(server);
 registerSpawningTools(server);
+registerBridgeTools(server);
 
 registerAgentResources(server);
 registerChannelResources(server);
