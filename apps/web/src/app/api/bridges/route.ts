@@ -43,6 +43,20 @@ export async function POST(req: Request) {
   if (typeof mcp_server_url !== "string" || mcp_server_url.length > 2000) {
     return NextResponse.json({ data: null, error: "Invalid mcp_server_url" }, { status: 400 });
   }
+  // SSRF protection: validate URL scheme and block private IPs
+  try {
+    const parsed = new URL(mcp_server_url);
+    if (!["https:"].includes(parsed.protocol)) {
+      return NextResponse.json({ data: null, error: "Only HTTPS URLs allowed" }, { status: 400 });
+    }
+    const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
+    const blocked = /^(localhost|127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|0\.|::1|0:0:0:0:0:0:0:1|fc|fd|fe80|::ffff:)/i;
+    if (blocked.test(hostname)) {
+      return NextResponse.json({ data: null, error: "URL not allowed" }, { status: 400 });
+    }
+  } catch {
+    return NextResponse.json({ data: null, error: "Invalid mcp_server_url" }, { status: 400 });
+  }
   if (typeof mcp_server_name !== "string" || mcp_server_name.length > 200) {
     return NextResponse.json({ data: null, error: "Invalid mcp_server_name" }, { status: 400 });
   }
@@ -70,17 +84,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: null, error: "Bridge requires an owner with Verified tier" }, { status: 403 });
   }
 
-  // Ed25519 signature auth
-  if (signature && agent.public_key) {
-    const sigResult = await verifyTimestampedSignature(
-      `bridge:${agent_id}:${mcp_server_name}`,
-      signature,
-      agent.public_key,
-      timestamp,
-    );
-    if (!sigResult.valid) {
-      return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid signature" }, { status: 403 });
-    }
+  // Ed25519 signature auth — mandatory
+  if (!agent.public_key) {
+    return NextResponse.json({ data: null, error: "Agent has no public key" }, { status: 400 });
+  }
+  if (!signature) {
+    return NextResponse.json({ data: null, error: "Signature required" }, { status: 400 });
+  }
+  const sigResult = await verifyTimestampedSignature(
+    `bridge:${agent_id}:${mcp_server_name}`,
+    signature,
+    agent.public_key,
+    timestamp,
+  );
+  if (!sigResult.valid) {
+    return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid signature" }, { status: 403 });
   }
 
   // Max bridges per agent

@@ -35,7 +35,22 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
-  // Call external MCP server's tools/list via JSON-RPC over HTTP
+  // SSRF protection: validate URL before fetch
+  try {
+    const parsed = new URL(bridge.mcp_server_url);
+    if (!["https:"].includes(parsed.protocol)) {
+      return NextResponse.json({ data: null, error: "Only HTTPS URLs allowed" }, { status: 400 });
+    }
+    const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
+    const blocked = /^(localhost|127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|0\.|::1|0:0:0:0:0:0:0:1|fc|fd|fe80|::ffff:)/i;
+    if (blocked.test(hostname)) {
+      return NextResponse.json({ data: null, error: "URL not allowed" }, { status: 400 });
+    }
+  } catch {
+    return NextResponse.json({ data: null, error: "Invalid MCP server URL" }, { status: 400 });
+  }
+
+  // Call external MCP server's tools/list via JSON-RPC over HTTPS
   let tools: McpTool[] = [];
   try {
     const controller = new AbortController();
@@ -57,7 +72,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     tools = json.result?.tools ?? [];
   } catch (err) {
     return NextResponse.json(
-      { data: null, error: `Failed to connect to MCP server: ${(err as Error).message}` },
+      { data: null, error: "Failed to connect to MCP server" },
       { status: 502 },
     );
   }

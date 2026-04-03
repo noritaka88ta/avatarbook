@@ -96,3 +96,116 @@ describe("SEC-06: claim_token stripped from agent GET response", () => {
     expect(agentRoute).toMatch(/const\s*\{[^}]*claim_token[^}]*claim_token_expires_at[^}]*\.\.\.\s*safeAgent\s*\}/);
   });
 });
+
+// ===== P0 Security Fixes (v1.4.0 audit) =====
+
+describe("P0-1: Bridge sync has SSRF blocklist", () => {
+  const syncRoute = read("app/api/bridges/[id]/sync/route.ts");
+
+  it("checks protocol is https", () => {
+    expect(syncRoute).toContain('["https:"].includes(parsed.protocol)');
+  });
+
+  it("has private IP blocklist", () => {
+    expect(syncRoute).toContain("localhost");
+    expect(syncRoute).toContain("169\\.254");
+    expect(syncRoute).toContain("::1");
+  });
+
+  it("does not leak internal error details", () => {
+    expect(syncRoute).not.toContain("(err as Error).message");
+  });
+});
+
+describe("P0-1b: Bridge registration has SSRF blocklist", () => {
+  const bridgeRoute = read("app/api/bridges/route.ts");
+
+  it("checks protocol is https", () => {
+    expect(bridgeRoute).toContain('["https:"].includes(parsed.protocol)');
+  });
+
+  it("has private IP blocklist", () => {
+    expect(bridgeRoute).toContain("localhost");
+  });
+});
+
+describe("P0-2: Signature is mandatory on spawn and bridges", () => {
+  const spawnRoute = read("app/api/agents/[id]/spawn/route.ts");
+  const bridgeRoute = read("app/api/bridges/route.ts");
+
+  it("spawn rejects missing signature", () => {
+    expect(spawnRoute).toMatch(/if \(!signature\)/);
+    expect(spawnRoute).toMatch(/Signature required/);
+  });
+
+  it("spawn rejects missing public key", () => {
+    expect(spawnRoute).toMatch(/if \(!parent\.public_key\)/);
+  });
+
+  it("bridge rejects missing signature", () => {
+    expect(bridgeRoute).toMatch(/if \(!signature\)/);
+    expect(bridgeRoute).toMatch(/Signature required/);
+  });
+});
+
+describe("P0-3: by-slug strips claim_token", () => {
+  const bySlug = read("app/api/agents/by-slug/route.ts");
+
+  it("destructures claim_token from response", () => {
+    expect(bySlug).toMatch(/claim_token/);
+    expect(bySlug).toMatch(/claim_token_expires_at/);
+  });
+});
+
+describe("P0-4: Skill order fulfillment is atomic", () => {
+  const fulfillRoute = read("app/api/skills/orders/[id]/fulfill/route.ts");
+
+  it("UPDATE includes .eq('status', 'pending')", () => {
+    expect(fulfillRoute).toMatch(/\.eq\("status",\s*"pending"\)/);
+  });
+
+  it("returns 409 on already-fulfilled", () => {
+    expect(fulfillRoute).toMatch(/409/);
+    expect(fulfillRoute).toMatch(/Already fulfilled/);
+  });
+});
+
+describe("P0-6: No negative avb_credit calls", () => {
+  const fulfillRoute = read("app/api/skills/orders/[id]/fulfill/route.ts");
+  const postsRoute = read("app/api/posts/route.ts");
+
+  it("fulfill uses avb_deduct not avb_credit(-n)", () => {
+    expect(fulfillRoute).toMatch(/avb_deduct/);
+    expect(fulfillRoute).not.toMatch(/avb_credit.*-fee/);
+  });
+
+  it("posts uses avb_deduct not avb_credit(-n)", () => {
+    expect(postsRoute).toMatch(/avb_deduct/);
+    expect(postsRoute).not.toMatch(/avb_credit.*-HOSTED_POST_COST/);
+  });
+});
+
+describe("P0-7: Stripe webhook has idempotency", () => {
+  const stripeRoute = read("app/api/webhook/stripe/route.ts");
+
+  it("inserts idempotency key before crediting", () => {
+    expect(stripeRoute).toMatch(/idempotency_keys/);
+    expect(stripeRoute).toMatch(/stripe:\$\{session\.id\}/);
+  });
+
+  it("returns early on duplicate (23505)", () => {
+    expect(stripeRoute).toMatch(/23505/);
+  });
+});
+
+describe("P0-8: GET /api/messages requires auth", () => {
+  const messagesRoute = read("app/api/messages/route.ts");
+
+  it("checks owner_id for DM access", () => {
+    expect(messagesRoute).toMatch(/owner_id required for DM access/);
+  });
+
+  it("verifies agent owner_id matches", () => {
+    expect(messagesRoute).toMatch(/agent\.owner_id !== ownerId/);
+  });
+});

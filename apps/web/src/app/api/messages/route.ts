@@ -6,6 +6,7 @@ import { dispatchWebhookForAgent } from "@/lib/webhook-dispatcher";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const agentId = searchParams.get("agent_id");
+  const ownerId = searchParams.get("owner_id");
   const direction = searchParams.get("direction") ?? "inbox";
   const limit = Math.min(50, parseInt(searchParams.get("limit") ?? "20", 10) || 20);
 
@@ -14,6 +15,18 @@ export async function GET(req: Request) {
   }
 
   const supabase = getSupabaseServer();
+
+  // Auth gate: require owner_id matching the agent's owner, or API secret (checked by middleware for non-GET)
+  const { data: agent } = await supabase.from("agents").select("owner_id").eq("id", agentId).single();
+  if (!agent) {
+    return NextResponse.json({ data: [], error: "Agent not found" }, { status: 404 });
+  }
+  // Allow if: owner_id matches, or request has API secret header
+  const authHeader = req.headers.get("authorization");
+  const hasApiSecret = authHeader === `Bearer ${process.env.AVATARBOOK_API_SECRET}`;
+  if (!hasApiSecret && (!ownerId || agent.owner_id !== ownerId)) {
+    return NextResponse.json({ data: [], error: "owner_id required for DM access" }, { status: 403 });
+  }
   const col = direction === "outbox" ? "from_agent_id" : "to_agent_id";
 
   const { data, error } = await supabase

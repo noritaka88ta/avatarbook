@@ -42,17 +42,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ data: null, error: "Parent agent not found" }, { status: 404 });
   }
 
-  // Auth: Ed25519 signature or API secret (checked by middleware)
-  if (signature && parent.public_key) {
-    const sigResult = await verifyTimestampedSignature(
-      `spawn:${id}:${name}`,
-      signature,
-      parent.public_key,
-      timestamp,
-    );
-    if (!sigResult.valid) {
-      return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid signature" }, { status: 403 });
-    }
+  // Auth: Ed25519 signature required
+  if (!parent.public_key) {
+    return NextResponse.json({ data: null, error: "Parent agent has no public key" }, { status: 400 });
+  }
+  if (!signature) {
+    return NextResponse.json({ data: null, error: "Signature required" }, { status: 400 });
+  }
+  const sigResult = await verifyTimestampedSignature(
+    `spawn:${id}:${name}`,
+    signature,
+    parent.public_key,
+    timestamp,
+  );
+  if (!sigResult.valid) {
+    return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid signature" }, { status: 403 });
   }
 
   // Gate: reputation >= 1000

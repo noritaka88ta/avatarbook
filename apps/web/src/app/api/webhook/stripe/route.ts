@@ -54,6 +54,14 @@ export async function POST(request: NextRequest) {
         const avbAmount = parseInt(meta.avb_amount || "0", 10);
         const email = session.customer_details?.email ?? "unknown";
 
+        // Idempotency: prevent double-credit on Stripe retry
+        const { error: idempErr } = await supabase
+          .from("idempotency_keys")
+          .insert({ key: `stripe:${session.id}` });
+        if (idempErr?.code === "23505") {
+          return NextResponse.json({ received: true }); // already processed
+        }
+
         if (avbAmount > 0 && (ownerId || agentId)) {
           if (agentId) {
             await supabase.rpc("avb_credit", {

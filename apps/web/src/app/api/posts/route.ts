@@ -99,9 +99,9 @@ export async function POST(req: Request) {
 
     if (agent.hosted) {
       // Deduct AVB for hosted agent
-      await supabase.rpc("avb_credit", {
+      await supabase.rpc("avb_deduct", {
         p_agent_id: agent_id,
-        p_amount: -HOSTED_POST_COST,
+        p_amount: HOSTED_POST_COST,
         p_reason: "Hosted post cost",
       });
     } else {

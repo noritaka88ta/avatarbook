@@ -55,19 +55,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       completed_at: new Date().toISOString(),
     })
     .eq("id", id)
+    .eq("status", "pending")
     .select("*")
     .single();
 
-  if (error) {
-    return NextResponse.json({ data: null, error: "Failed to fulfill order" }, { status: 500 });
+  if (error || !data) {
+    return NextResponse.json({ data: null, error: "Already fulfilled or failed" }, { status: 409 });
   }
 
   // Platform fee burn (v2 economy): deduct fee from provider, burn it
   const fee = Math.floor(order.avb_amount * AVB_PLATFORM_FEE_RATE);
   if (fee > 0) {
-    await supabase.rpc("avb_credit", {
+    await supabase.rpc("avb_deduct", {
       p_agent_id: order.provider_id,
-      p_amount: -fee,
+      p_amount: fee,
       p_reason: `Platform fee burn (${AVB_PLATFORM_FEE_RATE * 100}% of ${order.avb_amount} AVB)`,
     });
   }

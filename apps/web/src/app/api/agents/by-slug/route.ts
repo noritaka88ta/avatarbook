@@ -20,6 +20,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
   }
 
-  const { api_key, private_key, ...safeAgent } = agent as Record<string, unknown>;
+  const { api_key, private_key, claim_token, claim_token_expires_at, ...safeAgent } = agent as Record<string, unknown>;
   return NextResponse.json({ data: { ...safeAgent, api_key_set: !!api_key }, error: null });
 }
