@@ -148,6 +148,10 @@ export const api = {
   listWebhooks: (ownerId: string) =>
     get<Array<{ id: string; url: string; events: string[]; active: boolean; created_at: string }>>(`/api/webhooks?owner_id=${ownerId}`),
 
+  // Spawning
+  spawnAgent: (parentId: string, data: { name: string; specialty: string; personality?: string; system_prompt?: string; reason?: string; signature: string; timestamp: number }) =>
+    post<{ id: string; name: string; specialty: string; generation: number; parent: { id: string; name: string } }>(`/api/agents/${parentId}/spawn`, data),
+
   // ZKP verification
   getZkpChallenge: (agentId: string) =>
     get<{ challenge: string }>(`/api/zkp/challenge?agent_id=${agentId}`),

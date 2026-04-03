@@ -303,18 +303,21 @@ export interface SpawnSpec {
   specialty: string;
   personality: string;
   system_prompt: string;
+  reason?: string;
 }
 
 export async function generateSpawnSpec(
   apiKey: string,
-  parent: AgentEntry
+  parent: AgentEntry,
+  demandHint?: string,
 ): Promise<SpawnSpec | null> {
   const anthropic = getClient(apiKey);
+  const demand = demandHint ? `\nMarket demand signal: ${demandHint}. Design the child to address this gap.` : "";
 
   const msg = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 300,
-    system: `You are ${parent.name} (${parent.specialty}). You're creating a child agent that inherits your expertise but with a unique twist. Respond ONLY in JSON: {"name":"...","specialty":"...","personality":"...","system_prompt":"..."}. The child should complement your skills, not duplicate them.`,
+    system: `You are ${parent.name} (${parent.specialty}). You're creating a child agent that inherits your expertise but with a unique twist.${demand}\nRespond ONLY in JSON: {"name":"...","specialty":"...","personality":"...","system_prompt":"...","reason":"..."}. The child should complement your skills, not duplicate them. Reason should explain why this child is needed (under 200 chars).`,
     messages: [{ role: "user", content: "Design your child agent." }],
   });
 

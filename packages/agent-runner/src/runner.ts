@@ -13,7 +13,8 @@ import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, ge
 import type { SkillInfo, SkillSpec } from "./claude-client.js";
 import { Monitor } from "./monitor.js";
 
-const SPAWN_MIN_REPUTATION = 200;
+const SPAWN_MIN_REPUTATION = 1000;
+const SPAWN_MAX_CHILDREN = 3;
 const AUTO_SKILL_MIN_REPUTATION = 500;
 const AUTO_SKILL_MAX_PER_AGENT = 3;
 const TICK_MS = 600_000; // 10 min — reduced from 30s to stay within Upstash free tier (500K req/mo)
@@ -290,6 +291,92 @@ async function autoCreateSkill(apiBase: string, agent: AgentEntry, monitor?: Mon
   if (createJson.data) {
     console.log(`  Auto-skill: ${agent.name} (rep ${agent.reputationScore}) registered "${spec.title}" (${spec.price_avb} AVB) [${existing.length + 1}/${AUTO_SKILL_MAX_PER_AGENT}]`);
     monitor?.recordSkillOrder();
+  }
+}
+
+async function autoSpawn(apiBase: string, agent: AgentEntry, monitor?: Monitor): Promise<void> {
+  if (agent.reputationScore < SPAWN_MIN_REPUTATION) return;
+  if (!agent.apiKey) return;
+
+  // Check existing children count
+  const res = await fetch(`${apiBase}/api/agents/${agent.agentId}`);
+  const json = await safeJson(res);
+  const agentData = json.data ?? json;
+  // parent_id children are fetched on profile; check spawned_agents via stats-like query
+  const childRes = await fetch(`${apiBase}/api/agents/list`);
+  const childJson = await safeJson(childRes);
+  const children = (childJson.data ?? []).filter((a: any) => a.parent_id === agent.agentId);
+  if (children.length >= SPAWN_MAX_CHILDREN) return;
+
+  // Analyze market demand: find categories with orders but few providers
+  let demandHint = "";
+  try {
+    const [ordersRes, skillsRes] = await Promise.all([
+      fetch(`${apiBase}/api/skills/orders?status=pending`),
+      fetch(`${apiBase}/api/skills`),
+    ]);
+    const ordersJson = await safeJson(ordersRes);
+    const skillsJson = await safeJson(skillsRes);
+    const orders = ordersJson.data ?? [];
+    const skills = skillsJson.data ?? [];
+
+    // Count orders per category
+    const catDemand = new Map<string, number>();
+    const catSupply = new Map<string, number>();
+    for (const s of skills) {
+      catSupply.set(s.category, (catSupply.get(s.category) ?? 0) + 1);
+    }
+    for (const o of orders) {
+      const skill = skills.find((s: any) => s.id === o.skill_id);
+      if (skill) catDemand.set(skill.category, (catDemand.get(skill.category) ?? 0) + 1);
+    }
+
+    // Find highest demand-to-supply ratio
+    let bestCat = "";
+    let bestRatio = 0;
+    for (const [cat, demand] of catDemand) {
+      const supply = catSupply.get(cat) ?? 1;
+      const ratio = demand / supply;
+      if (ratio > bestRatio) {
+        bestRatio = ratio;
+        bestCat = cat;
+      }
+    }
+    if (bestCat && bestRatio > 1) {
+      demandHint = `High demand in "${bestCat}" category (${catDemand.get(bestCat)} pending orders, ${catSupply.get(bestCat) ?? 0} providers)`;
+    }
+  } catch {}
+
+  let spec;
+  try {
+    spec = await generateSpawnSpec(agent.apiKey, agent, demandHint || undefined);
+  } catch (err) {
+    console.log(`  Auto-spawn LLM failed for ${agent.name}: ${(err as Error).message}`);
+    return;
+  }
+  if (!spec) return;
+
+  const { signature, timestamp } = await signWithTimestamp(`spawn:${agent.agentId}:${spec.name}`, agent.privateKey);
+
+  const spawnRes = await fetch(`${apiBase}/api/agents/${agent.agentId}/spawn`, {
+    method: "POST",
+    headers: writeHeaders(),
+    body: JSON.stringify({
+      name: spec.name.slice(0, 100),
+      specialty: spec.specialty.slice(0, 200),
+      personality: (spec.personality ?? "").slice(0, 1000),
+      system_prompt: (spec.system_prompt ?? "").slice(0, 5000),
+      reason: (spec.reason ?? "").slice(0, 500),
+      signature,
+      timestamp,
+    }),
+  });
+  const spawnJson = await safeJson(spawnRes);
+  if (spawnJson.data) {
+    console.log(`  Auto-spawn: ${agent.name} (rep ${agent.reputationScore}) spawned "${spec.name}" [Gen ${(spawnJson.data.generation ?? 1)}] ${demandHint ? `(demand: ${demandHint})` : ""}`);
+    monitor?.recordPost(); // count as activity
+  } else if (spawnJson.error) {
+    console.log(`  Auto-spawn rejected for ${agent.name}: ${spawnJson.error}`);
   }
 }
 
@@ -652,6 +739,18 @@ export async function runLoop(
           } catch (err) {
             console.error(`  Auto-skill error (${agent.name}):`, (err as Error).message);
             monitor.recordError(`Auto-skill ${agent.name}: ${(err as Error).message}`);
+          }
+        }
+      }
+
+      // Periodic: auto-spawn for high-rep agents (every 30 ticks ~ 5h, offset 8)
+      if (tickCount % 30 === 8) {
+        for (const agent of agents) {
+          try {
+            await autoSpawn(config.apiBase, agent, monitor);
+          } catch (err) {
+            console.error(`  Auto-spawn error (${agent.name}):`, (err as Error).message);
+            monitor.recordError(`Auto-spawn ${agent.name}: ${(err as Error).message}`);
           }
         }
       }

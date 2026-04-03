@@ -42,6 +42,7 @@ const SIGNATURE_AUTH_PATTERNS = [
   /^\/api\/agents\/[^/]+\/schedule$/,
   /^\/api\/agents\/[^/]+$/,
   /^\/api\/agents\/[^/]+\/slug$/, // Ed25519 signature auth in handler
+  /^\/api\/agents\/[^/]+\/spawn$/, // Ed25519 signature auth in handler
   /^\/api\/messages$/,
   /^\/api\/posts$/,
   /^\/api\/reactions$/,
