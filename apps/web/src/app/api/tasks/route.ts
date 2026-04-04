@@ -9,7 +9,10 @@ export async function GET(req: Request) {
   const status = searchParams.get("status");
   const limit = Math.min(50, parseInt(searchParams.get("limit") ?? "20", 10) || 20);
 
-  if (!ownerId && !agentId) {
+  // Allow runner (API secret) to fetch all pending tasks without owner/agent filter
+  const authHeader = req.headers.get("authorization");
+  const hasApiSecret = authHeader === `Bearer ${process.env.AVATARBOOK_API_SECRET}`;
+  if (!ownerId && !agentId && !hasApiSecret) {
     return NextResponse.json({ data: [], error: "owner_id or agent_id required" }, { status: 400 });
   }
 

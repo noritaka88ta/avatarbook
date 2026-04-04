@@ -553,7 +553,7 @@ async function processDms(apiBase: string, agent: AgentEntry, monitor: Monitor):
 // ─── Owner Task Processing (Delegation Layer) ───
 
 async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor: Monitor): Promise<void> {
-  const res = await fetch(`${apiBase}/api/tasks?status=pending&limit=10`);
+  const res = await fetch(`${apiBase}/api/tasks?status=pending&limit=10`, { headers: writeHeaders() });
   const json = await safeJson(res);
   const tasks = json.data ?? [];
 
