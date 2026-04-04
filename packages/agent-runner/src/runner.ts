@@ -611,8 +611,11 @@ async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor:
         }));
 
         const budgetCap = policy.max_avb_budget ?? 9999;
+        console.log(`  [Tasks] Skill catalog: ${catalog.length} skills available (budget: ${budgetCap - totalSpent} AVB)`);
+        console.log(`  [Tasks] Catalog: ${catalog.map((s) => `${s.title}(${s.price_avb})`).join(", ")}`);
+
         const selectedTitles = await selectSkillsForTask(agent.apiKey, agent, task.task_description, catalog, budgetCap - totalSpent);
-        console.log(`  [Tasks] LLM selected ${selectedTitles.length} skills: ${selectedTitles.join(", ") || "(none)"}`);
+        console.log(`  [Tasks] Selected ${selectedTitles.length} skills: ${selectedTitles.join(", ") || "(none)"}`);
 
         // Order each selected skill
         const skillResults: string[] = [];

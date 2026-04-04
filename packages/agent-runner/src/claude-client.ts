@@ -346,25 +346,87 @@ export async function selectSkillsForTask(
   budgetRemaining: number,
 ): Promise<string[]> {
   if (availableSkills.length === 0) return [];
+  const affordable = availableSkills.filter((s) => s.price_avb <= budgetRemaining);
+  if (affordable.length === 0) return [];
+
   const anthropic = getClient(apiKey);
-  const catalog = availableSkills
-    .filter((s) => s.price_avb <= budgetRemaining)
-    .map((s) => `- "${s.title}" (${s.price_avb} AVB) by ${s.agent_name} — ${s.description.slice(0, 100)}`)
+  const catalog = affordable
+    .map((s) => `- "${s.title}" (${s.price_avb} AVB) by ${s.agent_name} — ${s.description.slice(0, 120)}`)
     .join("\n");
 
   const msg = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 300,
-    system: `You are ${agent.name} (${agent.specialty}). Your owner delegated a task. You must decide which specialist skills to order to complete it well. Order MULTIPLE skills when the task spans multiple domains. Budget remaining: ${budgetRemaining} AVB.\n\nAvailable skills:\n${catalog}\n\nRespond ONLY with a JSON array of skill titles to order, e.g. ["Security Audit", "Architecture Review"]. If no skills are needed, respond with [].`,
+    system: `You are ${agent.name}, a CEO agent. Your owner delegated a task to you. You MUST delegate work to specialists — do NOT try to do everything yourself. Your role is to DELEGATE and SYNTHESIZE.
+
+RULES:
+- You MUST order at least 2 skills from the catalog below.
+- Pick skills that cover different aspects of the task.
+- Budget remaining: ${budgetRemaining} AVB.
+
+Available specialist skills:
+${catalog}
+
+Respond ONLY with a JSON array of exact skill titles to order.
+Example: ["Security Audit", "Deep Research Report"]`,
     messages: [{ role: "user", content: `Task: ${sanitizeForPrompt(taskDescription)}` }],
   });
 
   const text = msg.content[0].type === "text" ? msg.content[0].text.trim() : "[]";
   try {
-    const titles = JSON.parse(text);
-    if (Array.isArray(titles)) return titles.filter((t: unknown) => typeof t === "string");
+    const parsed = JSON.parse(text.replace(/```json?\n?/g, "").replace(/```/g, "").trim());
+    if (Array.isArray(parsed)) {
+      const valid = parsed.filter((t: unknown) => typeof t === "string" && affordable.some((s) => s.title === t));
+      if (valid.length >= 1) return valid;
+    }
   } catch {}
-  return [];
+
+  // Fallback: keyword-based auto-selection (minimum 2 skills)
+  return fallbackSkillSelection(taskDescription, affordable);
+}
+
+function fallbackSkillSelection(taskDescription: string, skills: SkillCatalogEntry[]): string[] {
+  const desc = taskDescription.toLowerCase();
+  const selected: string[] = [];
+  const find = (kw: string[]) => skills.find((s) => kw.some((k) => s.title.toLowerCase().includes(k)));
+
+  if (desc.includes("security") || desc.includes("audit") || desc.includes("vulnerab")) {
+    const s = find(["security audit"]); if (s) selected.push(s.title);
+  }
+  if (desc.includes("market") || desc.includes("launch") || desc.includes("go-to-market") || desc.includes("gtm")) {
+    const s = find(["go-to-market", "market"]); if (s) selected.push(s.title);
+  }
+  if (desc.includes("research") || desc.includes("analysis") || desc.includes("analyze") || desc.includes("evaluate")) {
+    const s = find(["deep research", "research"]); if (s) selected.push(s.title);
+  }
+  if (desc.includes("code") || desc.includes("review") || desc.includes("bug")) {
+    const s = find(["code review"]); if (s) selected.push(s.title);
+  }
+  if (desc.includes("architecture") || desc.includes("infra") || desc.includes("scale") || desc.includes("system")) {
+    const s = find(["architecture review"]); if (s) selected.push(s.title);
+  }
+  if (desc.includes("test") || desc.includes("qa") || desc.includes("quality")) {
+    const s = find(["test suite"]); if (s) selected.push(s.title);
+  }
+  if (desc.includes("sprint") || desc.includes("plan") || desc.includes("roadmap")) {
+    const s = find(["sprint planning"]); if (s) selected.push(s.title);
+  }
+  if (desc.includes("creative") || desc.includes("brand") || desc.includes("campaign")) {
+    const s = find(["creative brief"]); if (s) selected.push(s.title);
+  }
+  if (desc.includes("strategy") || desc.includes("consult")) {
+    const s = find(["strategy consultation"]); if (s) selected.push(s.title);
+  }
+
+  // Ensure minimum 2 skills
+  if (selected.length < 2) {
+    const research = find(["deep research", "research"]);
+    const strategy = find(["strategy consultation"]);
+    if (research && !selected.includes(research.title)) selected.push(research.title);
+    if (strategy && !selected.includes(strategy.title) && selected.length < 2) selected.push(strategy.title);
+  }
+
+  return [...new Set(selected)].slice(0, 5);
 }
 
 export async function executeOwnerTask(
@@ -374,14 +436,28 @@ export async function executeOwnerTask(
   skillResults?: string,
 ): Promise<string> {
   const anthropic = getClient(apiKey);
-  const context = skillResults
-    ? `\n\nYou ordered specialist skills. Here are their results — synthesize them into your final report:\n\n${skillResults}`
-    : "";
+
+  let system: string;
+  if (skillResults) {
+    system = `You are ${agent.name} (${agent.specialty}, ${agent.personality}). Your owner delegated a task and you ordered specialist skills to gather expert input. Your job now is to SYNTHESIZE their reports into a single, coherent executive report.
+
+## Specialist Reports
+${skillResults}
+
+## Instructions
+- Combine insights from all specialists above
+- Add your own strategic perspective as ${agent.specialty}
+- Use markdown: headers, bullet points, bold for emphasis
+- Structure: Executive Summary → Key Findings → Recommendations → Next Steps
+- Credit which specialist contributed which insight`;
+  } else {
+    system = `You are ${agent.name} (${agent.specialty}, ${agent.personality}). Your owner has delegated a task to you. Execute it thoroughly and return a clear, actionable result in markdown format.`;
+  }
 
   const msg = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 2000,
-    system: `You are ${agent.name} (${agent.specialty}, ${agent.personality}). Your owner has delegated a task to you. Execute it thoroughly and return a clear, actionable result in markdown format.${context}`,
+    system,
     messages: [{ role: "user", content: `Task: ${sanitizeForPrompt(taskDescription)}` }],
   });
   return msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
