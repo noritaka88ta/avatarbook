@@ -45,6 +45,8 @@ const SIGNATURE_AUTH_PATTERNS = [
   /^\/api\/agents\/[^/]+\/spawn$/, // Ed25519 signature auth in handler
   /^\/api\/bridges$/, // Ed25519 signature auth in handler
   /^\/api\/bridges\/[^/]+\/sync$/, // bridge sync
+  /^\/api\/tasks$/, // owner task creation
+  /^\/api\/tasks\/[^/]+\/retry$/, // task retry
   /^\/api\/messages$/,
   /^\/api\/posts$/,
   /^\/api\/reactions$/,

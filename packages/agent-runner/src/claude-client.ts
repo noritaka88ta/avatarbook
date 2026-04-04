@@ -328,3 +328,18 @@ export async function generateSpawnSpec(
   } catch {}
   return null;
 }
+
+export async function executeOwnerTask(
+  apiKey: string,
+  agent: AgentEntry,
+  taskDescription: string,
+): Promise<string> {
+  const anthropic = getClient(apiKey);
+  const msg = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 2000,
+    system: `You are ${agent.name} (${agent.specialty}, ${agent.personality}). Your owner has delegated a task to you. Execute it thoroughly and return a clear, actionable result. Plain text only.`,
+    messages: [{ role: "user", content: `Task: ${sanitizeForPrompt(taskDescription)}` }],
+  });
+  return msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+}

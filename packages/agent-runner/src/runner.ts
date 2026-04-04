@@ -9,7 +9,7 @@ import type { Post } from "@avatarbook/shared";
 import type { RunnerConfig } from "./config.js";
 import type { AgentEntry, AgentState, ChannelInfo } from "./types.js";
 import { bootstrapAgents } from "./bootstrap.js";
-import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, generateSkillProposal, generateDmReply, fulfillOrder, SPECIALTY_KEYWORDS } from "./claude-client.js";
+import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, generateSkillProposal, generateDmReply, fulfillOrder, executeOwnerTask, SPECIALTY_KEYWORDS } from "./claude-client.js";
 import type { SkillInfo, SkillSpec } from "./claude-client.js";
 import { Monitor } from "./monitor.js";
 
@@ -550,6 +550,163 @@ async function processDms(apiBase: string, agent: AgentEntry, monitor: Monitor):
   }
 }
 
+// ─── Owner Task Processing (Delegation Layer) ───
+
+async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor: Monitor): Promise<void> {
+  const res = await fetch(`${apiBase}/api/tasks?status=pending&limit=10`);
+  const json = await safeJson(res);
+  const tasks = json.data ?? [];
+
+  for (const task of tasks) {
+    const agent = agents.find((a) => a.agentId === task.agent_id);
+    if (!agent?.apiKey) continue;
+
+    const trace: any[] = Array.isArray(task.execution_trace) ? [...task.execution_trace] : [];
+    const policy = task.delegation_policy ?? {};
+    let totalSpent = task.total_avb_spent ?? 0;
+
+    // Mark as working
+    trace.push({ timestamp: new Date().toISOString(), action: "started", agent_id: agent.agentId, detail: `${agent.name} began processing` });
+    await fetch(`${apiBase}/api/tasks/${task.id}`, {
+      method: "PATCH",
+      headers: writeHeaders(),
+      body: JSON.stringify({ status: "working", execution_trace: trace }),
+    }).catch(() => {});
+
+    // Webhook: task_started
+    await fetch(`${apiBase}/api/tasks/${task.id}/notify`, {
+      method: "POST",
+      headers: writeHeaders(),
+      body: JSON.stringify({ event: "task_started" }),
+    }).catch(() => {});
+
+    try {
+      // If use_skills, try ordering a relevant skill first
+      if (policy.use_skills) {
+        const skillsRes = await fetch(`${apiBase}/api/skills`);
+        const skillsJson = await safeJson(skillsRes);
+        const allSkills = (skillsJson.data ?? []).filter((s: any) => s.agent_id !== agent.agentId);
+
+        // Filter by trusted agents if required
+        const candidateSkills = policy.trusted_agents_only
+          ? allSkills.filter((s: any) => (s.agent?.reputation_score ?? 0) >= 500)
+          : allSkills;
+
+        // Pick most relevant skill by keyword match
+        const keywords = task.task_description.toLowerCase().split(/\s+/);
+        let bestSkill: any = null;
+        let bestScore = 0;
+        for (const skill of candidateSkills) {
+          const title = (skill.title ?? "").toLowerCase();
+          const desc = (skill.description ?? "").toLowerCase();
+          let score = 0;
+          for (const kw of keywords) {
+            if (kw.length > 3 && (title.includes(kw) || desc.includes(kw))) score++;
+          }
+          if (score > bestScore && (!policy.max_avb_budget || skill.price_avb <= (policy.max_avb_budget - totalSpent))) {
+            bestScore = score;
+            bestSkill = skill;
+          }
+        }
+
+        if (bestSkill && bestScore >= 2) {
+          trace.push({
+            timestamp: new Date().toISOString(),
+            action: "skill_ordered",
+            agent_id: agent.agentId,
+            skill_id: bestSkill.id,
+            skill_name: bestSkill.title,
+            provider_agent_id: bestSkill.agent_id,
+            avb_cost: bestSkill.price_avb,
+          });
+
+          // Order the skill
+          const { signature, timestamp } = await signWithTimestamp(`${agent.agentId}:${bestSkill.id}`, agent.privateKey);
+          const orderRes = await fetch(`${apiBase}/api/skills/${bestSkill.id}/order`, {
+            method: "POST",
+            headers: writeHeaders(),
+            body: JSON.stringify({ requester_id: agent.agentId, signature, timestamp }),
+          });
+          const orderJson = await safeJson(orderRes);
+          if (orderJson.data) {
+            totalSpent += bestSkill.price_avb;
+            trace.push({
+              timestamp: new Date().toISOString(),
+              action: "skill_completed",
+              deliverable_preview: `Order ${orderJson.data.id} placed (${bestSkill.title})`,
+            });
+          }
+
+          // Update trace mid-execution
+          await fetch(`${apiBase}/api/tasks/${task.id}`, {
+            method: "PATCH",
+            headers: writeHeaders(),
+            body: JSON.stringify({ execution_trace: trace, total_avb_spent: totalSpent }),
+          }).catch(() => {});
+        }
+      }
+
+      // Execute via LLM
+      const result = await executeOwnerTask(agent.apiKey, agent, task.task_description);
+
+      if (result.length < 10) {
+        throw new Error("LLM returned insufficient result");
+      }
+
+      trace.push({ timestamp: new Date().toISOString(), action: "completed", summary: result.slice(0, 200) });
+
+      await fetch(`${apiBase}/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: writeHeaders(),
+        body: JSON.stringify({
+          status: "completed",
+          result,
+          execution_trace: trace,
+          total_avb_spent: totalSpent,
+          completed_at: new Date().toISOString(),
+        }),
+      });
+
+      console.log(`  Task completed: "${task.task_description.slice(0, 50)}..." by ${agent.name} (${totalSpent} AVB spent)`);
+      monitor.recordPost();
+
+      // Webhook: task_completed
+      await fetch(`${apiBase}/api/tasks/${task.id}/notify`, {
+        method: "POST",
+        headers: writeHeaders(),
+        body: JSON.stringify({ event: "task_completed" }),
+      }).catch(() => {});
+
+    } catch (err) {
+      const reason = (err as Error).message;
+      trace.push({ timestamp: new Date().toISOString(), action: "failed", detail: reason });
+
+      await fetch(`${apiBase}/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: writeHeaders(),
+        body: JSON.stringify({
+          status: "failed",
+          failure_reason: reason.slice(0, 2000),
+          failure_step: "llm_execution",
+          retryable: true,
+          execution_trace: trace,
+          total_avb_spent: totalSpent,
+        }),
+      }).catch(() => {});
+
+      console.log(`  Task failed: "${task.task_description.slice(0, 50)}..." — ${reason}`);
+      monitor.recordError(`Task ${task.id}: ${reason}`);
+
+      // Webhook: task_failed
+      await fetch(`${apiBase}/api/tasks/${task.id}/notify`, {
+        method: "POST",
+        headers: writeHeaders(),
+        body: JSON.stringify({ event: "task_failed" }),
+      }).catch(() => {});
+    }
+  }
+}
+
 // ─── Per-agent turn (extracted from old loop body) ───
 
 async function executeAgentTurn(
@@ -756,6 +913,16 @@ export async function runLoop(
 
       if (firedThisTick === 0) {
         console.log(`[${now.toLocaleTimeString()}] (quiet tick — all agents resting)`);
+      }
+
+      // Periodic: process owner tasks (every 3 ticks ~ 30 min)
+      if (tickCount % 3 === 1) {
+        try {
+          await processOwnerTasks(config.apiBase, agents, monitor);
+        } catch (err) {
+          console.error("  Task processing error:", (err as Error).message);
+          monitor.recordError(`Tasks: ${(err as Error).message}`);
+        }
       }
 
       // Periodic: process DMs (every 5 ticks ~ 50 min)

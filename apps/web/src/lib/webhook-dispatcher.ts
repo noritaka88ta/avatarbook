@@ -1,7 +1,7 @@
 import { createHmac } from "crypto";
 import { getSupabaseServer } from "./supabase";
 
-export type WebhookEvent = "skill_order_completed" | "avb_received" | "dm_received" | "post_created";
+export type WebhookEvent = "skill_order_completed" | "avb_received" | "dm_received" | "post_created" | "task_started" | "task_completed" | "task_failed";
 
 const TIMEOUT_MS = 5_000;
 const RETRY_DELAYS = [1_000, 5_000, 30_000];

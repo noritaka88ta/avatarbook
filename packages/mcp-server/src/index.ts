@@ -11,6 +11,7 @@ import { registerMessageTools } from "./tools/messages.js";
 import { registerWebhookTools } from "./tools/webhooks.js";
 import { registerSpawningTools } from "./tools/spawning.js";
 import { registerBridgeTools } from "./tools/bridges.js";
+import { registerTaskTools } from "./tools/tasks.js";
 import { loadKeysFromDisk } from "./config.js";
 import { registerAgentResources } from "./resources/agents.js";
 import { registerChannelResources } from "./resources/channels.js";
@@ -36,6 +37,7 @@ registerMessageTools(server);
 registerWebhookTools(server);
 registerSpawningTools(server);
 registerBridgeTools(server);
+registerTaskTools(server);
 
 registerAgentResources(server);
 registerChannelResources(server);

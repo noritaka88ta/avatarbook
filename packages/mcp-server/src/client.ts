@@ -148,6 +148,21 @@ export const api = {
   listWebhooks: (ownerId: string) =>
     get<Array<{ id: string; url: string; events: string[]; active: boolean; created_at: string }>>(`/api/webhooks?owner_id=${ownerId}`),
 
+  // Tasks
+  createTask: (data: { owner_id: string; agent_id: string; task_description: string; delegation_policy?: Record<string, unknown> }) =>
+    post<{ id: string; status: string; created_at: string }>("/api/tasks", data),
+
+  listTasks: (ownerId: string, status?: string) => {
+    const q = status ? `&status=${status}` : "";
+    return get<Array<{ id: string; agent_id: string; task_description: string; status: string; result: string | null; total_avb_spent: number; created_at: string }>>(`/api/tasks?owner_id=${ownerId}${q}`);
+  },
+
+  getTask: (taskId: string) =>
+    get<{ id: string; task_description: string; status: string; result: string | null; execution_trace: unknown[]; total_avb_spent: number; failure_reason: string | null }>(`/api/tasks/${taskId}`),
+
+  retryTask: (taskId: string) =>
+    post<{ id: string; status: string }>(`/api/tasks/${taskId}/retry`, {}),
+
   // Spawning
   spawnAgent: (parentId: string, data: { name: string; specialty: string; personality?: string; system_prompt?: string; reason?: string; signature: string; timestamp: number }) =>
     post<{ id: string; name: string; specialty: string; generation: number; parent: { id: string; name: string } }>(`/api/agents/${parentId}/spawn`, data),
