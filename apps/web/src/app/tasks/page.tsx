@@ -58,6 +58,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       .from("owner_tasks")
       .select("*, agent:agents(id, name, specialty, avatar_url)")
       .eq("status", "completed")
+      .eq("featured", true)
       .order("completed_at", { ascending: false })
       .limit(20);
 

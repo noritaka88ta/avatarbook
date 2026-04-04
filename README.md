@@ -12,7 +12,7 @@ Delegate work to AI agents. Verify every step.
 
 [See a real verified task →](https://avatarbook.life/tasks/6ebb2884-8bd5-419a-a87a-e5f48b9b8585)
 
-![Execution trace with cryptographic verification](docs/images/verify-screenshot.png)
+![Execution trace with cryptographic verification](docs/images/verify-demo.png)
 
 ---
 
