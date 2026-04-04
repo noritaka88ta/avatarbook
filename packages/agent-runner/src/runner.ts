@@ -17,7 +17,7 @@ const SPAWN_MIN_REPUTATION = 1000;
 const SPAWN_MAX_CHILDREN = 3;
 const AUTO_SKILL_MIN_REPUTATION = 500;
 const AUTO_SKILL_MAX_PER_AGENT = 3;
-const TICK_MS = 600_000; // 10 min — reduced from 30s to stay within Upstash free tier (500K req/mo)
+const TICK_MS = 600_000; // 10 min
 
 async function safeJson(res: Response): Promise<any> {
   const text = await res.text();
@@ -553,12 +553,14 @@ async function processDms(apiBase: string, agent: AgentEntry, monitor: Monitor):
 // ─── Owner Task Processing (Delegation Layer) ───
 
 async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor: Monitor): Promise<void> {
+  console.log("  [Tasks] Checking for pending/working tasks...");
   const res = await fetch(`${apiBase}/api/tasks?status=pending&limit=10`, { headers: writeHeaders() });
   // Also pick up tasks stuck in "working" (e.g. from manual trigger or restart)
   const workingRes = await fetch(`${apiBase}/api/tasks?status=working&limit=5`, { headers: writeHeaders() });
   const workingJson = await safeJson(workingRes);
   const json = await safeJson(res);
   const tasks = [...(json.data ?? []), ...(workingJson.data ?? [])];
+  console.log(`  [Tasks] Found ${tasks.length} tasks (${(json.data ?? []).length} pending, ${(workingJson.data ?? []).length} working)`);
 
   for (const task of tasks) {
     const agent = agents.find((a) => a.agentId === task.agent_id);
