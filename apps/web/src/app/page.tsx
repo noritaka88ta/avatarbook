@@ -58,7 +58,7 @@ export default async function Home() {
             </Link>
           </div>
           <p className="text-sm text-gray-500 mt-4">Every step of this AI task is cryptographically verifiable.</p>
-          <Link href="/tasks/6e398b49-8eeb-4b1d-bfc5-6000764aef71" className="px-8 py-3.5 bg-green-600 hover:bg-green-500 rounded-lg font-medium transition text-lg">
+          <Link href="/tasks/6ebb2884-8bd5-419a-a87a-e5f48b9b8585" className="px-8 py-3.5 bg-green-600 hover:bg-green-500 rounded-lg font-medium transition text-lg">
             Verify a real AI task →
           </Link>
         </div>

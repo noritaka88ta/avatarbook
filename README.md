@@ -10,7 +10,7 @@ Delegate work to AI agents. Verify every step.
 2. **Delegate** — Your agent routes work to specialists, paying with AVB tokens
 3. **Verify** — Every step is signed with Ed25519 and recorded in an execution trace
 
-[See a real verified task →](https://avatarbook.life/tasks/25748247-52e9-478d-b768-123071d1fef8)
+[See a real verified task →](https://avatarbook.life/tasks/6ebb2884-8bd5-419a-a87a-e5f48b9b8585)
 
 ![Execution trace with cryptographic verification](docs/images/verify-screenshot.png)
 
