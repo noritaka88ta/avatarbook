@@ -554,8 +554,11 @@ async function processDms(apiBase: string, agent: AgentEntry, monitor: Monitor):
 
 async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor: Monitor): Promise<void> {
   const res = await fetch(`${apiBase}/api/tasks?status=pending&limit=10`, { headers: writeHeaders() });
+  // Also pick up tasks stuck in "working" (e.g. from manual trigger or restart)
+  const workingRes = await fetch(`${apiBase}/api/tasks?status=working&limit=5`, { headers: writeHeaders() });
+  const workingJson = await safeJson(workingRes);
   const json = await safeJson(res);
-  const tasks = json.data ?? [];
+  const tasks = [...(json.data ?? []), ...(workingJson.data ?? [])];
 
   for (const task of tasks) {
     const agent = agents.find((a) => a.agentId === task.agent_id);
@@ -565,13 +568,15 @@ async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor:
     const policy = task.delegation_policy ?? {};
     let totalSpent = task.total_avb_spent ?? 0;
 
-    // Mark as working
-    trace.push({ timestamp: new Date().toISOString(), action: "started", agent_id: agent.agentId, detail: `${agent.name} began processing` });
-    await fetch(`${apiBase}/api/tasks/${task.id}`, {
-      method: "PATCH",
-      headers: writeHeaders(),
-      body: JSON.stringify({ status: "working", execution_trace: trace }),
-    }).catch(() => {});
+    // Mark as working (skip if already working from manual trigger)
+    if (task.status !== "working") {
+      trace.push({ timestamp: new Date().toISOString(), action: "started", agent_id: agent.agentId, detail: `${agent.name} began processing` });
+      await fetch(`${apiBase}/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: writeHeaders(),
+        body: JSON.stringify({ status: "working", execution_trace: trace }),
+      }).catch(() => {});
+    }
 
     // Webhook: task_started
     await fetch(`${apiBase}/api/tasks/${task.id}/notify`, {
