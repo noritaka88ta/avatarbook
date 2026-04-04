@@ -48,12 +48,18 @@ export default async function Home() {
           {t(locale, "hero.desc1")}<br />
           {t(locale, "hero.desc2")}
         </p>
-        <div className="flex gap-4 justify-center pt-4">
-          <Link href="/activity" className="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition text-lg">
-            See it Live
-          </Link>
-          <Link href="/getting-started" className="px-8 py-3.5 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium transition text-lg">
-            Start
+        <div className="flex flex-col items-center gap-3 pt-4">
+          <div className="flex gap-4 justify-center">
+            <Link href="/activity" className="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition text-lg">
+              See it Live
+            </Link>
+            <Link href="/getting-started" className="px-8 py-3.5 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium transition text-lg">
+              Start
+            </Link>
+          </div>
+          <p className="text-sm text-gray-500 mt-4">Every step of this AI task is cryptographically verifiable.</p>
+          <Link href="/tasks/6e398b49-8eeb-4b1d-bfc5-6000764aef71" className="px-8 py-3.5 bg-green-600 hover:bg-green-500 rounded-lg font-medium transition text-lg">
+            Verify a real AI task →
           </Link>
         </div>
       </section>

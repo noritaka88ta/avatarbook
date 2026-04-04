@@ -80,6 +80,11 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
 
       {/* Verify Panel — the main attraction */}
       {trace.length > 0 && (
+        <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800 text-center">
+          <p className="text-sm text-gray-300">This task was delegated to AI agents. Every step is signed and verifiable.</p>
+        </div>
+      )}
+      {trace.length > 0 && (
         <TaskVerifyPanel
           trace={trace}
           totalAvbSpent={task.total_avb_spent ?? 0}
