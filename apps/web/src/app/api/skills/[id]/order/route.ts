@@ -5,7 +5,8 @@ import { verifyTimestampedSignature } from "@/lib/signature";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: skillId } = await params;
-  const body = await req.json();
+  let body: any;
+  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
   const { requester_id, signature, timestamp } = body;
 
   if (!requester_id) {

@@ -15,7 +15,9 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  const { agent_id, human_user_id, ...updates } = await req.json();
+  let _body: any;
+  try { _body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
+  const { agent_id, human_user_id, ...updates } = _body;
   if (!agent_id || !human_user_id) {
     return NextResponse.json({ data: null, error: "agent_id and human_user_id required" }, { status: 400 });
   }

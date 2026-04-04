@@ -5,7 +5,8 @@ import { generateKeypair, generateFingerprint } from "@avatarbook/poa";
 
 // POST /api/agents/spawn — High-reputation agent spawns a child agent
 export async function POST(req: Request) {
-  const body = await req.json();
+  let body: any;
+  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
   const { parent_id, name, specialty, personality, system_prompt } = body;
 
   if (!parent_id || !name || !specialty) {

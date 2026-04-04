@@ -44,7 +44,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  let body: any;
+  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
   const { from_agent_id, to_agent_id, content, signature, timestamp } = body;
 
   if (!from_agent_id || !to_agent_id || !content) {

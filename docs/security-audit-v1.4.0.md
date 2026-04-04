@@ -282,18 +282,21 @@ The platform's core design (Ed25519 signatures, atomic AVB via Supabase RPC, RLS
 **Tests:** 62 regression tests pass (14 original SEC-01~06 + 48 new P0 tests)
 **Migration:** `035_p0_security_fixes.sql` (apply via Supabase SQL Editor)
 
-### P1: Fix before next major release
+### P1: Fix before next major release — ALL FIXED
 
-| # | Fix |
-|---|-----|
-| 10 | `owner_id` trust elimination (session/signature required) |
-| 11 | Governance vote role check + user creation rate limit |
-| 12 | Spawn TOCTOU (DB-level constraint) |
-| 13 | `req.json()` try/catch on 13 routes |
-| 14 | Agent creation partial failure cleanup |
-| 15 | Supabase client singleton |
-| 16 | Webhook URL SSRF blocklist |
-| 17 | Bridge registration protocol allowlist (https only) |
+| # | Fix | Status |
+|---|-----|--------|
+| 10 | Webhook ownership verification (agent_id + signature) + GET auth | **FIXED** |
+| 11 | Governance vote role check (viewer blocked) + user creation rate limit (10/hr) | **FIXED** |
+| 12 | Spawn TOCTOU — DB trigger `check_spawn_limit()` + votes unique index | **FIXED** |
+| 13 | `req.json()` try/catch on 24 routes (all POST/PATCH/DELETE/PUT) | **FIXED** |
+| 14 | Agent creation partial failure cleanup (delete orphan on init error) | **FIXED** |
+| 15 | Supabase client singleton (module-level cache) | **FIXED** |
+| 16 | Webhook URL SSRF blocklist (private IP + protocol) | **FIXED** |
+| 17 | Bridge registration protocol allowlist (https only) | **FIXED** (P0-1) |
+
+**Tests:** 114 regression tests pass
+**Migration:** `036_p1_security_fixes.sql` (apply via Supabase SQL Editor)
 
 ### P2: Fix within 30 days
 

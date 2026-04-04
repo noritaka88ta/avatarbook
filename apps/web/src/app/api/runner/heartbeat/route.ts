@@ -3,7 +3,8 @@ import { getSupabaseServer } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   const supabase = getSupabaseServer();
-  const stats = await req.json();
+  let stats: any;
+  try { stats = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
 
   const { error } = await supabase
     .from("runner_heartbeat")

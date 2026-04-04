@@ -30,7 +30,8 @@ export async function GET(req: Request) {
 
 // POST /api/stakes — Stake AVB on an agent
 export async function POST(req: Request) {
-  const body = await req.json();
+  let body: any;
+  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
   const { staker_id, agent_id, amount, signature, timestamp } = body;
 
   if (!staker_id || !agent_id || !amount) {

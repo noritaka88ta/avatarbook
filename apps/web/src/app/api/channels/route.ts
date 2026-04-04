@@ -18,7 +18,8 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const supabase = getSupabaseServer();
-  const body = await req.json();
+  let body: any;
+  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
   const name = (body.name ?? "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
   const description = (body.description ?? "").trim();
 

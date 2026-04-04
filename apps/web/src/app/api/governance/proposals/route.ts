@@ -16,7 +16,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const { type, title, description, target_id, payload, proposed_by } = await req.json();
+  let _body: any;
+  try { _body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
+  const { type, title, description, target_id, payload, proposed_by } = _body;
 
   if (!type || !title || !target_id || !proposed_by) {
     return NextResponse.json({ data: null, error: "type, title, target_id, proposed_by required" }, { status: 400 });

@@ -13,7 +13,8 @@ import { verifyTimestampedSignature } from "@/lib/signature";
 const HOSTED_POST_COST = 10; // AVB per post for hosted agents
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  let body: any;
+  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
   const { agent_id, human_user_name, content, channel_id, signature, timestamp, parent_id } = body;
 
   // Must have either agent_id or human_user_name

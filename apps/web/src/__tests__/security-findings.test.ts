@@ -209,3 +209,106 @@ describe("P0-8: GET /api/messages requires auth", () => {
     expect(messagesRoute).toMatch(/agent\.owner_id !== ownerId/);
   });
 });
+
+// ===== P1 Security Fixes =====
+
+describe("P1-10: Webhook registration ownership verification", () => {
+  const webhookRoute = read("app/api/webhooks/route.ts");
+
+  it("imports verifyTimestampedSignature", () => {
+    expect(webhookRoute).toContain("verifyTimestampedSignature");
+  });
+
+  it("verifies agent belongs to owner", () => {
+    expect(webhookRoute).toContain("Agent does not belong to this owner");
+  });
+
+  it("has SSRF blocklist on webhook URL", () => {
+    expect(webhookRoute).toContain("169\\.254");
+    expect(webhookRoute).toContain("localhost");
+  });
+});
+
+describe("P1-11: Governance vote requires non-viewer role", () => {
+  const voteRoute = read("app/api/governance/proposals/vote/route.ts");
+
+  it("checks user role before allowing vote", () => {
+    expect(voteRoute).toContain("Viewers cannot vote");
+    expect(voteRoute).toContain('user.role === "viewer"');
+  });
+
+  it("has try/catch on req.json()", () => {
+    expect(voteRoute).toContain("Invalid JSON body");
+  });
+});
+
+describe("P1-11b: Governance user creation has rate limit", () => {
+  const usersRoute = read("app/api/governance/users/route.ts");
+
+  it("has hourly rate limit", () => {
+    expect(usersRoute).toContain("MAX_USERS_PER_HOUR");
+    expect(usersRoute).toContain("rate limit exceeded");
+  });
+
+  it("validates display_name length", () => {
+    expect(usersRoute).toContain("1-100 characters");
+  });
+
+  it("has try/catch on req.json()", () => {
+    expect(usersRoute).toContain("Invalid JSON body");
+  });
+});
+
+describe("P1-13: All POST routes have try/catch on req.json()", () => {
+  const routes = [
+    "app/api/posts/route.ts",
+    "app/api/reactions/route.ts",
+    "app/api/skills/route.ts",
+    "app/api/skills/[id]/order/route.ts",
+    "app/api/skills/orders/[id]/fulfill/route.ts",
+    "app/api/stakes/route.ts",
+    "app/api/governance/moderation/route.ts",
+    "app/api/governance/proposals/route.ts",
+    "app/api/governance/permissions/route.ts",
+    "app/api/owners/portal/route.ts",
+    "app/api/runner/heartbeat/route.ts",
+    "app/api/webhooks/test/route.ts",
+    "app/api/channels/route.ts",
+  ];
+
+  for (const route of routes) {
+    it(`${route} has try/catch`, () => {
+      const content = read(route);
+      expect(content).toContain("Invalid JSON body");
+    });
+  }
+});
+
+describe("P1-14: Agent registration has partial failure cleanup", () => {
+  const registerRoute = read("app/api/agents/register/route.ts");
+
+  it("deletes agent on balance init failure", () => {
+    expect(registerRoute).toContain('delete().eq("id", agent.id)');
+  });
+
+  it("checks transaction log insert error", () => {
+    expect(registerRoute).toContain("txErr");
+  });
+
+  it("checks permissions insert error", () => {
+    expect(registerRoute).toContain("permErr");
+  });
+});
+
+describe("P1-15: Supabase client is singleton", () => {
+  const supabase = read("lib/supabase.ts");
+
+  it("uses module-level server client cache", () => {
+    expect(supabase).toContain("_serverClient");
+    expect(supabase).toContain("if (_serverClient) return _serverClient");
+  });
+
+  it("uses module-level browser client cache", () => {
+    expect(supabase).toContain("_browserClient");
+  });
+});

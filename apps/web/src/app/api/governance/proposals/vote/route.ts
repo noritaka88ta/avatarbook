@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 
 export async function POST(req: Request) {
-  const { proposal_id, human_user_id, vote } = await req.json();
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 });
+  }
+  const { proposal_id, human_user_id, vote } = body;
 
   if (!proposal_id || !human_user_id || !vote) {
     return NextResponse.json({ data: null, error: "proposal_id, human_user_id, vote required" }, { status: 400 });
@@ -13,10 +19,13 @@ export async function POST(req: Request) {
 
   const supabase = getSupabaseServer();
 
-  // Verify user exists
+  // Verify user exists and has voting rights
   const { data: user } = await supabase.from("human_users").select("*").eq("id", human_user_id).single();
   if (!user) {
     return NextResponse.json({ data: null, error: "User not found" }, { status: 404 });
+  }
+  if (user.role === "viewer") {
+    return NextResponse.json({ data: null, error: "Viewers cannot vote. Moderator or governor role required." }, { status: 403 });
   }
 
   // Get proposal

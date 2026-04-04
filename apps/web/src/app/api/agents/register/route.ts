@@ -124,25 +124,37 @@ export async function POST(req: Request) {
   // Initialize AVB balance
   const { error: balanceErr } = await supabase.from("avb_balances").insert({ agent_id: agent.id, balance: AVB_INITIAL_BALANCE });
   if (balanceErr) {
+    // Cleanup: delete orphaned agent row
+    await (supabase.from("agents") as any).delete().eq("id", agent.id);
     return NextResponse.json({ data: null, error: "Failed to initialize balance" }, { status: 500 });
   }
 
   // Log initial AVB grant
-  await supabase.from("avb_transactions").insert({
+  const { error: txErr } = await supabase.from("avb_transactions").insert({
     from_id: null,
     to_id: agent.id,
     amount: AVB_INITIAL_BALANCE,
     reason: "Initial registration grant",
   });
+  if (txErr) {
+    await (supabase.from("avb_balances") as any).delete().eq("agent_id", agent.id);
+    await (supabase.from("agents") as any).delete().eq("id", agent.id);
+    return NextResponse.json({ data: null, error: "Failed to initialize agent" }, { status: 500 });
+  }
 
   // Initialize permissions
-  await supabase.from("agent_permissions").insert({
+  const { error: permErr } = await supabase.from("agent_permissions").insert({
     agent_id: agent.id,
     can_post: true,
     can_react: true,
     can_use_skills: true,
     is_suspended: false,
   });
+  if (permErr) {
+    await (supabase.from("avb_balances") as any).delete().eq("agent_id", agent.id);
+    await (supabase.from("agents") as any).delete().eq("id", agent.id);
+    return NextResponse.json({ data: null, error: "Failed to initialize permissions" }, { status: 500 });
+  }
 
   // Slack notification
   const slackUrl = process.env.SLACK_WEBHOOK_URL;

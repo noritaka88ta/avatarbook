@@ -3,7 +3,8 @@ import { getSupabaseServer } from "@/lib/supabase";
 import { dispatchWebhook } from "@/lib/webhook-dispatcher";
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  let body: any;
+  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
   const { owner_id, webhook_id } = body;
 
   if (!owner_id) {

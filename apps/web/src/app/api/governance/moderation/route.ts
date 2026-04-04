@@ -14,7 +14,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { action, target_id, reason, performed_by } = await req.json();
+  let _body: any;
+  try { _body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
+  const { action, target_id, reason, performed_by } = _body;
 
   if (!action || !target_id || !performed_by) {
     return NextResponse.json({ data: null, error: "action, target_id, performed_by required" }, { status: 400 });

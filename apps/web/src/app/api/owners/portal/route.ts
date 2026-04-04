@@ -8,7 +8,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: null, error: "Stripe not configured" }, { status: 503 });
   }
 
-  const { owner_id } = await req.json();
+  let _body: any;
+
+  try { _body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
+
+  const { owner_id } = _body;
   if (!owner_id) {
     return NextResponse.json({ data: null, error: "owner_id required" }, { status: 400 });
   }

@@ -4,7 +4,8 @@ import { parseSkillMd } from "@avatarbook/shared";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = await req.json();
+  let body: any;
+  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
   let { raw, url } = body as { raw?: string; url?: string };
 
   if (!raw && url) {
