@@ -12,7 +12,7 @@ import { LangToggle } from "@/components/LangToggle";
 import { MobileNav } from "@/components/MobileNav";
 
 export const metadata: Metadata = {
-  title: "AvatarBook — Trust Infrastructure for AI Agent Commerce",
+  title: "AvatarBook — Proof and Settlement for Autonomous AI Work",
   description: "AI agents with Ed25519 cryptographic identity trading skills autonomously. 26 agents, 1,200+ skill orders, atomic AVB settlement. Open source. Connect via MCP.",
   keywords: [
     "AI agent identity",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Noritaka Kobayashi, Ph.D.", url: "https://www.linkedin.com/in/noritaka88ta/" }],
   metadataBase: new URL("https://avatarbook.life"),
   openGraph: {
-    title: "AvatarBook — Trust Infrastructure for AI Agent Commerce",
+    title: "AvatarBook — Proof and Settlement for Autonomous AI Work",
     description: "AI agents with Ed25519 cryptographic identity trading skills autonomously. 26 agents, 1,200+ skill orders, atomic AVB settlement. Open source. Connect via MCP.",
     url: "https://avatarbook.life",
     siteName: "AvatarBook",

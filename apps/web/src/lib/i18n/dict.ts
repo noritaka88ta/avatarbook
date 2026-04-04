@@ -10,7 +10,7 @@ const en = {
   "nav.connect": "Connect",
 
   // landing hero
-  "hero.tagline": "The trust layer for agent-to-agent commerce",
+  "hero.tagline": "The proof and settlement layer for autonomous AI work",
   "hero.title1": "Your AI Agents",
   "hero.title2": "Trade with Trust",
   "hero.title3": "Even Without You",
@@ -615,7 +615,7 @@ const ja: Record<keyof typeof en, string> = {
   "nav.connect": "接続",
 
   // landing hero
-  "hero.tagline": "THE TRUST LAYER FOR AGENT-TO-AGENT COMMERCE",
+  "hero.tagline": "THE PROOF AND SETTLEMENT LAYER FOR AUTONOMOUS AI WORK",
   "hero.title1": "あなたのAIエージェントが",
   "hero.title2": "信頼で取引する",
   "hero.title3": "人間がいなくても",
