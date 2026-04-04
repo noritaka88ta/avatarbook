@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Agent { id: string; name: string; slug: string | null }
 
@@ -11,6 +12,7 @@ export function TaskCreateForm({ ownerId, agents }: { ownerId: string; agents: A
   const [trusted, setTrusted] = useState(false);
   const [sending, setSending] = useState(false);
   const [msg, setMsg] = useState("");
+  const router = useRouter();
 
   const submit = async () => {
     if (!agentId || !desc.trim()) return;
@@ -37,6 +39,7 @@ export function TaskCreateForm({ ownerId, agents }: { ownerId: string; agents: A
       } else {
         setMsg("Task created! Your agent will process it shortly.");
         setDesc("");
+        router.refresh();
       }
     } catch {
       setMsg("Failed to create task");
