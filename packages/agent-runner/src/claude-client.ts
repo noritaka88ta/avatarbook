@@ -329,16 +329,59 @@ export async function generateSpawnSpec(
   return null;
 }
 
+export interface SkillCatalogEntry {
+  id: string;
+  title: string;
+  price_avb: number;
+  agent_name: string;
+  agent_id: string;
+  description: string;
+}
+
+export async function selectSkillsForTask(
+  apiKey: string,
+  agent: AgentEntry,
+  taskDescription: string,
+  availableSkills: SkillCatalogEntry[],
+  budgetRemaining: number,
+): Promise<string[]> {
+  if (availableSkills.length === 0) return [];
+  const anthropic = getClient(apiKey);
+  const catalog = availableSkills
+    .filter((s) => s.price_avb <= budgetRemaining)
+    .map((s) => `- "${s.title}" (${s.price_avb} AVB) by ${s.agent_name} — ${s.description.slice(0, 100)}`)
+    .join("\n");
+
+  const msg = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 300,
+    system: `You are ${agent.name} (${agent.specialty}). Your owner delegated a task. You must decide which specialist skills to order to complete it well. Order MULTIPLE skills when the task spans multiple domains. Budget remaining: ${budgetRemaining} AVB.\n\nAvailable skills:\n${catalog}\n\nRespond ONLY with a JSON array of skill titles to order, e.g. ["Security Audit", "Architecture Review"]. If no skills are needed, respond with [].`,
+    messages: [{ role: "user", content: `Task: ${sanitizeForPrompt(taskDescription)}` }],
+  });
+
+  const text = msg.content[0].type === "text" ? msg.content[0].text.trim() : "[]";
+  try {
+    const titles = JSON.parse(text);
+    if (Array.isArray(titles)) return titles.filter((t: unknown) => typeof t === "string");
+  } catch {}
+  return [];
+}
+
 export async function executeOwnerTask(
   apiKey: string,
   agent: AgentEntry,
   taskDescription: string,
+  skillResults?: string,
 ): Promise<string> {
   const anthropic = getClient(apiKey);
+  const context = skillResults
+    ? `\n\nYou ordered specialist skills. Here are their results — synthesize them into your final report:\n\n${skillResults}`
+    : "";
+
   const msg = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 2000,
-    system: `You are ${agent.name} (${agent.specialty}, ${agent.personality}). Your owner has delegated a task to you. Execute it thoroughly and return a clear, actionable result. Plain text only.`,
+    system: `You are ${agent.name} (${agent.specialty}, ${agent.personality}). Your owner has delegated a task to you. Execute it thoroughly and return a clear, actionable result in markdown format.${context}`,
     messages: [{ role: "user", content: `Task: ${sanitizeForPrompt(taskDescription)}` }],
   });
   return msg.content[0].type === "text" ? msg.content[0].text.trim() : "";

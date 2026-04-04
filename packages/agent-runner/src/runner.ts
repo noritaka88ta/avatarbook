@@ -9,7 +9,8 @@ import type { Post } from "@avatarbook/shared";
 import type { RunnerConfig } from "./config.js";
 import type { AgentEntry, AgentState, ChannelInfo } from "./types.js";
 import { bootstrapAgents } from "./bootstrap.js";
-import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, generateSkillProposal, generateDmReply, fulfillOrder, executeOwnerTask, SPECIALTY_KEYWORDS } from "./claude-client.js";
+import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, generateSkillProposal, generateDmReply, fulfillOrder, executeOwnerTask, selectSkillsForTask, SPECIALTY_KEYWORDS } from "./claude-client.js";
+import type { SkillCatalogEntry } from "./claude-client.js";
 import type { SkillInfo, SkillSpec } from "./claude-client.js";
 import { Monitor } from "./monitor.js";
 
@@ -588,60 +589,73 @@ async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor:
     }).catch(() => {});
 
     try {
-      // If use_skills, try ordering a relevant skill first
+      let skillResultsSummary = "";
+
+      // If use_skills, let LLM decide which skills to order
       if (policy.use_skills) {
         const skillsRes = await fetch(`${apiBase}/api/skills`);
         const skillsJson = await safeJson(skillsRes);
         const allSkills = (skillsJson.data ?? []).filter((s: any) => s.agent_id !== agent.agentId);
 
-        // Filter by trusted agents if required
         const candidateSkills = policy.trusted_agents_only
           ? allSkills.filter((s: any) => (s.agent?.reputation_score ?? 0) >= 500)
           : allSkills;
 
-        // Pick most relevant skill by keyword match
-        const keywords = task.task_description.toLowerCase().split(/\s+/);
-        let bestSkill: any = null;
-        let bestScore = 0;
-        for (const skill of candidateSkills) {
-          const title = (skill.title ?? "").toLowerCase();
-          const desc = (skill.description ?? "").toLowerCase();
-          let score = 0;
-          for (const kw of keywords) {
-            if (kw.length > 3 && (title.includes(kw) || desc.includes(kw))) score++;
-          }
-          if (score > bestScore && (!policy.max_avb_budget || skill.price_avb <= (policy.max_avb_budget - totalSpent))) {
-            bestScore = score;
-            bestSkill = skill;
-          }
-        }
+        const catalog: SkillCatalogEntry[] = candidateSkills.map((s: any) => ({
+          id: s.id,
+          title: s.title,
+          price_avb: s.price_avb,
+          agent_name: s.agent?.name ?? "Unknown",
+          agent_id: s.agent_id,
+          description: s.description ?? "",
+        }));
 
-        if (bestSkill && bestScore >= 2) {
+        const budgetCap = policy.max_avb_budget ?? 9999;
+        const selectedTitles = await selectSkillsForTask(agent.apiKey, agent, task.task_description, catalog, budgetCap - totalSpent);
+        console.log(`  [Tasks] LLM selected ${selectedTitles.length} skills: ${selectedTitles.join(", ") || "(none)"}`);
+
+        // Order each selected skill
+        const skillResults: string[] = [];
+        for (const title of selectedTitles) {
+          const skill = catalog.find((s) => s.title === title);
+          if (!skill) continue;
+          if (totalSpent + skill.price_avb > budgetCap) {
+            trace.push({ timestamp: new Date().toISOString(), action: "skill_skipped", skill_name: skill.title, detail: `Budget exceeded (${totalSpent}+${skill.price_avb} > ${budgetCap})` });
+            continue;
+          }
+
           trace.push({
             timestamp: new Date().toISOString(),
             action: "skill_ordered",
             agent_id: agent.agentId,
-            skill_id: bestSkill.id,
-            skill_name: bestSkill.title,
-            provider_agent_id: bestSkill.agent_id,
-            avb_cost: bestSkill.price_avb,
+            skill_id: skill.id,
+            skill_name: skill.title,
+            provider_agent_id: skill.agent_id,
+            provider_name: skill.agent_name,
+            avb_cost: skill.price_avb,
           });
 
-          // Order the skill
-          const { signature, timestamp } = await signWithTimestamp(`${agent.agentId}:${bestSkill.id}`, agent.privateKey);
-          const orderRes = await fetch(`${apiBase}/api/skills/${bestSkill.id}/order`, {
+          const { signature, timestamp } = await signWithTimestamp(`${agent.agentId}:${skill.id}`, agent.privateKey);
+          const orderRes = await fetch(`${apiBase}/api/skills/${skill.id}/order`, {
             method: "POST",
             headers: writeHeaders(),
             body: JSON.stringify({ requester_id: agent.agentId, signature, timestamp }),
           });
           const orderJson = await safeJson(orderRes);
           if (orderJson.data) {
-            totalSpent += bestSkill.price_avb;
+            totalSpent += skill.price_avb;
             trace.push({
               timestamp: new Date().toISOString(),
               action: "skill_completed",
-              deliverable_preview: `Order ${orderJson.data.id} placed (${bestSkill.title})`,
+              skill_name: skill.title,
+              provider_name: skill.agent_name,
+              avb_cost: skill.price_avb,
+              order_id: orderJson.data.id,
+              deliverable_preview: orderJson.data.deliverable?.slice(0, 200) ?? `Order placed`,
             });
+            if (orderJson.data.deliverable) {
+              skillResults.push(`### ${skill.title} (by ${skill.agent_name})\n${orderJson.data.deliverable}`);
+            }
           }
 
           // Update trace mid-execution
@@ -651,10 +665,14 @@ async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor:
             body: JSON.stringify({ execution_trace: trace, total_avb_spent: totalSpent }),
           }).catch(() => {});
         }
+
+        if (skillResults.length > 0) {
+          skillResultsSummary = skillResults.join("\n\n---\n\n");
+        }
       }
 
-      // Execute via LLM
-      const result = await executeOwnerTask(agent.apiKey, agent, task.task_description);
+      // Execute via LLM — pass skill results for synthesis
+      const result = await executeOwnerTask(agent.apiKey, agent, task.task_description, skillResultsSummary || undefined);
 
       if (result.length < 10) {
         throw new Error("LLM returned insufficient result");

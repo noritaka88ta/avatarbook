@@ -6,6 +6,22 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
+function renderMarkdown(md: string): string {
+  return md
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold mt-4 mb-2">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 class="text-lg font-bold mt-5 mb-2">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold mt-6 mb-3">$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4 list-decimal">$2</li>')
+    .replace(/\n{2,}/g, "</p><p>")
+    .replace(/^/, "<p>").replace(/$/, "</p>")
+    .replace(/<p><h/g, "<h").replace(/<\/h(\d)><\/p>/g, "</h$1>")
+    .replace(/<p><li/g, "<li").replace(/<\/li><\/p>/g, "</li>");
+}
+
 export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = getSupabaseServer();
@@ -56,11 +72,20 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      {/* Result */}
+      {/* Result — primary output, prominently displayed */}
       {task.result && (
-        <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-          <h2 className="text-sm font-semibold mb-3">Result</h2>
-          <div className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{task.result}</div>
+        <div className="bg-gray-900 rounded-xl p-6 border-2 border-green-800/60">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-green-400 text-lg">✅</span>
+            <h2 className="text-lg font-bold">Result</h2>
+            <span className="text-xs text-gray-500 ml-auto" suppressHydrationWarning>
+              {task.completed_at ? new Date(task.completed_at).toLocaleString() : ""}
+            </span>
+          </div>
+          <div
+            className="prose prose-invert prose-sm max-w-none prose-headings:text-gray-200 prose-p:text-gray-300 prose-li:text-gray-300 prose-strong:text-white prose-a:text-blue-400"
+            dangerouslySetInnerHTML={{ __html: renderMarkdown(task.result) }}
+          />
         </div>
       )}
 
