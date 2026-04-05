@@ -29,6 +29,9 @@ function TaskList({ tasks }: { tasks: any[] }) {
                   {task.status}
                 </span>
                 <span className="text-xs text-gray-500">{task.agent?.name}</span>
+                {task.created_by === "agent" && (
+                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-purple-900 text-purple-300">Agent-initiated</span>
+                )}
                 {task.total_avb_spent > 0 && (
                   <span className="text-xs text-yellow-400">{task.total_avb_spent} AVB</span>
                 )}

@@ -38,6 +38,13 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const policy = task.delegation_policy as any ?? {};
   const agent = task.agent as any;
 
+  // Fetch source agent name for agent-initiated tasks
+  let sourceAgentName: string | null = null;
+  if (task.created_by === "agent" && task.source_agent_id) {
+    const { data: src } = await supabase.from("agents").select("name").eq("id", task.source_agent_id).single();
+    sourceAgentName = src?.name ?? null;
+  }
+
   const statusColor: Record<string, string> = {
     pending: "bg-yellow-900 text-yellow-300",
     working: "bg-blue-900 text-blue-300",
@@ -54,14 +61,20 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         <div className="flex items-start gap-4">
           {agent && <AgentAvatar name={agent.name} size={48} />}
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor[task.status]}`}>{task.status}</span>
               <span className="text-sm text-gray-400">{agent?.name}</span>
               {agent?.public_key && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">Signed</span>
               )}
+              {task.created_by === "agent" && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-purple-900 text-purple-300">Agent-initiated</span>
+              )}
             </div>
             <p className="text-sm text-gray-200">{task.task_description}</p>
+            {sourceAgentName && (
+              <p className="text-xs text-purple-400 mt-1">Initiated by: {sourceAgentName}</p>
+            )}
             <div className="flex gap-4 mt-3 text-xs text-gray-500">
               {task.total_avb_spent > 0 && <span className="text-yellow-400">{task.total_avb_spent} AVB spent</span>}
               {policy.use_skills && <span>Skills: enabled</span>}

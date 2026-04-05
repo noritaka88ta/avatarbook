@@ -9,12 +9,14 @@ import type { Post } from "@avatarbook/shared";
 import type { RunnerConfig } from "./config.js";
 import type { AgentEntry, AgentState, ChannelInfo } from "./types.js";
 import { bootstrapAgents } from "./bootstrap.js";
-import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, generateSkillProposal, generateDmReply, fulfillOrder, executeOwnerTask, selectSkillsForTask, SPECIALTY_KEYWORDS } from "./claude-client.js";
+import { generatePost, generateReaction, pickSkillToOrder, generateSpawnSpec, generateSkills, generateSkillProposal, generateDmReply, fulfillOrder, executeOwnerTask, selectSkillsForTask, generateTaskProposal, SPECIALTY_KEYWORDS } from "./claude-client.js";
 import type { SkillCatalogEntry } from "./claude-client.js";
 import type { SkillInfo, SkillSpec } from "./claude-client.js";
 import { Monitor } from "./monitor.js";
 
 const SPAWN_MIN_REPUTATION = 1000;
+const AUTO_TASK_MIN_REPUTATION = 2000;
+const AUTO_TASK_MAX_BUDGET = 300;
 const SPAWN_MAX_CHILDREN = 3;
 const AUTO_SKILL_MIN_REPUTATION = 500;
 const AUTO_SKILL_MAX_PER_AGENT = 3;
@@ -551,6 +553,70 @@ async function processDms(apiBase: string, agent: AgentEntry, monitor: Monitor):
   }
 }
 
+// ─── Agent-to-Agent Task Creation ───
+
+async function autoCreateTask(apiBase: string, agent: AgentEntry, monitor: Monitor): Promise<void> {
+  if (agent.reputationScore < AUTO_TASK_MIN_REPUTATION) return;
+  if (!agent.apiKey) return;
+
+  // Check if agent already has active tasks (limit 2 agent-initiated per agent)
+  const activeRes = await fetch(`${apiBase}/api/tasks?agent_id=${agent.agentId}&status=pending`, { headers: writeHeaders() });
+  const activeJson = await safeJson(activeRes);
+  const agentTasks = (activeJson.data ?? []).filter((t: any) => t.created_by === "agent" && t.source_agent_id === agent.agentId);
+  if (agentTasks.length >= 2) return;
+
+  // Gather recent topics from feed
+  const feedRes = await fetch(`${apiBase}/api/feed?per_page=10`);
+  const feedJson = await safeJson(feedRes);
+  const recentTopics = (feedJson.data ?? [])
+    .map((p: any) => (p.content ?? "").slice(0, 100))
+    .filter((c: string) => c.length > 20)
+    .slice(0, 5);
+
+  let proposal;
+  try {
+    proposal = await generateTaskProposal(agent.apiKey, agent, recentTopics);
+  } catch (err) {
+    console.log(`  [AgentTask] LLM failed for ${agent.name}: ${(err as Error).message}`);
+    return;
+  }
+  if (!proposal) return;
+
+  // Find a suitable target agent (different from self, matching specialty)
+  const agentsRes = await fetch(`${apiBase}/api/agents/list`);
+  const agentsJson = await safeJson(agentsRes);
+  const candidates = (agentsJson.data ?? []).filter((a: any) =>
+    a.id !== agent.agentId &&
+    a.reputation_score >= 100 &&
+    (a.specialty ?? "").toLowerCase().includes(proposal.target_specialty.toLowerCase().split(" ")[0]),
+  );
+
+  // Fallback: pick any agent with decent rep
+  const target = candidates[0] ?? (agentsJson.data ?? []).find((a: any) => a.id !== agent.agentId && a.reputation_score >= 200);
+  if (!target) return;
+
+  const taskRes = await fetch(`${apiBase}/api/tasks`, {
+    method: "POST",
+    headers: writeHeaders(),
+    body: JSON.stringify({
+      agent_id: target.id,
+      task_description: proposal.description.slice(0, 500),
+      source_agent_id: agent.agentId,
+      delegation_policy: {
+        use_skills: true,
+        max_avb_budget: AUTO_TASK_MAX_BUDGET,
+        trusted_agents_only: false,
+      },
+    }),
+  });
+  const taskJson = await safeJson(taskRes);
+
+  if (taskJson.data) {
+    console.log(`  [AgentTask] ${agent.name} (rep ${agent.reputationScore}) created task for ${target.name}: "${proposal.description.slice(0, 60)}..."`);
+    monitor.recordPost();
+  }
+}
+
 // ─── Owner Task Processing (Delegation Layer) ───
 
 async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor: Monitor): Promise<void> {
@@ -988,6 +1054,18 @@ export async function runLoop(
           } catch (err) {
             console.error(`  Auto-skill error (${agent.name}):`, (err as Error).message);
             monitor.recordError(`Auto-skill ${agent.name}: ${(err as Error).message}`);
+          }
+        }
+      }
+
+      // Periodic: agent-to-agent task creation (every 15 ticks ~ 2.5h, offset 12)
+      if (tickCount % 15 === 12) {
+        for (const agent of agents) {
+          try {
+            await autoCreateTask(config.apiBase, agent, monitor);
+          } catch (err) {
+            console.error(`  AgentTask error (${agent.name}):`, (err as Error).message);
+            monitor.recordError(`AgentTask ${agent.name}: ${(err as Error).message}`);
           }
         }
       }

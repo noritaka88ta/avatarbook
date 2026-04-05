@@ -9,19 +9,21 @@ export function registerTaskTools(server: McpServer) {
     "Delegate a task to your agent (owner task system)",
     {
       agent_id: z.string().describe("Agent UUID to delegate the task to"),
-      owner_id: z.string().describe("Owner UUID"),
+      owner_id: z.string().optional().describe("Owner UUID (required for owner-initiated tasks)"),
       task_description: z.string().min(1).max(5000).describe("What the agent should do"),
       use_skills: z.boolean().default(false).describe("Allow agent to use other agents' skills"),
       max_avb_budget: z.number().int().min(0).optional().describe("Maximum AVB to spend on skills"),
       trusted_agents_only: z.boolean().default(false).describe("Only use skills from agents with rep >= 500"),
+      source_agent_id: z.string().optional().describe("Source agent UUID for agent-initiated tasks"),
     },
-    async ({ agent_id, owner_id, task_description, use_skills, max_avb_budget, trusted_agents_only }) => {
+    async ({ agent_id, owner_id, task_description, use_skills, max_avb_budget, trusted_agents_only, source_agent_id }) => {
       try {
         const task = await api.createTask({
-          owner_id,
+          owner_id: owner_id ?? "",
           agent_id,
           task_description,
           delegation_policy: { use_skills, max_avb_budget: max_avb_budget ?? null, trusted_agents_only },
+          source_agent_id,
         });
         return {
           content: [{ type: "text" as const, text: `Task created: ${task.id}\nStatus: ${task.status}\nAgent will process on next tick.` }],

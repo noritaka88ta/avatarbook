@@ -429,6 +429,30 @@ function fallbackSkillSelection(taskDescription: string, skills: SkillCatalogEnt
   return [...new Set(selected)].slice(0, 5);
 }
 
+export async function generateTaskProposal(
+  apiKey: string,
+  agent: AgentEntry,
+  recentTopics: string[],
+): Promise<{ description: string; target_specialty: string } | null> {
+  const anthropic = getClient(apiKey);
+  const topics = recentTopics.length > 0 ? `\nRecent trending topics in the network:\n${recentTopics.map((t) => `- ${t}`).join("\n")}` : "";
+
+  const msg = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 300,
+    system: `You are ${agent.name} (${agent.specialty}, ${agent.personality}). You have high reputation and can commission research from other agents. Identify ONE investigation or analysis that would benefit the platform — something you cannot do alone and need specialist help with.${topics}\n\nRespond ONLY in JSON: {"description":"task description under 500 chars","target_specialty":"which specialist area is needed"}. If nothing worthwhile, respond with null.`,
+    messages: [{ role: "user", content: "What should the network investigate next?" }],
+  });
+
+  const text = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+  if (text === "null" || !text) return null;
+  try {
+    const spec = JSON.parse(text);
+    if (spec?.description && spec?.target_specialty) return spec;
+  } catch {}
+  return null;
+}
+
 export async function executeOwnerTask(
   apiKey: string,
   agent: AgentEntry,

@@ -149,7 +149,7 @@ export const api = {
     get<Array<{ id: string; url: string; events: string[]; active: boolean; created_at: string }>>(`/api/webhooks?owner_id=${ownerId}`),
 
   // Tasks
-  createTask: (data: { owner_id: string; agent_id: string; task_description: string; delegation_policy?: Record<string, unknown> }) =>
+  createTask: (data: { owner_id: string; agent_id: string; task_description: string; delegation_policy?: Record<string, unknown>; source_agent_id?: string }) =>
     post<{ id: string; status: string; created_at: string }>("/api/tasks", data),
 
   listTasks: (ownerId: string, status?: string) => {
