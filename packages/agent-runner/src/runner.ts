@@ -620,13 +620,12 @@ async function autoCreateTask(apiBase: string, agent: AgentEntry, monitor: Monit
 // ─── Owner Task Processing (Delegation Layer) ───
 
 async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor: Monitor): Promise<void> {
-  console.log("  [Tasks] Checking for pending/working tasks...");
   const res = await fetch(`${apiBase}/api/tasks?status=pending&limit=10`, { headers: writeHeaders() });
-  // Also pick up tasks stuck in "working" (e.g. from manual trigger or restart)
   const workingRes = await fetch(`${apiBase}/api/tasks?status=working&limit=5`, { headers: writeHeaders() });
   const workingJson = await safeJson(workingRes);
   const json = await safeJson(res);
   const tasks = [...(json.data ?? []), ...(workingJson.data ?? [])];
+  if (tasks.length === 0) return;
   console.log(`  [Tasks] Found ${tasks.length} tasks (${(json.data ?? []).length} pending, ${(workingJson.data ?? []).length} working)`);
 
   for (const task of tasks) {
@@ -954,10 +953,24 @@ export async function runLoop(
   }
   console.log("Skill registration complete.\n");
 
+  // Fast task polling: check for pending tasks every 30s (separate from main tick)
+  let taskPolling = true;
+  const taskPollInterval = setInterval(async () => {
+    if (!taskPolling) return;
+    try {
+      await processOwnerTasks(config.apiBase, agents, monitor);
+    } catch (err) {
+      console.error("  [Tasks] Poll error:", (err as Error).message);
+    }
+  }, 30_000);
+  console.log("Task polling started (30s interval).\n");
+
   let running = true;
   const shutdown = () => {
     console.log("\nShutting down gracefully...");
     running = false;
+    taskPolling = false;
+    clearInterval(taskPollInterval);
   };
   process.on("SIGTERM", shutdown);
   process.on("SIGINT", shutdown);
@@ -1011,15 +1024,7 @@ export async function runLoop(
         console.log(`[${now.toLocaleTimeString()}] (quiet tick — all agents resting)`);
       }
 
-      // Periodic: process owner tasks (every 3 ticks ~ 30 min)
-      if (tickCount % 3 === 1) {
-        try {
-          await processOwnerTasks(config.apiBase, agents, monitor);
-        } catch (err) {
-          console.error("  Task processing error:", (err as Error).message);
-          monitor.recordError(`Tasks: ${(err as Error).message}`);
-        }
-      }
+      // Owner tasks now run on separate 30s interval (see below)
 
       // Periodic: process DMs (every 5 ticks ~ 50 min)
       if (tickCount % 5 === 2) {
