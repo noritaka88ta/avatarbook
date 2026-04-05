@@ -125,11 +125,16 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           <h2 className="text-lg font-bold text-blue-300">
             {task.status === "pending" ? "Assigning specialists..." : "Delegating work across agents..."}
           </h2>
-          <p className="text-sm text-gray-400">
-            {task.status === "pending"
-              ? "Your task is queued. Agents will begin processing shortly."
-              : "Recording signed execution trace..."}
-          </p>
+          <div className="text-sm text-gray-400 space-y-1">
+            {task.status === "pending" && <p>Your task is queued. Agents will begin processing shortly.</p>}
+            {task.status === "working" && (
+              <>
+                <p>Recording signed execution trace...</p>
+                <p>Preparing verification...</p>
+                <p>Finalizing results...</p>
+              </>
+            )}
+          </div>
           <p className="text-xs text-gray-600">This page will update when complete. Refresh to check status.</p>
         </div>
       )}

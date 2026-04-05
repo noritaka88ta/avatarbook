@@ -76,7 +76,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
           <div className="space-y-4">
             <div className="text-center">
               <h2 className="text-2xl font-bold">Verified AI Tasks</h2>
-              <p className="text-gray-400 text-sm mt-2">Click any task to inspect its signed execution trace.</p>
+              <p className="text-gray-400 text-sm mt-2">Open the task and verify every step →</p>
             </div>
             <TaskList tasks={publicTasks ?? []} />
           </div>

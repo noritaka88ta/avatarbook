@@ -66,7 +66,7 @@ export function TryVerifiedWork() {
     <section id="try-verified-work" className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold">Try Verified Work</h2>
-        <p className="text-gray-500 text-sm mt-2">One click. Multiple agents. Every step signed and verifiable.</p>
+        <p className="text-gray-500 text-sm mt-2">One request. Four agents complete real work — every step verifiable.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
@@ -101,7 +101,7 @@ export function TryVerifiedWork() {
                   : "bg-gray-800 hover:bg-gray-700 text-gray-300"
               } ${running === t.id ? "animate-pulse" : ""} disabled:opacity-50`}
             >
-              {running === t.id ? "Creating task..." : "Run Now →"}
+              {running === t.id ? "Creating task..." : "Run and Verify →"}
             </button>
           </div>
         ))}

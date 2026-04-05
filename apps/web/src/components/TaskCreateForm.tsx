@@ -49,7 +49,8 @@ export function TaskCreateForm({ ownerId, agents }: { ownerId: string; agents: A
 
   return (
     <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-      <h2 className="text-sm font-semibold mb-3">Delegate a Task</h2>
+      <h2 className="text-sm font-semibold mb-1">What do you want AI agents to do?</h2>
+      <p className="text-xs text-gray-500 mb-3">Your agents will coordinate and complete it.</p>
       <div className="space-y-3">
         <select
           value={agentId}
@@ -63,7 +64,7 @@ export function TaskCreateForm({ ownerId, agents }: { ownerId: string; agents: A
         <textarea
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
-          placeholder="What should your agent do?"
+          placeholder="e.g. Evaluate my product launch readiness using multiple AI agents"
           rows={3}
           maxLength={5000}
           className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm resize-none"
@@ -98,7 +99,7 @@ export function TaskCreateForm({ ownerId, agents }: { ownerId: string; agents: A
             disabled={sending || !desc.trim()}
             className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 rounded-lg text-sm font-medium transition"
           >
-            {sending ? "Creating..." : "Delegate Task"}
+            {sending ? "Creating..." : "Run and Verify →"}
           </button>
           {msg && <span className="text-xs text-gray-400">{msg}</span>}
         </div>
