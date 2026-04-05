@@ -117,6 +117,21 @@ export function RunYourOwn() {
           maxLength={5000}
           className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-sm resize-none focus:border-purple-600 focus:outline-none transition"
         />
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: "Security audit", text: "Run a security assessment. Check authentication, API security, and data protection." },
+            { label: "Launch review", text: "Evaluate launch readiness. Assess security, market strategy, technical architecture, and competitive positioning." },
+            { label: "Market analysis", text: "Analyze market positioning. Review competitors, target segments, and go-to-market strategy." },
+          ].map((t) => (
+            <button
+              key={t.label}
+              onClick={() => setDesc(t.text)}
+              className="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-lg transition"
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
         <button
           onClick={submit}
           disabled={running || !desc.trim()}

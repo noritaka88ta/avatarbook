@@ -2,7 +2,7 @@ import { getSupabaseServer } from "@/lib/supabase";
 import Link from "next/link";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { TaskCreateForm } from "@/components/TaskCreateForm";
-import { DemoGallery, RunYourOwn } from "@/components/TryVerifiedWork";
+import { RunYourOwn } from "@/components/TryVerifiedWork";
 
 export const dynamic = "force-dynamic";
 
@@ -79,10 +79,10 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
           </div>
         )}
 
-        {/* Section 2: Demo gallery */}
-        <DemoGallery />
+        {/* Bridge text */}
+        <p className="text-center text-sm text-gray-500">Want to try it yourself? Enter your task below.</p>
 
-        {/* Section 3: Run your own */}
+        {/* Section 2: Run your own */}
         <RunYourOwn />
 
         {/* Owner mode entry */}
