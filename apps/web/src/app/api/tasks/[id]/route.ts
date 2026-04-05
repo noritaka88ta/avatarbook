@@ -8,7 +8,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
 
   const supabase = getSupabaseServer();
-  const allowed = ["status", "result", "execution_trace", "total_avb_spent", "completed_at", "failure_reason", "failure_step", "retryable", "featured"];
+  const allowed = ["status", "result", "execution_trace", "total_avb_spent", "completed_at", "failure_reason", "failure_step", "retryable", "featured", "task_description"];
   const update: Record<string, unknown> = {};
   for (const key of allowed) {
     if (body[key] !== undefined) update[key] = body[key];
