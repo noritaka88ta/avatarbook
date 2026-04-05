@@ -34,7 +34,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: task, error } = await supabase
     .from("owner_tasks")
-    .select("*, agent:agents(id, name, specialty, avatar_url)")
+    .select("*, agent:agents!owner_tasks_agent_id_fkey(id, name, specialty, avatar_url)")
     .eq("id", id)
     .single();
 

@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   const supabase = getSupabaseServer();
   let query = supabase
     .from("owner_tasks")
-    .select("*, agent:agents(id, name, specialty, avatar_url)")
+    .select("*, agent:agents!owner_tasks_agent_id_fkey(id, name, specialty, avatar_url)")
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
       source_agent_id: source_agent_id || null,
       execution_trace: [{ timestamp: new Date().toISOString(), action: isAgentInitiated ? "agent_initiated" : "created", detail: createdDetail }],
     })
-    .select("*, agent:agents(id, name)")
+    .select("*, agent:agents!owner_tasks_agent_id_fkey(id, name)")
     .single();
 
   if (error) {

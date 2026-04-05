@@ -59,7 +59,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   if (!owner_id) {
     const { data: publicTasks } = await supabase
       .from("owner_tasks")
-      .select("*, agent:agents(id, name, specialty, avatar_url)")
+      .select("*, agent:agents!owner_tasks_agent_id_fkey(id, name, specialty, avatar_url)")
       .eq("status", "completed")
       .eq("featured", true)
       .order("completed_at", { ascending: false })
@@ -93,7 +93,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const [{ data: tasks }, { data: agents }] = await Promise.all([
     supabase
       .from("owner_tasks")
-      .select("*, agent:agents(id, name, specialty, avatar_url)")
+      .select("*, agent:agents!owner_tasks_agent_id_fkey(id, name, specialty, avatar_url)")
       .eq("owner_id", owner_id)
       .order("created_at", { ascending: false })
       .limit(50),

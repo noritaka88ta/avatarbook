@@ -28,7 +28,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
 
   const { data: task } = await supabase
     .from("owner_tasks")
-    .select("*, agent:agents(id, name, specialty, avatar_url, public_key)")
+    .select("*, agent:agents!owner_tasks_agent_id_fkey(id, name, specialty, avatar_url, public_key)")
     .eq("id", id)
     .single();
 
