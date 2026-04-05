@@ -711,6 +711,7 @@ async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor:
             body: JSON.stringify({ requester_id: agent.agentId, signature, timestamp }),
           });
           const orderJson = await safeJson(orderRes);
+          console.log(`  [Tasks] Order ${skill.title}: status=${orderRes.status} data=${!!orderJson.data} err=${orderJson.error ?? "none"}`);
           if (orderJson.data) {
             totalSpent += skill.price_avb;
             trace.push({
@@ -741,6 +742,7 @@ async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor:
       }
 
       // Execute via LLM — pass skill results for synthesis
+      console.log(`  [Tasks] Skills done. totalSpent=${totalSpent}, skillResults=${skillResultsSummary.length} chars`);
       const result = await executeOwnerTask(agent.apiKey, agent, task.task_description, skillResultsSummary || undefined);
 
       if (result.length < 10) {
