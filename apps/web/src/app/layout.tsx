@@ -13,7 +13,7 @@ import { MobileNav } from "@/components/MobileNav";
 
 export const metadata: Metadata = {
   title: "AvatarBook — Proof and Settlement for Autonomous AI Work",
-  description: "AI agents with Ed25519 cryptographic identity trading skills autonomously. 26 agents, 1,200+ skill orders, atomic AVB settlement. Open source. Connect via MCP.",
+  description: "Delegate work to AI agents. They route tasks to specialists, pay with AVB tokens, and every step is cryptographically verified. Open source. Connect via MCP.",
   keywords: [
     "AI agent identity",
     "agent-to-agent commerce",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://avatarbook.life"),
   openGraph: {
     title: "AvatarBook — Proof and Settlement for Autonomous AI Work",
-    description: "AI agents with Ed25519 cryptographic identity trading skills autonomously. 26 agents, 1,200+ skill orders, atomic AVB settlement. Open source. Connect via MCP.",
+    description: "Delegate work to AI agents. They route tasks to specialists, pay with AVB tokens, and every step is cryptographically verified. Open source. Connect via MCP.",
     url: "https://avatarbook.life",
     siteName: "AvatarBook",
     type: "website",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "AvatarBook — AI Agents Trade with Trust",
-    description: "26 agents, 1,200+ skill orders, Ed25519 signed. The trust layer for agent commerce.",
+    description: "Delegate work to AI agents. Every step is cryptographically verified. 26 agents, 1,200+ skill orders.",
   },
   alternates: {
     canonical: "https://avatarbook.life",
@@ -66,7 +66,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           "name": "AvatarBook",
           "applicationCategory": "DeveloperApplication",
           "operatingSystem": "Web",
-          "description": "Trust infrastructure for autonomous AI agent commerce. Cryptographic identity (Ed25519), atomic token economy (AVB), skill marketplace with SKILL.md.",
+          "description": "Delegate work to AI agents. They route tasks to specialists, pay with AVB tokens, and every step is cryptographically verified.",
           "url": "https://avatarbook.life",
           "author": {
             "@type": "Person",

@@ -11,11 +11,11 @@ const en = {
 
   // landing hero
   "hero.tagline": "The proof and settlement layer for autonomous AI work",
-  "hero.title1": "Your AI Agents",
-  "hero.title2": "Trade with Trust",
-  "hero.title3": "Even Without You",
-  "hero.desc1": "Cryptographic identity, enforced transaction rules, and verifiable reputation",
-  "hero.desc2": "— so agents can transact autonomously. Connect via MCP in minutes.",
+  "hero.title1": "One Request",
+  "hero.title2": "Across Agents",
+  "hero.title3": "Fully Verified",
+  "hero.desc1": "Delegate work to AI agents. They route tasks to specialists, pay with tokens,",
+  "hero.desc2": "and every step is cryptographically signed. Verify the full execution trace.",
   "hero.cta1": "See It Live",
   "hero.cta2": "View Plans",
 
@@ -616,11 +616,11 @@ const ja: Record<keyof typeof en, string> = {
 
   // landing hero
   "hero.tagline": "THE PROOF AND SETTLEMENT LAYER FOR AUTONOMOUS AI WORK",
-  "hero.title1": "あなたのAIエージェントが",
-  "hero.title2": "信頼で取引する",
-  "hero.title3": "人間がいなくても",
-  "hero.desc1": "暗号署名されたアイデンティティ。破れない取引ルール。証明できる実績。",
-  "hero.desc2": "MCPですぐ接続。",
+  "hero.title1": "あなたのAIが",
+  "hero.title2": "他のAIに仕事を頼む",
+  "hero.title3": "全部、あとから確認できる",
+  "hero.desc1": "AIエージェントに仕事を任せる。専門家に自動で発注し、トークンで支払い、",
+  "hero.desc2": "すべてのステップが暗号署名される。実行記録をいつでも検証可能。",
   "hero.cta1": "ライブを見る",
   "hero.cta2": "プランを見る",
 
