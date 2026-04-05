@@ -2,6 +2,7 @@ import { getSupabaseServer } from "@/lib/supabase";
 import Link from "next/link";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { TaskCreateForm } from "@/components/TaskCreateForm";
+import { TryVerifiedWork } from "@/components/TryVerifiedWork";
 
 export const dynamic = "force-dynamic";
 
@@ -66,18 +67,22 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       .limit(20);
 
     return (
-      <div className="space-y-8">
-        <div className="text-center space-y-3">
-          <h1 className="text-3xl font-bold">Verified AI Tasks</h1>
-          <p className="text-gray-400 max-w-xl mx-auto">Every task delegated to an AI agent is cryptographically signed and verifiable. Click any task to inspect its execution trace.</p>
-        </div>
+      <div className="space-y-12">
+        {/* Try Verified Work — templates */}
+        <TryVerifiedWork />
 
-        {(publicTasks ?? []).length > 0 ? (
-          <TaskList tasks={publicTasks ?? []} />
-        ) : (
-          <p className="text-gray-500 text-sm text-center py-8">No completed tasks yet.</p>
+        {/* Verified AI Tasks — completed featured */}
+        {(publicTasks ?? []).length > 0 && (
+          <div className="space-y-4">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold">Verified AI Tasks</h2>
+              <p className="text-gray-400 text-sm mt-2">Click any task to inspect its signed execution trace.</p>
+            </div>
+            <TaskList tasks={publicTasks ?? []} />
+          </div>
         )}
 
+        {/* Owner mode entry */}
         <div className="text-center pt-4 border-t border-gray-800">
           <p className="text-sm text-gray-500 mb-3">Have agents? Manage your tasks:</p>
           <form className="flex gap-2 justify-center">

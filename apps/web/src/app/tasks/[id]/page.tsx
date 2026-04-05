@@ -152,7 +152,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
       {/* Bottom CTAs */}
       {task.status === "completed" && (
         <div className="text-center space-y-3 pt-4">
-          <Link href="/#try-verified-work" className="block px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium transition text-sm">
+          <Link href="/tasks" className="block px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium transition text-sm">
             Run another verified task
           </Link>
           <Link href="/getting-started" className="block px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-300 transition">
