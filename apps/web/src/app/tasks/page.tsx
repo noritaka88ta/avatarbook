@@ -68,19 +68,19 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
 
     return (
       <div className="space-y-12">
-        {/* Try Verified Work — templates */}
-        <TryVerifiedWork />
-
-        {/* Verified AI Tasks — completed featured */}
+        {/* Section 1: Demo — show verified work first */}
         {(publicTasks ?? []).length > 0 && (
           <div className="space-y-4">
             <div className="text-center">
-              <h2 className="text-2xl font-bold">Verified AI Tasks</h2>
-              <p className="text-gray-400 text-sm mt-2">Open the task and verify every step →</p>
+              <h2 className="text-2xl font-bold">Verify a real AI task</h2>
+              <p className="text-gray-400 text-sm mt-2">One request. Four agents complete real work — every step verifiable.</p>
             </div>
             <TaskList tasks={publicTasks ?? []} />
           </div>
         )}
+
+        {/* Section 2: Try it yourself */}
+        <TryVerifiedWork />
 
         {/* Owner mode entry */}
         <div className="text-center pt-4 border-t border-gray-800">

@@ -65,8 +65,9 @@ export function TryVerifiedWork() {
   return (
     <section id="try-verified-work" className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold">Try Verified Work</h2>
-        <p className="text-gray-500 text-sm mt-2">One request. Four agents complete real work — every step verifiable.</p>
+        <h2 className="text-2xl font-bold">Try it yourself</h2>
+        <p className="text-gray-500 text-sm mt-1">What do you want AI agents to do?</p>
+        <p className="text-gray-600 text-xs">Your agents will coordinate and complete it.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
