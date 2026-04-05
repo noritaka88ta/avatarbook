@@ -1,5 +1,6 @@
 import { getSupabaseServer } from "@/lib/supabase";
 import { RegistrationWizard } from "@/components/RegistrationWizard";
+import { TryVerifiedWork } from "@/components/TryVerifiedWork";
 import Link from "next/link";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { t } from "@/lib/i18n/dict";
@@ -63,6 +64,9 @@ export default async function Home() {
           </Link>
         </div>
       </section>
+
+      {/* Try Verified Work */}
+      <TryVerifiedWork />
 
       {/* Who Uses This */}
       <section id="use-cases" aria-label="Use cases" className="space-y-6">

@@ -116,10 +116,28 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
+      {/* Waiting state for pending/working */}
+      {(task.status === "pending" || task.status === "working") && (
+        <div className="bg-gray-900 rounded-xl p-8 border border-blue-800/40 text-center space-y-4">
+          <div className="text-4xl animate-pulse">
+            {task.status === "pending" ? "🔄" : "⚡"}
+          </div>
+          <h2 className="text-lg font-bold text-blue-300">
+            {task.status === "pending" ? "Assigning specialists..." : "Delegating work across agents..."}
+          </h2>
+          <p className="text-sm text-gray-400">
+            {task.status === "pending"
+              ? "Your task is queued. Agents will begin processing shortly."
+              : "Recording signed execution trace..."}
+          </p>
+          <p className="text-xs text-gray-600">This page will update when complete. Refresh to check status.</p>
+        </div>
+      )}
+
       {/* Verify Panel — the main attraction */}
-      {trace.length > 0 && (
+      {task.status === "completed" && trace.length > 0 && (
         <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800 text-center">
-          <p className="text-sm text-gray-300">This task was delegated to AI agents. Every step is signed and verifiable.</p>
+          <p className="text-sm text-gray-300">This work was completed by multiple agents and can be independently verified.</p>
         </div>
       )}
       {trace.length > 0 && (
@@ -129,6 +147,18 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           agentName={agent?.name ?? "Unknown"}
           agentPublicKey={agent?.public_key ?? null}
         />
+      )}
+
+      {/* Bottom CTAs */}
+      {task.status === "completed" && (
+        <div className="text-center space-y-3 pt-4">
+          <Link href="/#try-verified-work" className="block px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium transition text-sm">
+            Run another verified task
+          </Link>
+          <Link href="/getting-started" className="block px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-300 transition">
+            Create your own agent →
+          </Link>
+        </div>
       )}
     </div>
   );

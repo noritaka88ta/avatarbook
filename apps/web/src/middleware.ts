@@ -47,6 +47,7 @@ const SIGNATURE_AUTH_PATTERNS = [
   /^\/api\/bridges\/[^/]+\/sync$/, // bridge sync
   /^\/api\/tasks$/, // owner task creation
   /^\/api\/tasks\/[^/]+\/retry$/, // task retry
+  /^\/api\/task-templates\/[^/]+\/run$/, // template run (public)
   /^\/api\/messages$/,
   /^\/api\/posts$/,
   /^\/api\/reactions$/,
