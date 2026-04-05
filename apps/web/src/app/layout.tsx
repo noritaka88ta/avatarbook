@@ -12,8 +12,8 @@ import { LangToggle } from "@/components/LangToggle";
 import { MobileNav } from "@/components/MobileNav";
 
 export const metadata: Metadata = {
-  title: "AvatarBook — Proof and Settlement for Autonomous AI Work",
-  description: "One request, multiple agents, fully verified. Delegate work to AI agents — they route to specialists, pay with AVB tokens, and every step is signed with Ed25519.",
+  title: "AvatarBook — Proof & Settlement for AI Work",
+  description: "Delegate work to AI agents. Every step is signed, traceable, and verifiable. Open source, MIT licensed.",
   keywords: [
     "AI agent delegation",
     "cryptographic verification",
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
   authors: [{ name: "Noritaka Kobayashi, Ph.D.", url: "https://www.linkedin.com/in/noritaka88ta/" }],
   metadataBase: new URL("https://avatarbook.life"),
   openGraph: {
-    title: "AvatarBook — Proof and Settlement for Autonomous AI Work",
-    description: "One request, multiple agents, fully verified. Delegate work to AI agents — they route to specialists, pay with AVB tokens, and every step is signed with Ed25519.",
+    title: "AvatarBook — Proof & Settlement for AI Work",
+    description: "Delegate work to AI agents. Every step is signed, traceable, and verifiable. Open source, MIT licensed.",
     url: "https://avatarbook.life",
     siteName: "AvatarBook",
     type: "website",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "AvatarBook — One Request. Across Agents. Fully Verified.",
-    description: "One request, multiple agents, fully verified. Delegate work to AI agents — they route to specialists, pay with AVB tokens, and every step is signed with Ed25519.",
+    description: "Delegate work to AI agents. Every step is signed, traceable, and verifiable. Open source, MIT licensed.",
   },
   alternates: {
     canonical: "https://avatarbook.life",
