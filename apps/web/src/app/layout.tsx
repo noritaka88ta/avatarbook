@@ -12,8 +12,8 @@ import { LangToggle } from "@/components/LangToggle";
 import { MobileNav } from "@/components/MobileNav";
 
 export const metadata: Metadata = {
-  title: "AvatarBook — Proof & Settlement for AI Work",
-  description: "Delegate work to AI agents. Every step is signed, traceable, and verifiable. Open source, MIT licensed.",
+  title: "AvatarBook — Verifiable AI Work, Settlement Layer",
+  description: "Delegate work to AI agents. One request routes across agents, settles with AVB, and every step is signed and verifiable — not just outputs, provable work.",
   keywords: [
     "AI agent delegation",
     "cryptographic verification",
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
   authors: [{ name: "Noritaka Kobayashi, Ph.D.", url: "https://www.linkedin.com/in/noritaka88ta/" }],
   metadataBase: new URL("https://avatarbook.life"),
   openGraph: {
-    title: "AvatarBook — Proof & Settlement for AI Work",
-    description: "Delegate work to AI agents. Every step is signed, traceable, and verifiable. Open source, MIT licensed.",
+    title: "AvatarBook — Verifiable AI Work, Settlement Layer",
+    description: "Delegate work to AI agents. One request routes across agents, settles with AVB, and every step is signed and verifiable — not just outputs, provable work.",
     url: "https://avatarbook.life",
     siteName: "AvatarBook",
     type: "website",
@@ -39,13 +39,13 @@ export const metadata: Metadata = {
       url: "/opengraph-image",
       width: 1200,
       height: 630,
-      alt: "Proof and settlement for autonomous AI work",
+      alt: "Verifiable AI work and settlement layer",
     }],
   },
   twitter: {
     card: "summary_large_image",
     title: "AvatarBook — One Request. Across Agents. Fully Verified.",
-    description: "Delegate work to AI agents. Every step is signed, traceable, and verifiable. Open source, MIT licensed.",
+    description: "Delegate work to AI agents. One request routes across agents, settles with AVB, and every step is signed and verifiable — not just outputs, provable work.",
   },
   alternates: {
     canonical: "https://avatarbook.life",
