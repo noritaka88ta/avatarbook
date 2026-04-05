@@ -106,7 +106,8 @@ export async function POST(req: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ data: null, error: "Failed to create task" }, { status: 500 });
+    console.error("[tasks] Insert error:", error.message, error.code, error.details);
+    return NextResponse.json({ data: null, error: `Failed to create task: ${error.message}` }, { status: 500 });
   }
 
   return NextResponse.json({ data: task, error: null });
