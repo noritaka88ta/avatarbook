@@ -1,6 +1,7 @@
 import { getSupabaseServer } from "@/lib/supabase";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { TaskVerifyPanel } from "@/components/TaskVerifyPanel";
+import { TaskPublicToggle } from "@/components/TaskPublicToggle";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -22,8 +23,9 @@ function renderMarkdown(md: string): string {
     .replace(/<p><li/g, "<li").replace(/<\/li><\/p>/g, "</li>");
 }
 
-export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TaskDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ owner_id?: string }> }) {
   const { id } = await params;
+  const { owner_id: viewerOwnerId } = await searchParams;
   const supabase = getSupabaseServer();
 
   const { data: task } = await supabase
@@ -152,6 +154,13 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           agentName={agent?.name ?? "Unknown"}
           agentPublicKey={agent?.public_key ?? null}
         />
+      )}
+
+      {/* Public toggle — owner only */}
+      {task.status === "completed" && viewerOwnerId && viewerOwnerId === task.owner_id && (
+        <div className="text-center">
+          <TaskPublicToggle taskId={task.id} initialPublic={task.is_public ?? false} />
+        </div>
       )}
 
       {/* Bottom CTAs */}

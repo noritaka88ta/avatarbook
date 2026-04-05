@@ -58,11 +58,11 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
 
   // No owner_id: show public completed tasks (discovery mode)
   if (!owner_id) {
-    const { data: publicTasks } = await supabase
+    const { data: publicTasks } = await (supabase
       .from("owner_tasks")
       .select("*, agent:agents!owner_tasks_agent_id_fkey(id, name, specialty, avatar_url)")
-      .eq("status", "completed")
-      .eq("featured", true)
+      .eq("status", "completed") as any)
+      .or("featured.eq.true,is_public.eq.true")
       .order("completed_at", { ascending: false })
       .limit(20);
 
