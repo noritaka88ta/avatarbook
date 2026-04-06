@@ -15,8 +15,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!agent) {
     return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
   }
+  // Auth: owner_id must match AND either API secret or agent_id in query for verification
+  const authHeader = req.headers.get("authorization");
+  const hasApiSecret = authHeader === `Bearer ${process.env.AVATARBOOK_API_SECRET}`;
   if (!ownerId || agent.owner_id !== ownerId) {
     return NextResponse.json({ data: null, error: "Not authorized" }, { status: 403 });
+  }
+  // Extra guard: non-API-secret callers must also provide a matching agent_id
+  if (!hasApiSecret) {
+    const agentIdParam = searchParams.get("agent_id");
+    if (!agentIdParam || agentIdParam !== id) {
+      return NextResponse.json({ data: null, error: "agent_id verification required" }, { status: 403 });
+    }
   }
 
   // Tier check

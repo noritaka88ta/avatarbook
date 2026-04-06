@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-export function TaskPublicToggle({ taskId, initialPublic }: { taskId: string; initialPublic: boolean }) {
+export function TaskPublicToggle({ taskId, ownerId, initialPublic }: { taskId: string; ownerId: string; initialPublic: boolean }) {
   const [isPublic, setIsPublic] = useState(initialPublic);
   const [updating, setUpdating] = useState(false);
 
@@ -11,7 +11,7 @@ export function TaskPublicToggle({ taskId, initialPublic }: { taskId: string; in
       const res = await fetch(`/api/tasks/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_public: !isPublic }),
+        body: JSON.stringify({ owner_id: ownerId, is_public: !isPublic }),
       });
       const json = await res.json();
       if (json.data) setIsPublic(!isPublic);

@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 const TEMPLATES: Record<string, { description: string; primary_agent_id: string; budget: number }> = {
   "security-audit": {
     description: "Run a security assessment of a web application. Order Security Audit and Architecture Review skills from specialist agents. Synthesize findings into an executive report.",
-    primary_agent_id: "a43e03fb-843a-45f4-b572-55e87bfc1ed4", // CEO Agent orchestrates
+    primary_agent_id: "a43e03fb-843a-45f4-b572-55e87bfc1ed4",
     budget: 300,
   },
   "market-analysis": {
@@ -21,6 +21,9 @@ const TEMPLATES: Record<string, { description: string; primary_agent_id: string;
   },
 };
 
+const MAX_ACTIVE_TASKS_PER_AGENT = 5;
+const MAX_GUEST_TASKS_PER_HOUR = 10;
+
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const template = TEMPLATES[id];
@@ -31,7 +34,31 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   const supabase = getSupabaseServer();
 
-  // Create guest owner (no auth required)
+  // Rate limit: max guest tasks per hour (global)
+  const hourAgo = new Date(Date.now() - 3600_000).toISOString();
+  const { count: recentGuest } = await supabase
+    .from("owner_tasks")
+    .select("id", { count: "exact", head: true })
+    .eq("agent_id", template.primary_agent_id)
+    .eq("created_by", "owner")
+    .gte("created_at", hourAgo);
+
+  if ((recentGuest ?? 0) >= MAX_GUEST_TASKS_PER_HOUR) {
+    return NextResponse.json({ data: null, error: "Too many tasks created recently. Please try again later." }, { status: 429 });
+  }
+
+  // Check active task count for this agent
+  const { count: activeTasks } = await supabase
+    .from("owner_tasks")
+    .select("id", { count: "exact", head: true })
+    .eq("agent_id", template.primary_agent_id)
+    .in("status", ["pending", "working"]);
+
+  if ((activeTasks ?? 0) >= MAX_ACTIVE_TASKS_PER_AGENT) {
+    return NextResponse.json({ data: null, error: "Agent is busy. Please try again shortly." }, { status: 429 });
+  }
+
+  // Create guest owner
   const { data: owner } = await supabase
     .from("owners")
     .insert({ tier: "free", display_name: `guest-${randomUUID().slice(0, 8)}` })
@@ -42,7 +69,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ data: null, error: "Failed to create guest owner" }, { status: 500 });
   }
 
-  // Create the task
+  // Create task — NOT featured by default
   const { data: task, error } = await supabase
     .from("owner_tasks")
     .insert({
@@ -54,7 +81,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         max_avb_budget: template.budget,
         trusted_agents_only: false,
       },
-      featured: true,
+      featured: false,
       execution_trace: [{
         timestamp: new Date().toISOString(),
         action: "created",

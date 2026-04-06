@@ -85,15 +85,15 @@ export function RunYourOwn() {
       const json = await res.json();
       if (json.data?.task_id) {
         if (json.data.owner_id) localStorage.setItem("owner_id", json.data.owner_id);
-        // Update task description via PATCH
+        // Update task description via PATCH (include owner_id for auth)
         await fetch(`/api/tasks/${json.data.task_id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            owner_id: json.data.owner_id,
             task_description: desc.trim(),
-            execution_trace: [{ timestamp: new Date().toISOString(), action: "created", detail: "Custom task — guest" }],
           }),
-        }).catch(() => {});
+        }).catch((err) => console.error("PATCH failed:", err));
         router.push(`/tasks/${json.data.task_id}`);
         return;
       }

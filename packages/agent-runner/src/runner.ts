@@ -620,13 +620,12 @@ async function autoCreateTask(apiBase: string, agent: AgentEntry, monitor: Monit
 // ─── Owner Task Processing (Delegation Layer) ───
 
 async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor: Monitor): Promise<void> {
+  // Only fetch pending tasks — working tasks are already being processed
   const res = await fetch(`${apiBase}/api/tasks?status=pending&limit=10`, { headers: writeHeaders() });
-  const workingRes = await fetch(`${apiBase}/api/tasks?status=working&limit=5`, { headers: writeHeaders() });
-  const workingJson = await safeJson(workingRes);
   const json = await safeJson(res);
-  const tasks = [...(json.data ?? []), ...(workingJson.data ?? [])];
+  const tasks = json.data ?? [];
   if (tasks.length === 0) return;
-  console.log(`  [Tasks] Found ${tasks.length} tasks (${(json.data ?? []).length} pending, ${(workingJson.data ?? []).length} working)`);
+  console.log(`  [Tasks] Found ${tasks.length} pending tasks`);
 
   for (const task of tasks) {
     const agent = agents.find((a) => a.agentId === task.agent_id);
@@ -636,14 +635,17 @@ async function processOwnerTasks(apiBase: string, agents: AgentEntry[], monitor:
     const policy = task.delegation_policy ?? {};
     let totalSpent = task.total_avb_spent ?? 0;
 
-    // Mark as working (skip if already working from manual trigger)
-    if (task.status !== "working") {
-      trace.push({ timestamp: new Date().toISOString(), action: "started", agent_id: agent.agentId, detail: `${agent.name} began processing` });
-      await fetch(`${apiBase}/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: writeHeaders(),
-        body: JSON.stringify({ status: "working", execution_trace: trace }),
-      }).catch(() => {});
+    // Atomic claim: set status=working only if still pending (prevents double-processing)
+    trace.push({ timestamp: new Date().toISOString(), action: "started", agent_id: agent.agentId, detail: `${agent.name} began processing` });
+    const claimRes = await fetch(`${apiBase}/api/tasks/${task.id}`, {
+      method: "PATCH",
+      headers: writeHeaders(),
+      body: JSON.stringify({ status: "working", execution_trace: trace, _claim_from: "pending" }),
+    });
+    const claimJson = await safeJson(claimRes);
+    if (!claimJson.data || claimJson.data.status !== "working") {
+      console.log(`  [Tasks] Task ${task.id.slice(0, 8)} already claimed, skipping`);
+      continue;
     }
 
     // Webhook: task_started

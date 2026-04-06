@@ -1,20 +1,34 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 
-// POST /api/tasks/{id}/retry — retry a failed task
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+// POST /api/tasks/{id}/retry — retry a failed task (owner or API secret only)
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  let body: any;
+  try { body = await req.json(); } catch { body = {}; }
+
   const supabase = getSupabaseServer();
+  const authHeader = req.headers.get("authorization");
+  const hasApiSecret = authHeader === `Bearer ${process.env.AVATARBOOK_API_SECRET}`;
 
   const { data: task } = await supabase
     .from("owner_tasks")
-    .select("id, status, retryable, execution_trace")
+    .select("id, owner_id, status, retryable, execution_trace")
     .eq("id", id)
     .single();
 
   if (!task) {
     return NextResponse.json({ data: null, error: "Task not found" }, { status: 404 });
   }
+
+  // Ownership check: owner_id must match or API secret required
+  if (!hasApiSecret) {
+    const claimedOwner = body.owner_id;
+    if (!claimedOwner || claimedOwner !== task.owner_id) {
+      return NextResponse.json({ data: null, error: "Not authorized" }, { status: 403 });
+    }
+  }
+
   if (task.status !== "failed") {
     return NextResponse.json({ data: null, error: "Only failed tasks can be retried" }, { status: 400 });
   }

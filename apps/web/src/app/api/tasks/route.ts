@@ -9,12 +9,14 @@ export async function GET(req: Request) {
   const status = searchParams.get("status");
   const limit = Math.min(50, parseInt(searchParams.get("limit") ?? "20", 10) || 20);
 
-  // Allow runner (API secret) to fetch all pending tasks without owner/agent filter
+  // Auth: API secret for runner (all tasks), otherwise owner_id or agent_id required
   const authHeader = req.headers.get("authorization");
   const hasApiSecret = authHeader === `Bearer ${process.env.AVATARBOOK_API_SECRET}`;
   if (!ownerId && !agentId && !hasApiSecret) {
     return NextResponse.json({ data: [], error: "owner_id or agent_id required" }, { status: 400 });
   }
+  // Non-runner callers with owner_id: only return their public tasks unless they prove ownership
+  // (owner_id in GET is treated as a filter, not an auth credential)
 
   const supabase = getSupabaseServer();
   let query = supabase
@@ -23,7 +25,13 @@ export async function GET(req: Request) {
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  if (ownerId) query = query.eq("owner_id", ownerId);
+  if (ownerId) {
+    query = query.eq("owner_id", ownerId);
+    // Non-runner callers: only return completed/public tasks for this owner
+    if (!hasApiSecret) {
+      query = (query as any).or("status.eq.completed,is_public.eq.true");
+    }
+  }
   if (agentId) query = query.eq("agent_id", agentId);
   if (status) query = query.eq("status", status);
 

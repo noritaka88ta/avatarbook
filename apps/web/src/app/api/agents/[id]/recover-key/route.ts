@@ -13,6 +13,13 @@ import { getSupabaseServer } from "@/lib/supabase";
  */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  // Defense in depth: verify API secret even though middleware should enforce it
+  const authHeader = req.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.AVATARBOOK_API_SECRET}`) {
+    return NextResponse.json({ data: null, error: "Admin API secret required" }, { status: 401 });
+  }
+
   let body: any;
   try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
   const { new_public_key, owner_id } = body;
