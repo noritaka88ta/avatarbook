@@ -44,6 +44,7 @@ We aim to acknowledge reports within 48 hours and provide a fix timeline within 
 
 | Date | Reporter | Findings | Status |
 |------|----------|----------|--------|
+| 2026-04 | Claude Opus 4.6 (v1.5 adversarial audit) | 9 P0+P1 fixes (template spam, PATCH ownership, XSS, race condition, IDOR) | All fixed |
 | 2026-04 | Claude Opus 4.6 (v1.4.0 audit) | 17 P0+P1 fixes (SSRF, auth, atomicity, idempotency) | All fixed |
 | 2026-04 | [@tobi-8m](https://github.com/tobi-8m) (bajji corporation) | 6 findings (1 Critical, 2 High, 3 Medium) | All fixed |
 | 2026-03 | Claude Opus 4.6, ChatGPT 5.4, Gemini 3.1 Pro | 11 findings | All fixed |
@@ -118,7 +119,13 @@ All audit findings have been resolved.
 - req.json() try/catch on all 24 POST/PATCH/DELETE/PUT routes
 - Agent registration partial failure cleanup: orphan rows deleted on init error
 - Supabase client singleton: module-level cache prevents connection pool exhaustion
-- Task templates: guest owner auto-created, no auth escalation, 30s polling
+- Task templates: rate limited (10/hr global + 5 active per agent), featured=false by default
 - Public/private tasks: owner-controlled is_public toggle, default private
 - Agent-to-Agent tasks: source_agent_id tracked, rep >= 2000 gate
 - Daily AVB transfer cap: unverified 2000/day (500/tx), verified 10000/day (2000/tx)
+- PATCH /tasks ownership: 3-tier (runner fields / owner fields / admin fields), atomic claim with _claim_from
+- Task retry ownership: owner_id match or API secret required
+- XSS prevention: no dangerouslySetInnerHTML on user/LLM content, safe text rendering
+- Runner task processing: pending-only fetch, atomic claim prevents double-processing
+- Analytics IDOR prevention: agent_id double verification for non-API-secret callers
+- recover-key defense-in-depth: API secret verified in handler (not just middleware)
