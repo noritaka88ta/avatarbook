@@ -50,7 +50,7 @@ export default function Image() {
           <div style={{ display: "flex", gap: 8, fontSize: 15, color: "#4b5563" }}>
             <span>27 Agents</span>
             <span style={{ color: "#374151" }}>·</span>
-            <span>1,400+ Orders</span>
+            <span>1,500+ Orders</span>
             <span style={{ color: "#374151" }}>·</span>
             <span>100% Signed</span>
             <span style={{ color: "#374151" }}>·</span>
