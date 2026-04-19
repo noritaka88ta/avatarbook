@@ -1,0 +1,56 @@
+{
+  "ceo": {
+    "agentId": "1b33b69e-2a59-4784-9401-4ba4d2fec132",
+    "name": "CEO Agent",
+    "privateKey": "48e890ee7ba1be7e9ba4a0bd9e6318271327d05c5be9618f489f555b52da6361",
+    "publicKey": "27ec450906cba3fe8b9b4e2a82d60e9be2802fa6d860b581926ad2373bbbd935"
+  },
+  "researcher": {
+    "agentId": "9430321f-4a7b-46d0-b3fc-8be4459547cf",
+    "name": "Researcher Agent",
+    "privateKey": "d0c241073f51f80b088e2e25b07d0ec06119070425dac723a176012e3eba51ac",
+    "publicKey": "f1df9c5dab2fc42655f2773d8c884ac9591047182ca1ac8a114735bdd6611bd3"
+  },
+  "engineer": {
+    "agentId": "9eedb377-d0f1-41ec-af76-401e308cedb3",
+    "name": "Engineer Agent",
+    "privateKey": "df2eb2e8c6d2709681f8df61fcc5d1231ec57e6b1487b7a31425b41dc77c1ab4",
+    "publicKey": "088f2af47e2b2eda85cf0037c5b78b4ef6c9e68daf98007443649d09bff4d63a"
+  },
+  "qa": {
+    "agentId": "90032e9c-06c8-4975-994f-0bf6d05a9caa",
+    "name": "QA Agent",
+    "privateKey": "054dc6bccc3d3df7692759d30afb25dc739151660f8f79cc45f683c48e15fc49",
+    "publicKey": "c5e29579cb48b0574593b6acfe7ff812b50f0064eb657e84244c6ff7e53c16a6"
+  },
+  "security": {
+    "agentId": "3bb4ece8-8d3f-406a-a8c7-fef3fe01a1cb",
+    "name": "Security Agent",
+    "privateKey": "09597487572a2c312e8a11df18eb1439e22b3bec2b051d40f09897aa373d0df4",
+    "publicKey": "fd92b1b56fccb211048fe969f4149e835d1c5b799d3dc93cec9042d157e47496"
+  },
+  "creative": {
+    "agentId": "7d0b63e2-a2fb-4a2f-aafc-8f0503f366e0",
+    "name": "Creative Agent",
+    "privateKey": "667212e470ec908581f346c946316a7099c53efbea590cf9c6063d8659f42c4a",
+    "publicKey": "eb8c45d919b1002b66ca12a08b37e8c4d08c64f8497a581da9f7048b4ee44345"
+  },
+  "cmo": {
+    "agentId": "8b7f04d2-d155-458b-bcf5-ef4b81cdee67",
+    "name": "CMO Agent",
+    "privateKey": "8079f5e983884cd208b7d7fed9bf814444c13383064bf8ee0c3072dc172716fa",
+    "publicKey": "8896e8c8c949c73cff9fc8baa48167e6c9eaeb2e3ee777036c332fa40d619039"
+  },
+  "pdm": {
+    "agentId": "737937aa-9897-4e35-8741-51a43ae00be7",
+    "name": "PDM Agent",
+    "privateKey": "addd183ea207db1f9a2e6d21dae8ea941c549d1e1b3b96109b22f994f432ef21",
+    "publicKey": "0045aa1a9c3fbfe2e459ae8730adbb3371c39396f3536afa2e58085592b9df4b"
+  },
+  "cto": {
+    "agentId": "c74c9b18-95e9-445f-820f-a0719d0518d4",
+    "name": "CTO Agent",
+    "privateKey": "ab184f83759de1eda9f10e063281f4ae4654c5c75391b72dcee932f785f7ebc8",
+    "publicKey": "318d2c545fa7fd3db5e6e7398b9f2b345a76a8070fd74a74099295e13e39b277"
+  }
+}

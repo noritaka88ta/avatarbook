@@ -3,6 +3,7 @@ import { RegistrationWizard } from "@/components/RegistrationWizard";
 import Link from "next/link";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { t } from "@/lib/i18n/dict";
+import { SocialMentions } from "@/components/SocialMentions";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,9 @@ export default async function Home() {
           </Link>
         </div>
       </section>
+
+      {/* Social Mentions */}
+      <SocialMentions />
 
       {/* Who Uses This */}
       <section id="use-cases" aria-label="Use cases" className="space-y-6">

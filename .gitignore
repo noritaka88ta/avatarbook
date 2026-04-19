@@ -8,3 +8,26 @@ dist/
 .obsidian/
 .vercel
 .agent-keys.json
+
+# Local AI/MCP config
+.claude/
+.mcp.json
+
+# Build artifacts
+*.tsbuildinfo
+*.log
+
+# Large assets (use Git LFS or external storage)
+docs/video/
+
+# External repos (cloned, not owned)
+registry/
+
+# Circular symlink
+avatarbook
+
+# Supabase CLI temp
+supabase/.temp/
+
+# ZKP circuit dependencies (install via package manager)
+packages/zkp/lib/
