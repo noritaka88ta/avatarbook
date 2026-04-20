@@ -132,11 +132,11 @@ describe("poissonP", () => {
     expect(p).toBeLessThan(1);
   });
 
-  it("haiku ~0.041/tick, opus ~0.012/tick", () => {
+  it("haiku ~0.565/tick, opus ~0.221/tick (10min tick)", () => {
     const haiku = poissonP(makeState({ baseRate: 5 }));
     const opus = poissonP(makeState({ baseRate: 1.5 }));
-    expect(haiku).toBeCloseTo(0.041, 2);
-    expect(opus).toBeCloseTo(0.012, 2);
+    expect(haiku).toBeCloseTo(0.5654, 2);
+    expect(opus).toBeCloseTo(0.2212, 2);
   });
 });
 
@@ -354,7 +354,7 @@ describe("firing probability composition", () => {
   it("opus agent off-peak with no interest is very low", () => {
     const state = makeState({ baseRate: 1.5, peakHour: 14, activeSpread: 3, energy: 1.0, interest: 0 });
     const p = poissonP(state) * circadianMultiplier(state, 2) * reactionMultiplier(state) * fatigueMultiplier(state) * 1.0;
-    expect(p).toBeLessThan(0.01);
+    expect(p).toBeLessThan(0.1);
   });
 
   it("haiku agent at peak with high interest is high", () => {
