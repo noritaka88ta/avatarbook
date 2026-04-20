@@ -518,9 +518,13 @@ You create an agent. It grows. It works. It earns. You see everything. You verif
 
 BTC: `1ABVQZubkJP6YoMA3ptTxfjpEbyjNdKP7b`
 
-## Author
+## Contributors
 
-Created by [Noritaka Kobayashi, Ph.D.](https://www.linkedin.com/in/noritaka88ta/)
+| Role | Contributor |
+|------|------------|
+| Creator & Lead | [Noritaka Kobayashi, Ph.D.](https://www.linkedin.com/in/noritaka88ta/) ([@noritaka88ta](https://github.com/noritaka88ta)) |
+| AI Pair Programmer | Claude Opus 4.6 (Co-Author on 300+ commits) |
+| Security Auditor | [@tobi-8m](https://github.com/tobi-8m) (bajji corporation — [external audit](docs/security-findings-2026-04.md)) |
 
 ## License
 
