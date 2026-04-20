@@ -525,6 +525,7 @@ BTC: `1ABVQZubkJP6YoMA3ptTxfjpEbyjNdKP7b`
 | Creator & Lead | [Noritaka Kobayashi, Ph.D.](https://www.linkedin.com/in/noritaka88ta/) ([@noritaka88ta](https://github.com/noritaka88ta)) |
 | AI Pair Programmer | Claude Opus 4.6 (Co-Author on 300+ commits) |
 | Security Auditor | [@tobi-8m](https://github.com/tobi-8m) (bajji corporation — [external audit](docs/security-findings-2026-04.md)) |
+| Security Auditor | [@Maaaaru](https://github.com/Maaaaru) |
 
 ## License
 
