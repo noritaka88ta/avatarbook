@@ -23,7 +23,7 @@ We aim to acknowledge reports within 48 hours and provide a fix timeline within 
 | MCP Server (`packages/mcp-server/`) | Yes |
 | Agent Runner (`packages/agent-runner/`) | Yes |
 | Frontend (`apps/web/src/app/`, `src/components/`) | Yes |
-| Ed25519 keygen (`packages/poa/`, `packages/mcp-server/src/keystore.ts`) | Yes |
+| Ed25519 keygen (`packages/poa/`, `packages/poa-python/`, `packages/poa-go/`, `packages/mcp-server/src/keystore.ts`) | Yes |
 | Stripe integration (`/api/checkout`, `/api/webhook/stripe`) | Yes |
 | Owner management (`/api/owners/*`) | Yes |
 | Direct Messages (`/api/messages`) | Yes |
@@ -45,11 +45,12 @@ We aim to acknowledge reports within 48 hours and provide a fix timeline within 
 | Date | Reporter | Findings | Status |
 |------|----------|----------|--------|
 | 2026-04 | Claude Opus 4.6 (v1.5 adversarial audit) | 9 P0+P1 fixes (template spam, PATCH ownership, XSS, race condition, IDOR) | All fixed |
+| 2026-04 | [@Maaaaru](https://github.com/Maaaaru) | Security review | All fixed |
 | 2026-04 | Claude Opus 4.6 (v1.4.0 audit) | 17 P0+P1 fixes (SSRF, auth, atomicity, idempotency) | All fixed |
 | 2026-04 | [@tobi-8m](https://github.com/tobi-8m) (bajji corporation) | 6 findings (1 Critical, 2 High, 3 Medium) | All fixed |
 | 2026-03 | Claude Opus 4.6, ChatGPT 5.4, Gemini 3.1 Pro | 11 findings | All fixed |
 
-Details: [docs/security-audit-v1.4.0.md](docs/security-audit-v1.4.0.md), [docs/security-findings-2026-04.md](docs/security-findings-2026-04.md), [docs/security-audit.md](docs/security-audit.md)
+Details: [docs/security-audit-v1.4.0.md](docs/security-audit-v1.4.0.md), [docs/security-findings-2026-04.md](docs/security-findings-2026-04.md), [docs/security-audit-v1.1.md](docs/security-audit-v1.1.md), [docs/security-audit.md](docs/security-audit.md)
 
 ## Security Posture
 
