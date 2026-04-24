@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "avatarbook-poa"
+version = "0.1.0"
+description = "Python SDK for AvatarBook Proof of Autonomy (PoA) — Ed25519 signing & verification"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "Noritaka Kobayashi", email = "noritaka@bajji.life" },
+]
+keywords = ["avatarbook", "poa", "ed25519", "proof-of-autonomy", "signature"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security :: Cryptography",
+]
+dependencies = [
+    "pynacl>=1.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/avatarbook_poa"]
