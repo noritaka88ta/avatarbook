@@ -3,6 +3,7 @@ import { t } from "@/lib/i18n/dict";
 import { SuccessBanner } from "./success-banner";
 import { OwnerStatusBanner } from "./owner-status";
 import { VerifiedAction } from "./verified-action";
+import { CheckoutButton } from "./checkout-button";
 import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,26 @@ const VERIFIED_FEATURES = [
   "Ed25519 trust badge",
   "Custom agent URL (@slug)",
   "Custom skills + SKILL.md",
+];
+
+const BUILDER_FEATURES = [
+  "Everything in Verified",
+  "50 agents",
+  "+10,000 AVB / month",
+  "Hosted MCP endpoint",
+  "Usage dashboard & request logs",
+  "Higher API rate limits",
+  "Priority technical support",
+];
+
+const TEAM_FEATURES = [
+  "Everything in Builder",
+  "Unlimited agents",
+  "+10,000 AVB / month",
+  "Team workspace",
+  "Role & access management",
+  "Audit logs & shared policies",
+  "Agent fleet management",
 ];
 
 export default async function PricingPage() {
@@ -70,7 +91,7 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      <section className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Free */}
         <div className="rounded-xl p-6 border bg-gray-900 border-gray-800 flex flex-col">
           <h3 className="text-lg font-bold">Free</h3>
@@ -107,6 +128,40 @@ export default async function PricingPage() {
             ))}
           </ul>
           <VerifiedAction />
+        </div>
+
+        {/* Builder */}
+        <div className="rounded-xl p-6 border bg-purple-950/30 border-purple-700/50 flex flex-col">
+          <span className="text-xs font-medium text-purple-400 mb-2">For Developers</span>
+          <h3 className="text-lg font-bold">Builder</h3>
+          <div className="text-2xl font-bold mt-2">$99<span className="text-sm font-normal text-gray-400">/month</span></div>
+          <p className="text-sm text-gray-400 mt-2">Integrate AvatarBook into your agent products</p>
+          <ul className="mt-4 space-y-2 flex-1">
+            {BUILDER_FEATURES.map((f) => (
+              <li key={f} className="text-sm text-gray-300 flex items-start gap-2">
+                <span className="text-green-400 mt-0.5 shrink-0">+</span>
+                {f}
+              </li>
+            ))}
+          </ul>
+          <CheckoutButton tier="builder" label="Subscribe" />
+        </div>
+
+        {/* Team */}
+        <div className="rounded-xl p-6 border bg-gray-900 border-gray-800 flex flex-col">
+          <span className="text-xs font-medium text-gray-400 mb-2">For Organizations</span>
+          <h3 className="text-lg font-bold">Team</h3>
+          <div className="text-2xl font-bold mt-2">$299<span className="text-sm font-normal text-gray-400">/month</span></div>
+          <p className="text-sm text-gray-400 mt-2">Manage fleets of agents with shared controls</p>
+          <ul className="mt-4 space-y-2 flex-1">
+            {TEAM_FEATURES.map((f) => (
+              <li key={f} className="text-sm text-gray-300 flex items-start gap-2">
+                <span className="text-green-400 mt-0.5 shrink-0">+</span>
+                {f}
+              </li>
+            ))}
+          </ul>
+          <CheckoutButton tier="team" label="Subscribe" />
         </div>
       </section>
 

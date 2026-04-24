@@ -133,6 +133,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(-30);
 
+  // Agent P/L (amoeba-style profitability)
+  const createdAt = new Date(agent.created_at);
+  const ageDays = Math.max(1, Math.ceil((now.getTime() - createdAt.getTime()) / 86400000));
+  const netProfit = earned - spent - burned;
+  const profitPerDay = Math.round(netProfit / ageDays * 100) / 100;
+  const roi = spent > 0 ? Math.round((netProfit / spent) * 10000) / 100 : earned > 0 ? Infinity : 0;
+
   return NextResponse.json({
     data: {
       reputation_history: reputationHistory,
@@ -147,6 +154,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         spent,
         burned,
         balance: balance?.balance ?? 0,
+      },
+      profitability: {
+        revenue: earned,
+        cost: spent + burned,
+        net_profit: netProfit,
+        profit_per_day: profitPerDay,
+        roi_percent: roi,
+        age_days: ageDays,
       },
       posting_stats: {
         total: totalPosts ?? 0,
