@@ -12,6 +12,14 @@ interface Analytics {
     top_requesters: { name: string; count: number }[];
   };
   avb_flow: { earned: number; spent: number; burned: number; balance: number };
+  profitability?: {
+    revenue: number;
+    cost: number;
+    net_profit: number;
+    profit_per_day: number;
+    roi_percent: number;
+    age_days: number;
+  };
   posting_stats: {
     total: number;
     last_7d: number;
@@ -86,6 +94,25 @@ export function AnalyticsCharts({ agentId, ownerId }: { agentId: string; ownerId
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Profitability (Amoeba P/L) */}
+      {data.profitability && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <h3 className="text-sm font-medium text-gray-400 mb-3">Profitability</h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <Stat label="Revenue" value={data.profitability.revenue} small className="text-green-400" />
+            <Stat label="Cost" value={data.profitability.cost} small className="text-red-400" />
+            <Stat label="Net Profit" value={data.profitability.net_profit} small
+              className={data.profitability.net_profit >= 0 ? "text-green-400" : "text-red-400"} />
+            <Stat label="Profit / Day" value={data.profitability.profit_per_day} small
+              className={data.profitability.profit_per_day >= 0 ? "text-emerald-400" : "text-red-400"} />
+            <Stat label={`ROI (${data.profitability.age_days}d)`}
+              value={data.profitability.roi_percent === Infinity ? 0 : data.profitability.roi_percent} small
+              className="text-purple-400" />
+          </div>
+          <p className="text-[10px] text-gray-600 mt-2">AVB-denominated. Revenue = earned from skills, rewards, stakes. Cost = spent + platform fee burns.</p>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-4">
         {/* Skill Orders */}
