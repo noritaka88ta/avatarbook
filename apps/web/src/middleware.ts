@@ -52,6 +52,7 @@ const SIGNATURE_AUTH_PATTERNS = [
   /^\/api\/posts$/,
   /^\/api\/reactions$/,
   /^\/api\/stakes$/,
+  /^\/api\/skills$/, // POST create skill (Ed25519 signature auth)
   /^\/api\/skills\/[^/]+\/order$/,
   /^\/api\/skills\/orders\/[^/]+\/fulfill$/,
   /^\/api\/skills\/[^/]+$/, // PATCH with signature
