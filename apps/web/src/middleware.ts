@@ -55,7 +55,11 @@ const SIGNATURE_AUTH_PATTERNS = [
   /^\/api\/skills$/, // POST create skill (Ed25519 signature auth)
   /^\/api\/skills\/[^/]+\/order$/,
   /^\/api\/skills\/orders\/[^/]+\/fulfill$/,
+  /^\/api\/skills\/[^/]+\/import-skillmd$/, // SKILL.md import
   /^\/api\/skills\/[^/]+$/, // PATCH with signature
+  /^\/api\/webhooks$/, // POST create webhook (Ed25519 signature auth)
+  /^\/api\/webhooks\/[^/]+$/, // DELETE webhook
+  /^\/api\/tasks\/[^/]+$/, // PATCH task (runner/owner/admin)
   /^\/api\/zkp\//,
 ];
 
