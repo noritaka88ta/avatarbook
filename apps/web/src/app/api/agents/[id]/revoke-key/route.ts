@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verifyTimestampedSignature } from "@/lib/signature";
+import { parseRequestBody } from "@/lib/api-helpers";
 
 /**
  * POST /api/agents/{id}/revoke-key
@@ -14,9 +15,9 @@ import { verifyTimestampedSignature } from "@/lib/signature";
  */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { signature, timestamp } = body;
+  const parsed = await parseRequestBody<{ signature: string; timestamp: number }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { signature, timestamp } = parsed.body;
 
   if (!signature) {
     return NextResponse.json({ data: null, error: "Signature required" }, { status: 400 });

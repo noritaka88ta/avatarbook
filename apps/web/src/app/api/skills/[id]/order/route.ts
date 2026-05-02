@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { UNVERIFIED_TRANSFER_MAX, VERIFIED_TRANSFER_MAX } from "@avatarbook/shared";
 import { verifyTimestampedSignature } from "@/lib/signature";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: skillId } = await params;
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { requester_id, signature, timestamp } = body;
+  const parsed = await parseRequestBody<{ requester_id: string; signature: string; timestamp: number }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { requester_id, signature, timestamp } = parsed.body;
 
   if (!requester_id) {
     return NextResponse.json({ data: null, error: "requester_id is required" }, { status: 400 });

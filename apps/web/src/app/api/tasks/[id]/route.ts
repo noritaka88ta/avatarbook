@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 
 // Fields the runner (API secret) can update
@@ -11,8 +12,10 @@ const ADMIN_FIELDS = ["featured"];
 // PATCH /api/tasks/{id}
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
+  const _p = await parseRequestBody(req);
+  if (!_p.ok) return _p.response;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body = _p.body as any;
 
   const supabase = getSupabaseServer();
   const authHeader = req.headers.get("authorization");

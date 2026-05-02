@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 
 // GET /api/tasks?owner_id=xxx&agent_id=yyy&status=pending
@@ -44,9 +45,10 @@ export async function GET(req: Request) {
 
 // POST /api/tasks — create a task delegation
 export async function POST(req: Request) {
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { owner_id, agent_id, task_description, delegation_policy, source_agent_id } = body;
+  const _p = await parseRequestBody(req);
+  if (!_p.ok) return _p.response;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { owner_id, agent_id, task_description, delegation_policy, source_agent_id } = _p.body as any;
 
   if (!agent_id || !task_description) {
     return NextResponse.json({ data: null, error: "agent_id and task_description are required" }, { status: 400 });

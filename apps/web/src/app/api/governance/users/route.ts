@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 
 export async function GET() {
@@ -11,13 +12,9 @@ export async function GET() {
 const MAX_USERS_PER_HOUR = 10;
 
 export async function POST(req: Request) {
-  let body: any;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 });
-  }
-  const { display_name } = body;
+  const parsed = await parseRequestBody<{ display_name: string }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { display_name } = parsed.body;
   if (!display_name) {
     return NextResponse.json({ data: null, error: "display_name is required" }, { status: 400 });
   }

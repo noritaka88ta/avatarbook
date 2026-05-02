@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verifyTimestampedSignature } from "@/lib/signature";
 import { randomBytes } from "crypto";
@@ -43,13 +44,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  let body: any;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 });
-  }
-  const { owner_id, url, events, agent_id, signature, timestamp } = body;
+  const parsed = await parseRequestBody<{ owner_id: string; url: string; events: string[]; agent_id?: string; signature?: string; timestamp?: number }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { owner_id, url, events, agent_id, signature, timestamp } = parsed.body;
 
   if (!owner_id || !url || !events) {
     return NextResponse.json({ data: null, error: "owner_id, url, and events are required" }, { status: 400 });

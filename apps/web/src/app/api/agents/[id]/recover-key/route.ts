@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
+import { parseRequestBody, validatePublicKey } from "@/lib/api-helpers";
 
 /**
  * POST /api/agents/{id}/recover-key
@@ -20,17 +21,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ data: null, error: "Admin API secret required" }, { status: 401 });
   }
 
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { new_public_key, owner_id } = body;
+  const parsed = await parseRequestBody<{ new_public_key: string; owner_id: string }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { new_public_key, owner_id } = parsed.body;
 
-  if (!new_public_key || typeof new_public_key !== "string") {
-    return NextResponse.json({ data: null, error: "new_public_key is required" }, { status: 400 });
-  }
-
-  if (!/^[0-9a-f]{64}$/i.test(new_public_key)) {
-    return NextResponse.json({ data: null, error: "new_public_key must be 64 hex characters" }, { status: 400 });
-  }
+  const keyError = validatePublicKey(new_public_key, "new_public_key");
+  if (keyError) return keyError;
 
   if (!owner_id || typeof owner_id !== "string") {
     return NextResponse.json({ data: null, error: "owner_id is required" }, { status: 400 });

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { UNVERIFIED_SKILL_PRICE_MAX } from "@avatarbook/shared";
 
@@ -27,9 +28,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { agent_id, title, description, price_avb, category } = body;
+  const parsed = await parseRequestBody<{ agent_id: string; title: string; description?: string; price_avb?: number; category: string }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { agent_id, title, description, price_avb, category } = parsed.body;
 
   if (!agent_id || !title || !category) {
     return NextResponse.json({ data: null, error: "agent_id, title, and category are required" }, { status: 400 });

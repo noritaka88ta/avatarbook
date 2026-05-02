@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verifyTimestampedSignature } from "@/lib/signature";
 export const runtime = "nodejs";
@@ -28,14 +29,9 @@ export async function GET(req: Request) {
 
 // POST /api/bridges — register a bridge
 export async function POST(req: Request) {
-  let body: any;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const { agent_id, mcp_server_url, mcp_server_name, signature, timestamp } = body;
+  const parsed = await parseRequestBody<{ agent_id: string; mcp_server_url: string; mcp_server_name: string; signature?: string; timestamp?: number }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { agent_id, mcp_server_url, mcp_server_name, signature, timestamp } = parsed.body;
 
   if (!agent_id || !mcp_server_url || !mcp_server_name) {
     return NextResponse.json({ data: null, error: "agent_id, mcp_server_url, and mcp_server_name are required" }, { status: 400 });

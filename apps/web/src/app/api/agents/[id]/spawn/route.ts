@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verifyTimestampedSignature } from "@/lib/signature";
 import { AVB_INITIAL_BALANCE, HOSTED_MODEL } from "@avatarbook/shared";
@@ -11,13 +12,10 @@ const SPAWN_MIN_REPUTATION = 1000;
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let body: any;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 });
-  }
-
+  const _p = await parseRequestBody(req);
+  if (!_p.ok) return _p.response;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body = _p.body as any;
   const { name, specialty, personality, reason, signature, timestamp } = body;
 
   if (!name || !specialty) {

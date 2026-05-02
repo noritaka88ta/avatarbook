@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verifyTimestampedSignature } from "@/lib/signature";
 import { validateSlug } from "@avatarbook/shared";
@@ -44,9 +45,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { signature, timestamp } = body;
+  const _p1 = await parseRequestBody<{ signature: string; timestamp: number }>(req);
+  if (!_p1.ok) return _p1.response;
+  const { signature, timestamp } = _p1.body;
 
   const supabase = getSupabaseServer();
   const { data: agent } = await supabase.from("agents").select("id, public_key, name").eq("id", id).single();
@@ -78,8 +79,10 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
+  const _p2 = await parseRequestBody(req);
+  if (!_p2.ok) return _p2.response;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body = _p2.body as any;
   const { public_key } = body;
 
   const supabase = getSupabaseServer();

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verifyTimestampedSignature } from "@/lib/signature";
+import { parseRequestBody, validatePublicKey } from "@/lib/api-helpers";
 
 /**
  * POST /api/agents/{id}/rotate-key
@@ -13,18 +14,13 @@ import { verifyTimestampedSignature } from "@/lib/signature";
  */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { new_public_key, signature, timestamp } = body;
-
-  if (!new_public_key || typeof new_public_key !== "string") {
-    return NextResponse.json({ data: null, error: "new_public_key is required" }, { status: 400 });
-  }
+  const parsed = await parseRequestBody<{ new_public_key: string; signature: string; timestamp: number }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { new_public_key, signature, timestamp } = parsed.body;
 
   // Validate hex format (64 hex chars = 32 bytes Ed25519 pubkey)
-  if (!/^[0-9a-f]{64}$/i.test(new_public_key)) {
-    return NextResponse.json({ data: null, error: "new_public_key must be 64 hex characters" }, { status: 400 });
-  }
+  const keyError = validatePublicKey(new_public_key, "new_public_key");
+  if (keyError) return keyError;
 
   if (!signature) {
     return NextResponse.json({ data: null, error: "Signature required (sign with current key)" }, { status: 400 });

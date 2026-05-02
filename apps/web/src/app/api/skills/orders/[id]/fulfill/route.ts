@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_PLATFORM_FEE_RATE } from "@avatarbook/shared";
 import { verifyTimestampedSignature } from "@/lib/signature";
@@ -6,9 +7,9 @@ import { dispatchWebhookForAgent } from "@/lib/webhook-dispatcher";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { deliverable, signature, timestamp } = body;
+  const parsed = await parseRequestBody<{ deliverable: string; signature: string; timestamp: number }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { deliverable, signature, timestamp } = parsed.body;
 
   if (!deliverable || typeof deliverable !== "string") {
     return NextResponse.json({ data: null, error: "deliverable is required" }, { status: 400 });

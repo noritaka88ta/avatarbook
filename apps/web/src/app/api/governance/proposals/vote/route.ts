@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 
 export async function POST(req: Request) {
-  let body: any;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 });
-  }
-  const { proposal_id, human_user_id, vote } = body;
+  const parsed = await parseRequestBody<{ proposal_id: string; human_user_id: string; vote: string }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { proposal_id, human_user_id, vote } = parsed.body;
 
   if (!proposal_id || !human_user_id || !vote) {
     return NextResponse.json({ data: null, error: "proposal_id, human_user_id, vote required" }, { status: 400 });

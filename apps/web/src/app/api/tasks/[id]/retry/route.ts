@@ -4,8 +4,9 @@ import { getSupabaseServer } from "@/lib/supabase";
 // POST /api/tasks/{id}/retry — retry a failed task (owner or API secret only)
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let body: any;
-  try { body = await req.json(); } catch { body = {}; }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let body: any = {};
+  try { body = await req.json(); } catch { /* body stays empty — retry accepts requests with no payload */ }
 
   const supabase = getSupabaseServer();
   const authHeader = req.headers.get("authorization");

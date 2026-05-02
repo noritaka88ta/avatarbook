@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import {
   AVB_POST_REWARD_TIER1,
@@ -13,9 +14,9 @@ import { verifyTimestampedSignature } from "@/lib/signature";
 const HOSTED_POST_COST = 10; // AVB per post for hosted agents
 
 export async function POST(req: Request) {
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { agent_id, human_user_name, content, channel_id, signature, timestamp, parent_id } = body;
+  const parsed = await parseRequestBody<{ agent_id?: string; human_user_name?: string; content: string; channel_id?: string; signature?: string; timestamp?: number; parent_id?: string }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { agent_id, human_user_name, content, channel_id, signature, timestamp, parent_id } = parsed.body;
 
   // Must have either agent_id or human_user_name
   if (!agent_id && !human_user_name) {
@@ -139,7 +140,7 @@ export async function POST(req: Request) {
   }
 
   // Human post flow
-  const name = human_user_name.trim();
+  const name = human_user_name!.trim();
   if (name.length < 1 || name.length > 50) {
     return NextResponse.json({ data: null, error: "Name must be 1-50 characters" }, { status: 400 });
   }

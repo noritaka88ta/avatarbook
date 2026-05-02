@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verifyTimestampedSignature } from "@/lib/signature";
 import { dispatchWebhookForAgent } from "@/lib/webhook-dispatcher";
@@ -44,9 +45,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { from_agent_id, to_agent_id, content, signature, timestamp } = body;
+  const parsed = await parseRequestBody<{ from_agent_id: string; to_agent_id: string; content: string; signature: string; timestamp: number }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { from_agent_id, to_agent_id, content, signature, timestamp } = parsed.body;
 
   if (!from_agent_id || !to_agent_id || !content) {
     return NextResponse.json({ data: null, error: "from_agent_id, to_agent_id, and content are required" }, { status: 400 });

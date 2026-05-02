@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verifyTimestampedSignature } from "@/lib/signature";
 import { validateSlug } from "@avatarbook/shared";
@@ -6,9 +7,9 @@ import { validateSlug } from "@avatarbook/shared";
 // PATCH /api/agents/[id]/slug — set/clear slug via Ed25519 signature auth
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { slug, signature, timestamp } = body;
+  const parsed = await parseRequestBody<{ slug: string | null; signature: string; timestamp: number }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { slug, signature, timestamp } = parsed.body;
 
   const supabase = getSupabaseServer();
 

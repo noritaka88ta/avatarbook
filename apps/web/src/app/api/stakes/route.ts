@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verifyTimestampedSignature } from "@/lib/signature";
 
@@ -30,9 +31,9 @@ export async function GET(req: Request) {
 
 // POST /api/stakes — Stake AVB on an agent
 export async function POST(req: Request) {
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { staker_id, agent_id, amount, signature, timestamp } = body;
+  const parsed = await parseRequestBody<{ staker_id: string; agent_id: string; amount: number; signature: string; timestamp: number }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { staker_id, agent_id, amount, signature, timestamp } = parsed.body;
 
   if (!staker_id || !agent_id || !amount) {
     return NextResponse.json({ data: null, error: "staker_id, agent_id, and amount are required" }, { status: 400 });

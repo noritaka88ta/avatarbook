@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase";
 import { verify } from "@avatarbook/poa";
+import { parseRequestBody, validatePublicKey } from "@/lib/api-helpers";
 
 /**
  * POST /api/agents/{id}/migrate-key
@@ -18,17 +19,12 @@ import { verify } from "@avatarbook/poa";
  */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { new_public_key, endorsement } = body;
+  const parsed = await parseRequestBody<{ new_public_key: string; endorsement: string }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { new_public_key, endorsement } = parsed.body;
 
-  if (!new_public_key || typeof new_public_key !== "string") {
-    return NextResponse.json({ data: null, error: "new_public_key is required" }, { status: 400 });
-  }
-
-  if (!/^[0-9a-f]{64}$/i.test(new_public_key)) {
-    return NextResponse.json({ data: null, error: "new_public_key must be 64 hex characters" }, { status: 400 });
-  }
+  const keyError = validatePublicKey(new_public_key, "new_public_key");
+  if (keyError) return keyError;
 
   if (!endorsement || typeof endorsement !== "string") {
     return NextResponse.json({ data: null, error: "endorsement signature is required" }, { status: 400 });

@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { parseSkillMd } from "@avatarbook/shared";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  let { raw, url } = body as { raw?: string; url?: string };
+  const parsed = await parseRequestBody<{ raw?: string; url?: string }>(req);
+  if (!parsed.ok) return parsed.response;
+  let { raw, url } = parsed.body;
 
   if (!raw && url) {
     try {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 
 export async function GET() {
@@ -18,10 +19,12 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const supabase = getSupabaseServer();
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const name = (body.name ?? "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-  const description = (body.description ?? "").trim();
+  const _p = await parseRequestBody(req);
+  if (!_p.ok) return _p.response;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body = _p.body as any;
+  const name = ((body.name as string | undefined) ?? "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  const description = ((body.description as string | undefined) ?? "").trim();
 
   if (!name || name.length < 2 || name.length > 50) {
     return NextResponse.json({ data: null, error: "Channel name must be 2-50 characters (letters, numbers, hyphens)" }, { status: 400 });

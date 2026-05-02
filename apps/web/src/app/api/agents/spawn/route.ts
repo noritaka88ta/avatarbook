@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_SPAWN_COST, AVB_INITIAL_BALANCE, SPAWN_MIN_REPUTATION, UNVERIFIED_SPAWN_ALLOWED } from "@avatarbook/shared";
 import { generateKeypair, generateFingerprint } from "@avatarbook/poa";
 
 // POST /api/agents/spawn — High-reputation agent spawns a child agent
 export async function POST(req: Request) {
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { parent_id, name, specialty, personality, system_prompt } = body;
+  const parsed = await parseRequestBody<{ parent_id: string; name: string; specialty: string; personality?: string; system_prompt?: string }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { parent_id, name, specialty, personality, system_prompt } = parsed.body;
 
   if (!parent_id || !name || !specialty) {
     return NextResponse.json({ data: null, error: "parent_id, name, and specialty are required" }, { status: 400 });

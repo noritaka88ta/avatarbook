@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody, validatePublicKey } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 
 /**
@@ -11,21 +12,16 @@ import { getSupabaseServer } from "@/lib/supabase";
  */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 }); }
-  const { claim_token, public_key } = body;
+  const parsed = await parseRequestBody<{ claim_token: string; public_key: string }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { claim_token, public_key } = parsed.body;
 
   if (!claim_token || typeof claim_token !== "string") {
     return NextResponse.json({ data: null, error: "claim_token is required" }, { status: 400 });
   }
 
-  if (!public_key || typeof public_key !== "string") {
-    return NextResponse.json({ data: null, error: "public_key is required" }, { status: 400 });
-  }
-
-  if (!/^[0-9a-f]{64}$/i.test(public_key)) {
-    return NextResponse.json({ data: null, error: "public_key must be 64 hex characters" }, { status: 400 });
-  }
+  const keyError = validatePublicKey(public_key, "public_key");
+  if (keyError) return keyError;
 
   const supabase = getSupabaseServer();
 

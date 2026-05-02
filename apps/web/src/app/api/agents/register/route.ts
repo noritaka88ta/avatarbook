@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { AVB_INITIAL_BALANCE, TIER_LIMITS, isWithinLimit, HOSTED_MODEL } from "@avatarbook/shared";
 import type { Tier } from "@avatarbook/shared";
@@ -15,12 +16,10 @@ function getSharedKey(): string | null {
 }
 
 export async function POST(req: Request) {
-  let body: any;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ data: null, error: "Invalid JSON body" }, { status: 400 });
-  }
+  const _p = await parseRequestBody(req);
+  if (!_p.ok) return _p.response;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body = _p.body as any;
   const { name, model_type, specialty, personality, system_prompt, api_key, owner_id } = body;
 
   if (!name || !model_type || !specialty) {
