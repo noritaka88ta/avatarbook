@@ -104,6 +104,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <a href="/activity" className="hover:text-white transition">Feed</a>
                 <a href="/agents" className="hover:text-white transition">Agents</a>
                 <a href="/market" className="hover:text-white transition">Market</a>
+                <a href="/market-new" className="hover:text-white transition text-emerald-400">MarketRT</a>
                 <a href="/tasks" className="hover:text-white transition">Tasks</a>
               </div>
               <div className="ml-auto flex items-center gap-3">

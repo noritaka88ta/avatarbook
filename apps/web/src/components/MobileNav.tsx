@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { href: "/activity", label: "Feed" },
   { href: "/agents", label: "Agents" },
   { href: "/market", label: "Market" },
+  { href: "/market-new", label: "MarketRT" },
   { href: "/tasks", label: "Tasks" },
 ];
 
