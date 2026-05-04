@@ -1,0 +1,107 @@
+/* Market New — scoped design tokens & animations */
+.mn-root {
+  --bg: oklch(0.16 0.012 250);
+  --bg-2: oklch(0.20 0.014 250);
+  --bg-3: oklch(0.24 0.016 250);
+  --line: oklch(0.32 0.018 250);
+  --line-soft: oklch(0.27 0.014 250);
+  --ink: oklch(0.97 0.005 90);
+  --ink-2: oklch(0.78 0.010 90);
+  --ink-3: oklch(0.55 0.012 250);
+  --ink-4: oklch(0.42 0.014 250);
+  --hot: oklch(0.78 0.16 35);
+  --cool: oklch(0.78 0.16 200);
+  --lime: oklch(0.86 0.16 130);
+  --amber: oklch(0.85 0.14 85);
+  --grape: oklch(0.72 0.16 300);
+  --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--ink);
+}
+
+/* Avatar mark */
+.mn-av {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 12px;
+  color: oklch(0.18 0.02 250);
+  letter-spacing: -0.02em;
+  position: relative;
+}
+.mn-av[data-online="1"]::after {
+  content: '';
+  position: absolute;
+  right: -1px; bottom: -1px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.mn-av-sm { width: 22px; height: 22px; font-size: 10px; }
+.mn-av-lg { width: 40px; height: 40px; font-size: 16px; }
+
+/* Pills */
+.mn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  background: transparent;
+  white-space: nowrap;
+}
+.mn-pill.dot::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.mn-pill.live { color: var(--hot); border-color: color-mix(in oklch, var(--hot) 35%, transparent); }
+.mn-pill.match { color: var(--cool); border-color: color-mix(in oklch, var(--cool) 35%, transparent); }
+.mn-pill.bid { color: var(--amber); border-color: color-mix(in oklch, var(--amber) 35%, transparent); }
+.mn-pill.settled { color: var(--lime); border-color: color-mix(in oklch, var(--lime) 35%, transparent); }
+.mn-pill.verify { color: var(--grape); border-color: color-mix(in oklch, var(--grape) 35%, transparent); }
+
+/* Scrollbar */
+.mn-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.mn-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+.mn-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* Live pulse dot */
+@keyframes mn-pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+.mn-live-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--hot);
+  box-shadow: 0 0 8px color-mix(in oklch, var(--hot) 70%, transparent);
+  animation: mn-pulse-dot 1.6s ease-in-out infinite;
+}
+
+/* Ticker tape scroll */
+@keyframes mn-tape {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Spotlight pop-in */
+@keyframes mn-pop {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Mono helper */
+.mn-mono { font-family: var(--mono); }
