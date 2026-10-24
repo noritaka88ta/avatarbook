@@ -415,6 +415,19 @@ function assertSafeBridgeUrl(raw: string): void {
   }
 }
 
+// SSRF probe URL から狙われた内部ターゲットを抽出してアラートに出す。
+// 例: httpbin.org/redirect-to?url=http://127.0.0.1:2375/version → "127.0.0.1:2375"
+function extractBridgeTarget(raw: string): string {
+  try {
+    const u = new URL(raw);
+    const inner = u.searchParams.get("url"); // open-redirect の inner target を優先
+    const t = inner ? new URL(inner) : u;
+    return t.port ? `${t.hostname}:${t.port}` : t.hostname;
+  } catch {
+    return raw.slice(0, 80);
+  }
+}
+
 async function fulfillViaBridge(
   mcpServerUrl: string,
   mcpTool: string,
@@ -507,6 +520,12 @@ async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monit
             // エラー記録せず rejection を deliverable にして order を完了させ、
             // pending に残して毎tick再試行する無限ループ (= Slack スパム) を断つ。
             console.warn(`  Bridge rejected (SSRF policy): ${bridgeInfo.mcp_server_url} — ${e.message}`);
+            // 攻撃シグナル: 正規bridgeはloopback/open-redirectを指さない。即Slack通知(集約あり)。
+            monitor?.recordSecurityEvent(
+              "ssrf",
+              `bridge SSRF via "${requesterName}": ${e.message}`,
+              extractBridgeTarget(bridgeInfo.mcp_server_url),
+            );
             deliverable = `Order rejected: external tool endpoint not permitted by security policy (${e.message}).`;
           } else {
             throw e;

@@ -16,12 +16,25 @@ const MAX_ERRORS = 20;
 const ERROR_WINDOW_MS = 10 * 60 * 1000; // 10 min
 const ERROR_THRESHOLD = 5;
 
+// セキュリティイベントは運用エラーとは別系統で扱う。
+// 「システムが健全か(error)」と「誰かが攻撃してるか(security)」を混ぜると埋もれる。
+const SEC_AGGREGATE_MS = 5 * 60 * 1000; // 同一種別はこの窓で集約し、1通にまとめる
+
+interface SecurityBucket {
+  countSinceAlert: number;
+  totalCount: number;
+  targets: Set<string>;
+  lastDetail: string;
+  lastAlertTs: number;
+}
+
 export class Monitor {
   private stats: RunnerStats;
   private apiBase: string;
   private apiSecret?: string;
   private slackWebhookUrl?: string;
   private recentErrorTimestamps: number[] = [];
+  private securityBuckets = new Map<string, SecurityBucket>();
 
   constructor(apiBase: string, apiSecret?: string, slackWebhookUrl?: string) {
     this.apiBase = apiBase;
@@ -70,6 +83,44 @@ export class Monitor {
     if (this.recentErrorTimestamps.length >= ERROR_THRESHOLD) {
       this.alert(`ERROR THRESHOLD: ${this.recentErrorTimestamps.length} errors in 10min. Latest: ${message}`);
       this.recentErrorTimestamps = []; // reset to avoid spam
+    }
+  }
+
+  /**
+   * セキュリティイベント（攻撃シグナル）を記録し、Slackへ専用通知する。
+   * 運用エラー(recordError)の閾値アラートとは別系統・別プレフィックス。
+   * 初回は即時通知、その後は SEC_AGGREGATE_MS 窓で集約して1通にまとめる（連打スパム防止）。
+   *
+   * @param kind  イベント種別（例: "ssrf", "auth-bypass"）
+   * @param detail 人間が読む要約（例: "bridge redirects to loopback"）
+   * @param target 狙われた対象（例: "127.0.0.1:2375"）— 集約時に distinct 数を出す
+   */
+  recordSecurityEvent(kind: string, detail: string, target?: string): void {
+    const now = Date.now();
+    let b = this.securityBuckets.get(kind);
+    if (!b) {
+      b = { countSinceAlert: 0, totalCount: 0, targets: new Set(), lastDetail: detail, lastAlertTs: 0 };
+      this.securityBuckets.set(kind, b);
+    }
+    b.countSinceAlert++;
+    b.totalCount++;
+    b.lastDetail = detail;
+    if (target) b.targets.add(target);
+
+    // 初回 or 集約窓を超えたら通知。それ以外はカウントだけ貯める。
+    const firstHit = b.lastAlertTs === 0;
+    if (firstHit || now - b.lastAlertTs >= SEC_AGGREGATE_MS) {
+      const targetList = [...b.targets].slice(-8).join(", ");
+      const burst = firstHit
+        ? `初検知`
+        : `直近${Math.round(SEC_AGGREGATE_MS / 60000)}分で${b.countSinceAlert}件`;
+      this.alert(
+        `🚨 SECURITY [${kind}] ${burst} — ${detail}` +
+          (b.targets.size ? ` | ${b.targets.size}ターゲット: ${targetList}` : "") +
+          ` | 累計${b.totalCount}件`,
+      );
+      b.countSinceAlert = 0;
+      b.lastAlertTs = now;
     }
   }
 
