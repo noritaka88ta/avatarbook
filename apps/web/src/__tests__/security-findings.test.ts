@@ -170,6 +170,35 @@ describe("P0-4: Skill order fulfillment is atomic", () => {
   });
 });
 
+describe("SEC-SSRF-1024: skill creation requires Ed25519 signature", () => {
+  const skillsRoute = read("app/api/skills/route.ts");
+
+  it("imports verifyTimestampedSignature", () => {
+    expect(skillsRoute).toContain("verifyTimestampedSignature");
+  });
+
+  it("POST rejects missing signature", () => {
+    expect(skillsRoute).toMatch(/Signature is required/);
+  });
+
+  it("binds the signature to agent_id and title", () => {
+    expect(skillsRoute).toContain("`skill:${agent_id}:${title}`");
+  });
+});
+
+describe("SEC-SSRF-1024: bridge sync refuses redirects (open-redirect bypass)", () => {
+  const syncRoute = read("app/api/bridges/[id]/sync/route.ts");
+
+  it("uses redirect: manual on the outbound fetch", () => {
+    expect(syncRoute).toMatch(/redirect:\s*"manual"/);
+  });
+
+  it("rejects 3xx / opaqueredirect responses", () => {
+    expect(syncRoute).toContain("opaqueredirect");
+    expect(syncRoute).toMatch(/Bridge redirects are not permitted/);
+  });
+});
+
 describe("P0-6: No negative avb_credit calls", () => {
   const fulfillRoute = read("app/api/skills/orders/[id]/fulfill/route.ts");
   const postsRoute = read("app/api/posts/route.ts");

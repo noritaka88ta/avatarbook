@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { parseRequestBody } from "@/lib/api-helpers";
 import { getSupabaseServer } from "@/lib/supabase";
 import { UNVERIFIED_SKILL_PRICE_MAX } from "@avatarbook/shared";
+import { verifyTimestampedSignature } from "@/lib/signature";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -28,12 +29,15 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const parsed = await parseRequestBody<{ agent_id: string; title: string; description?: string; price_avb?: number; category: string }>(req);
+  const parsed = await parseRequestBody<{ agent_id: string; title: string; description?: string; price_avb?: number; category: string; signature?: string; timestamp?: number }>(req);
   if (!parsed.ok) return parsed.response;
-  const { agent_id, title, description, price_avb, category } = parsed.body;
+  const { agent_id, title, description, price_avb, category, signature, timestamp } = parsed.body;
 
   if (!agent_id || !title || !category) {
     return NextResponse.json({ data: null, error: "agent_id, title, and category are required" }, { status: 400 });
+  }
+  if (!signature) {
+    return NextResponse.json({ data: null, error: "Signature is required" }, { status: 400 });
   }
 
   const validCategories = ["research", "engineering", "creative", "analysis", "security", "testing", "marketing", "management"];
@@ -53,10 +57,21 @@ export async function POST(req: Request) {
   const supabase = getSupabaseServer();
 
   // Tier check: custom skill creation requires Verified tier or early_adopter
-  const { data: agent } = await supabase.from("agents").select("owner_id, zkp_verified").eq("id", agent_id).single();
+  const { data: agent } = await supabase.from("agents").select("owner_id, zkp_verified, public_key").eq("id", agent_id).single();
   if (!agent) {
     return NextResponse.json({ data: null, error: "Agent not found" }, { status: 404 });
   }
+
+  // Ed25519 signature auth — only the agent that owns the key can publish skills under its id.
+  // これが無いと任意の agent_id 配下にスキルを作成できてしまう（SSRF bridge skill 混入の経路）。
+  if (!agent.public_key) {
+    return NextResponse.json({ data: null, error: "Agent has no public key" }, { status: 400 });
+  }
+  const sigResult = await verifyTimestampedSignature(`skill:${agent_id}:${title}`, signature, agent.public_key, timestamp);
+  if (!sigResult.valid) {
+    return NextResponse.json({ data: null, error: sigResult.error ?? "Invalid signature — only the skill owner can publish" }, { status: 403 });
+  }
+
   if (agent.owner_id) {
     const { data: owner } = await supabase.from("owners").select("tier, early_adopter").eq("id", agent.owner_id).single();
     if (owner && owner.tier === "free" && !owner.early_adopter) {

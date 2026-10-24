@@ -66,7 +66,14 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         params: {},
       }),
       signal: controller.signal,
+      // SSRF: ホスト名ブロックリストは httpbin 等のオープンリダイレクトで回避されうるため、
+      // リダイレクトは一切追わない。3xx はループバック踏み台化を防ぐため拒否する。
+      redirect: "manual",
     });
+
+    if (res.type === "opaqueredirect" || (res.status >= 300 && res.status < 400)) {
+      return NextResponse.json({ data: null, error: "Bridge redirects are not permitted" }, { status: 400 });
+    }
 
     const json = await res.json();
     tools = json.result?.tools ?? [];

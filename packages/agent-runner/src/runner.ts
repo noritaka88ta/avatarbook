@@ -241,6 +241,7 @@ async function registerSkillsIfNeeded(apiBase: string, agent: AgentEntry): Promi
     }];
   }
   for (const spec of specs) {
+    const { signature, timestamp } = await signWithTimestamp(`skill:${agent.agentId}:${spec.title}`, agent.privateKey);
     await fetch(`${apiBase}/api/skills`, {
       method: "POST",
       headers: writeHeaders(),
@@ -250,6 +251,8 @@ async function registerSkillsIfNeeded(apiBase: string, agent: AgentEntry): Promi
         description: spec.description,
         price_avb: Math.max(10, Math.min(500, spec.price_avb || 50)),
         category: spec.category,
+        signature,
+        timestamp,
       }),
     }).catch(() => {});
   }
@@ -279,15 +282,19 @@ async function autoCreateSkill(apiBase: string, agent: AgentEntry, monitor?: Mon
   }
   if (!spec) return;
 
+  const skillTitle = spec.title.slice(0, 200);
+  const { signature, timestamp } = await signWithTimestamp(`skill:${agent.agentId}:${skillTitle}`, agent.privateKey);
   const createRes = await fetch(`${apiBase}/api/skills`, {
     method: "POST",
     headers: writeHeaders(),
     body: JSON.stringify({
       agent_id: agent.agentId,
-      title: spec.title.slice(0, 200),
+      title: skillTitle,
       description: (spec.description ?? "").slice(0, 2000),
       price_avb: Math.max(10, Math.min(500, spec.price_avb || 50)),
       category: spec.category,
+      signature,
+      timestamp,
     }),
   });
   const createJson = await safeJson(createRes);
@@ -383,12 +390,41 @@ async function autoSpawn(apiBase: string, agent: AgentEntry, monitor?: Monitor):
   }
 }
 
+// Bridge fulfillment が SSRF ポリシーで拒否されたことを表す。
+// 通常の fetch 失敗（リトライ対象）と区別するために専用の型にする。
+class BridgeRejected extends Error {}
+
+// SSRF 対策: ループバック・プライベート帯・非 HTTPS を拒否する。
+// API 側 (apps/web/api/bridges) と同じブロックリストを runner 側にも適用する。
+const BLOCKED_BRIDGE_HOST =
+  /^(localhost|127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|0\.|::1|0:0:0:0:0:0:0:1|fc|fd|fe80|::ffff:)/i;
+
+function assertSafeBridgeUrl(raw: string): void {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    throw new BridgeRejected("invalid bridge URL");
+  }
+  if (u.protocol !== "https:") {
+    throw new BridgeRejected("bridge URL must be https");
+  }
+  const host = u.hostname.replace(/^\[|\]$/g, "");
+  if (BLOCKED_BRIDGE_HOST.test(host)) {
+    throw new BridgeRejected("bridge host not permitted");
+  }
+}
+
 async function fulfillViaBridge(
   mcpServerUrl: string,
   mcpTool: string,
   order: any,
   provider: AgentEntry,
 ): Promise<string> {
+  // ホスト名レベルで検証。httpbin 等のオープンリダイレクトを経由した
+  // ループバック到達を防ぐため、リダイレクトは一切追わない (redirect: manual)。
+  assertSafeBridgeUrl(mcpServerUrl);
+
   const controller = new AbortController();
   setTimeout(() => controller.abort(), 15000);
 
@@ -405,7 +441,14 @@ async function fulfillViaBridge(
       },
     }),
     signal: controller.signal,
+    redirect: "manual",
   });
+
+  // redirect: manual の場合 undici は opaqueredirect レスポンスを返す。
+  // 3xx は内部ネットワークへの踏み台にされうるため拒否する。
+  if (res.type === "opaqueredirect" || (res.status >= 300 && res.status < 400)) {
+    throw new BridgeRejected("bridge redirects are not permitted");
+  }
 
   const json = await res.json();
   if (json.error) {
@@ -454,7 +497,19 @@ async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monit
 
       if (bridgeInfo?.bridge_id && bridgeInfo?.mcp_tool && bridgeInfo?.mcp_server_url) {
         // Bridge fulfillment: call external MCP tool
-        deliverable = await fulfillViaBridge(bridgeInfo.mcp_server_url, bridgeInfo.mcp_tool, order, provider);
+        try {
+          deliverable = await fulfillViaBridge(bridgeInfo.mcp_server_url, bridgeInfo.mcp_tool, order, provider);
+        } catch (e) {
+          if (e instanceof BridgeRejected) {
+            // SSRF ポリシー違反は恒久的な拒否として扱う。
+            // エラー記録せず rejection を deliverable にして order を完了させ、
+            // pending に残して毎tick再試行する無限ループ (= Slack スパム) を断つ。
+            console.warn(`  Bridge rejected (SSRF policy): ${bridgeInfo.mcp_server_url} — ${e.message}`);
+            deliverable = `Order rejected: external tool endpoint not permitted by security policy (${e.message}).`;
+          } else {
+            throw e;
+          }
+        }
       } else {
         // Standard LLM fulfillment
         deliverable = await fulfillOrder(provider.apiKey, provider, skillTitle, requesterName, instruction);
