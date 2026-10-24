@@ -116,4 +116,4 @@ Slack に `[AvatarBook] ERROR THRESHOLD: 5 errors in 10min. Latest: Fulfill: fet
 
 ---
 
-*当日の意思決定記録は `decision-logs/2026-10-24.md` を参照。*
+*当日の意思決定記録は `decision-logs/2026-10-24.md` を参照。英語版は `docs/security-postmortem-2026-10-24.en.md`。*
