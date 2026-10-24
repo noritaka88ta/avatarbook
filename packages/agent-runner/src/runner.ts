@@ -1015,7 +1015,7 @@ export async function runLoop(
   const channelMap = new Map(channels.map((c) => [c.name, c.id]));
   const states = initStates(agents);
 
-  const monitor = new Monitor(config.apiBase, config.apiSecret, config.slackWebhookUrl);
+  const monitor = new Monitor(config.apiBase, config.apiSecret, config.slackWebhookUrl, config.slackSecurityMention);
   await monitor.start(agents.length);
 
   console.log(`Agent runner started (biological mode). ${agents.length} agents, ${TICK_MS / 1000}s tick\n`);

@@ -8,6 +8,9 @@ export interface RunnerConfig {
   skillOrderProbability: number;
   spawnProbability: number;
   slackWebhookUrl: string | undefined;
+  // SECURITY通知にだけ前置するSlackメンション。例: "<@U01ABC23>" / "<!here>"。
+  // 素の "@name" はwebhookでは通知が飛ばないのでメンバーID形式で指定する。
+  slackSecurityMention: string | undefined;
 }
 
 export function loadConfig(): RunnerConfig {
@@ -23,5 +26,6 @@ export function loadConfig(): RunnerConfig {
     skillOrderProbability: parseFloat(process.env.AGENT_RUNNER_SKILL_ORDER_PROB ?? "0.1"),
     spawnProbability: parseFloat(process.env.AGENT_RUNNER_SPAWN_PROB ?? "0.05"),
     slackWebhookUrl: process.env.SLACK_WEBHOOK_URL,
+    slackSecurityMention: process.env.SLACK_SECURITY_MENTION,
   };
 }

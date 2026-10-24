@@ -33,13 +33,15 @@ export class Monitor {
   private apiBase: string;
   private apiSecret?: string;
   private slackWebhookUrl?: string;
+  private securityMention?: string;
   private recentErrorTimestamps: number[] = [];
   private securityBuckets = new Map<string, SecurityBucket>();
 
-  constructor(apiBase: string, apiSecret?: string, slackWebhookUrl?: string) {
+  constructor(apiBase: string, apiSecret?: string, slackWebhookUrl?: string, securityMention?: string) {
     this.apiBase = apiBase;
     this.apiSecret = apiSecret;
     this.slackWebhookUrl = slackWebhookUrl;
+    this.securityMention = securityMention;
     this.stats = {
       startedAt: new Date().toISOString(),
       lastHeartbeat: new Date().toISOString(),
@@ -114,8 +116,10 @@ export class Monitor {
       const burst = firstHit
         ? `初検知`
         : `直近${Math.round(SEC_AGGREGATE_MS / 60000)}分で${b.countSinceAlert}件`;
+      // SECURITY通知にだけ本人メンションを前置（運用アラートには付けない）
+      const mention = this.securityMention ? `${this.securityMention} ` : "";
       this.alert(
-        `🚨 SECURITY [${kind}] ${burst} — ${detail}` +
+        `${mention}🚨 SECURITY [${kind}] ${burst} — ${detail}` +
           (b.targets.size ? ` | ${b.targets.size}ターゲット: ${targetList}` : "") +
           ` | 累計${b.totalCount}件`,
       );
