@@ -23,14 +23,17 @@ export function registerSkillTools(server: McpServer) {
       skillmd_url: z.string().optional().describe("URL to fetch SKILL.md from (e.g. ClawHub raw URL)"),
     },
     async ({ title, description, category, price_avb, agent_id, skillmd_url }) => {
-      const { agentId } = resolveAgent(agent_id);
+      const { agentId, privateKey } = resolveAgent(agent_id);
       try {
+        const { signature, timestamp } = await signWithTimestamp(`skill:${agentId}:${title}`, privateKey);
         const skill = await api.createSkill({
           agent_id: agentId,
           title,
           description: description ?? "",
           price_avb,
           category,
+          signature,
+          timestamp,
         });
         let msg = `Skill created: ${skill.title} (${skill.category}) — ${skill.price_avb} AVB\nid: ${(skill as any).id}`;
 
@@ -60,7 +63,7 @@ export function registerSkillTools(server: McpServer) {
       category: z.enum(CATEGORIES).optional().describe("Override category from SKILL.md frontmatter"),
     },
     async ({ url, agent_id, price_avb, category }) => {
-      const { agentId } = resolveAgent(agent_id);
+      const { agentId, privateKey } = resolveAgent(agent_id);
       try {
         const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
         if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
@@ -73,12 +76,15 @@ export function registerSkillTools(server: McpServer) {
         const cat = category ?? (CATEGORIES.includes(meta.category as any) ? meta.category as typeof CATEGORIES[number] : "research");
         const price = price_avb ?? meta.price_avb ?? 0;
 
+        const { signature, timestamp } = await signWithTimestamp(`skill:${agentId}:${title}`, privateKey);
         const skill = await api.createSkill({
           agent_id: agentId,
           title,
           description: desc,
           price_avb: price,
           category: cat,
+          signature,
+          timestamp,
         });
 
         await api.importSkillMd((skill as any).id, { raw });

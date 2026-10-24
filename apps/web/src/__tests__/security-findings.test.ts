@@ -170,6 +170,35 @@ describe("P0-4: Skill order fulfillment is atomic", () => {
   });
 });
 
+describe("SEC-SSRF-1024: skill creation requires Ed25519 signature", () => {
+  const skillsRoute = read("app/api/skills/route.ts");
+
+  it("imports verifyTimestampedSignature", () => {
+    expect(skillsRoute).toContain("verifyTimestampedSignature");
+  });
+
+  it("POST rejects missing signature", () => {
+    expect(skillsRoute).toMatch(/Signature is required/);
+  });
+
+  it("binds the signature to agent_id and title", () => {
+    expect(skillsRoute).toContain("`skill:${agent_id}:${title}`");
+  });
+});
+
+describe("SEC-SSRF-1024: bridge sync refuses redirects (open-redirect bypass)", () => {
+  const syncRoute = read("app/api/bridges/[id]/sync/route.ts");
+
+  it("uses redirect: manual on the outbound fetch", () => {
+    expect(syncRoute).toMatch(/redirect:\s*"manual"/);
+  });
+
+  it("rejects 3xx / opaqueredirect responses", () => {
+    expect(syncRoute).toContain("opaqueredirect");
+    expect(syncRoute).toMatch(/Bridge redirects are not permitted/);
+  });
+});
+
 describe("P0-6: No negative avb_credit calls", () => {
   const fulfillRoute = read("app/api/skills/orders/[id]/fulfill/route.ts");
   const postsRoute = read("app/api/posts/route.ts");
@@ -237,8 +266,9 @@ describe("P1-11: Governance vote requires non-viewer role", () => {
     expect(voteRoute).toContain('user.role === "viewer"');
   });
 
-  it("has try/catch on req.json()", () => {
-    expect(voteRoute).toContain("Invalid JSON body");
+  it("handles invalid JSON safely", () => {
+    // 集約ヘルパ parseRequestBody 経由 or 旧来のinline "Invalid JSON body" のどちらでも可
+    expect(voteRoute).toMatch(/Invalid JSON body|parseRequestBody/);
   });
 });
 
@@ -254,12 +284,12 @@ describe("P1-11b: Governance user creation has rate limit", () => {
     expect(usersRoute).toContain("1-100 characters");
   });
 
-  it("has try/catch on req.json()", () => {
-    expect(usersRoute).toContain("Invalid JSON body");
+  it("handles invalid JSON safely", () => {
+    expect(usersRoute).toMatch(/Invalid JSON body|parseRequestBody/);
   });
 });
 
-describe("P1-13: All POST routes have try/catch on req.json()", () => {
+describe("P1-13: All POST routes handle invalid JSON safely", () => {
   const routes = [
     "app/api/posts/route.ts",
     "app/api/reactions/route.ts",
@@ -277,9 +307,10 @@ describe("P1-13: All POST routes have try/catch on req.json()", () => {
   ];
 
   for (const route of routes) {
-    it(`${route} has try/catch`, () => {
+    it(`${route} handles invalid JSON`, () => {
       const content = read(route);
-      expect(content).toContain("Invalid JSON body");
+      // 集約ヘルパ parseRequestBody 経由 or 旧来のinline "Invalid JSON body" のどちらでも可
+      expect(content).toMatch(/Invalid JSON body|parseRequestBody/);
     });
   }
 });
