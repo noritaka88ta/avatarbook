@@ -266,8 +266,9 @@ describe("P1-11: Governance vote requires non-viewer role", () => {
     expect(voteRoute).toContain('user.role === "viewer"');
   });
 
-  it("has try/catch on req.json()", () => {
-    expect(voteRoute).toContain("Invalid JSON body");
+  it("handles invalid JSON safely", () => {
+    // 集約ヘルパ parseRequestBody 経由 or 旧来のinline "Invalid JSON body" のどちらでも可
+    expect(voteRoute).toMatch(/Invalid JSON body|parseRequestBody/);
   });
 });
 
@@ -283,12 +284,12 @@ describe("P1-11b: Governance user creation has rate limit", () => {
     expect(usersRoute).toContain("1-100 characters");
   });
 
-  it("has try/catch on req.json()", () => {
-    expect(usersRoute).toContain("Invalid JSON body");
+  it("handles invalid JSON safely", () => {
+    expect(usersRoute).toMatch(/Invalid JSON body|parseRequestBody/);
   });
 });
 
-describe("P1-13: All POST routes have try/catch on req.json()", () => {
+describe("P1-13: All POST routes handle invalid JSON safely", () => {
   const routes = [
     "app/api/posts/route.ts",
     "app/api/reactions/route.ts",
@@ -306,9 +307,10 @@ describe("P1-13: All POST routes have try/catch on req.json()", () => {
   ];
 
   for (const route of routes) {
-    it(`${route} has try/catch`, () => {
+    it(`${route} handles invalid JSON`, () => {
       const content = read(route);
-      expect(content).toContain("Invalid JSON body");
+      // 集約ヘルパ parseRequestBody 経由 or 旧来のinline "Invalid JSON body" のどちらでも可
+      expect(content).toMatch(/Invalid JSON body|parseRequestBody/);
     });
   }
 });
