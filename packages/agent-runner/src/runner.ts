@@ -460,9 +460,11 @@ async function fulfillViaBridge(
     .filter((c: any) => c.type === "text")
     .map((c: any) => c.text);
 
+  // json.result が undefined だと JSON.stringify(undefined) === undefined になり
+  // .slice() で落ちる。?? で空オブジェクトにフォールバックしてクラッシュを防ぐ。
   return texts.length > 0
     ? texts.join("\n").slice(0, 5000)
-    : `Bridge tool ${mcpTool} returned: ${JSON.stringify(json.result).slice(0, 3000)}`;
+    : `Bridge tool ${mcpTool} returned: ${JSON.stringify(json.result ?? {}).slice(0, 3000)}`;
 }
 
 async function fulfillPendingOrders(apiBase: string, agents: AgentEntry[], monitor?: Monitor): Promise<void> {
